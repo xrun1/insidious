@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "xrtube"
+version = "0.1.0"
+description = ""
+authors = ["xrun1 <126838916+xrun1@users.noreply.github.com>"]
+license = "LGPL-3.0-or-later"
+readme = "README.md"
+
+[tool.poetry.scripts]
+xrtube = "xrtube.__main__:run"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^=0.103.1"
+jinja2 = "^=3.1.2"
+pydantic = "^=1.10.12"
+uvicorn = "^=0.23.2"
+watchfiles = "^=0.21.0"
+libsass = "^=0.22.0"
+yt-dlp = "2023.11.16"
+docopt = "^=0.6.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

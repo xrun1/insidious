@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{title}}</title>
+        <meta charset="utf-8">
+        <meta name="viewport"
+              content="width=device-width, initial-scale=1, maximum-scale=1">
+        <link rel="stylesheet" href="/style.css">
+        <script src="{{url_for("static", path="/htmx.min.js")}}"></script>
+    </head>
+    <body>
+        <form
+            hx-get="/results"
+            hx-select="#results"
+            hx-target="#results"
+            hx-push-url=true
+        >
+            <input
+                type=search
+                placeholder="Search"
+                autocomplete=true
+                autofocus=true
+                name=search_query
+            >
+        </form>
+
+        <div id=results>
+        {% for entry in results.entries %}
+            <a href="{{entry.url}}">
+                <img src="{{entry.thumb_for(160).fixed_url}}">
+                <p>{{entry.title}}</p>
+            </a>
+        {% endfor %}
+        </div>
+    </body>
+</html>
