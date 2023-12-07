@@ -23,6 +23,7 @@
                 libsass
                 yt-dlp
                 docopt
+                httpx
             ];
         };
         devShells.${sys}.default = pkgs.mkShell {

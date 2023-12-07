@@ -19,6 +19,7 @@ watchfiles = "^=0.21.0"
 libsass = "^=0.22.0"
 yt-dlp = "2023.11.16"
 docopt = "^=0.6.2"
+httpx = "^=0.25.0"
 
 [build-system]
 requires = ["poetry-core"]
