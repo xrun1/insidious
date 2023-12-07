@@ -25,12 +25,21 @@
         </form>
 
         <div id=results>
-        {% for entry in results.entries %}
-            <a href="{{entry.url}}">
-                <img src="{{entry.thumb_for(160).fixed_url}}">
-                <p>{{entry.title}}</p>
-            </a>
-        {% endfor %}
+            {% for entry in results.entries %}
+                <a href="{{entry.url}}">
+                    <img src="{{entry.thumb_for(160).fixed_url}}">
+                    <p>{{entry.title}}</p>
+                </a>
+            {% endfor %}
+
+            <div
+                class=lazy-loader
+                hx-get="{{next_page}}"
+                hx-trigger="intersect once"
+                hx-select="#results > *"
+                hx-target=#results
+                hx-swap=beforeend
+            ></div>
         </div>
     </body>
 </html>

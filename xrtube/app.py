@@ -36,9 +36,12 @@ async def style() -> Response:
 
 
 @APP.get("/results")
-async def results(request: Request, search_query: str = "") -> Response:
-    client = YoutubeClient()
+async def results(
+    request: Request, search_query: str = "", page: int = 1,
+) -> Response:
+    client = YoutubeClient(page=page)
     return jinja("index", request, {
         "title": f"{search_query} | {NAME}" if search_query else NAME,
+        "next_page": request.url.include_query_params(page=page + 1),
         "results": await client.search(client.convert_url(request.url)),
     })
