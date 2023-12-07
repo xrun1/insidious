@@ -57,9 +57,9 @@ class VideoEntry(ShortEntry):
     channel_id: str
     channel_name: str = Field(alias="channel")
     channel_url: str
-    uploader_id: str
+    uploader_id: str | None
     uploader_name: str = Field(alias="uploader")
-    uploader_url: str
+    uploader_url: str | None
     live_status: LiveStatus | None
     live_watching: int | None = \
         Field(alias="concurrent_view_count", default=None)
