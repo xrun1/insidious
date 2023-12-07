@@ -27,7 +27,10 @@
         };
         devShells.${sys}.default = pkgs.mkShell {
             inputsFrom = [packages.${sys}.default];
-            packages = with pyPkgs; [ipdb rich];
+            packages = with pyPkgs; [
+                ipdb rich  # debugging
+                wget  # ./update-static.sh
+            ];
             shellHook = ''export PYTHONBREAKPOINT=ipdb.set_trace'';
         };
     };
