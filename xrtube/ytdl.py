@@ -34,13 +34,15 @@ class Entry(BaseModel):
     id: str
     url: str
     title: str
-    thumbnails: list[Thumbnail]
+    thumbnails: list[Thumbnail] = Field(default_factory=list)
 
     def thumb_for(self, width: int) -> Thumbnail:
         for thumb in sorted(self.thumbnails, key=lambda t: t.width):
             if thumb.width >= width:
                 return thumb
-        return self.thumbnails[0]
+
+        missing = Thumbnail(url="/404", width=0, height=0)
+        return self.thumbnails[0] if len(self.thumbnails) else missing
 
 
 class ShortEntry(Entry):
@@ -63,16 +65,16 @@ class VideoEntry(ShortEntry):
         Field(alias="concurrent_view_count", default=None)
 
 
+class PlaylistEntry(Entry):
+    entry_type: Literal["PlaylistEntry"]
+
+
 class ChannelEntry(Entry):
     entry_type: Literal["ChannelEntry"]
     uploader: str
     uploader_id: str
     uploader_url: str
     followers: int = Field(alias="channel_follower_count")
-
-
-class Video(VideoEntry):
-    upload_date: str
 
 
 class Entries(BaseModel, Sequence[EntryT]):
@@ -87,9 +89,13 @@ class Entries(BaseModel, Sequence[EntryT]):
 
 class SearchResults(Entries[Entry]):
     entries: list[Annotated[
-        ShortEntry | VideoEntry | ChannelEntry,
+        ShortEntry | VideoEntry | ChannelEntry | PlaylistEntry,
         Field(discriminator="entry_type")
     ]]
+
+
+class Video(VideoEntry):
+    upload_date: str
 
 
 class Playlist(Entries[ShortEntry | VideoEntry]):
@@ -142,6 +148,8 @@ class YoutubeClient:
                 etype = ShortEntry.__name__
             elif "/channel/" in entry["url"]:
                 etype = ChannelEntry.__name__
+            elif "/playlist?" in entry["url"]:
+                etype = PlaylistEntry.__name__
             else:
                 etype = VideoEntry.__name__
 
