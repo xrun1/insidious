@@ -11,6 +11,7 @@
             href="{{url_for("static", path="/video-js.min.css")}}">
 
         <script src="{{url_for("static", path="/htmx.min.js")}}"></script>
+        <script>htmx.config.defaultSwapStyle = "outerHTML"</script>
         <script src="{{url_for("static", path="/video.min.js")}}"></script>
     </head>
     <body>
