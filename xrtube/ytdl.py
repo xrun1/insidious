@@ -148,7 +148,7 @@ class YoutubeClient:
     def __init__(
         self,
         page: int = 1,
-        per_page: int = 40,
+        per_page: int = 12,
     ) -> None:
         offset = per_page * (page - 1)
         self._ytdl = YoutubeDL({
