@@ -1,0 +1,15 @@
+<video-js id=player controls playsinline poster="{{video.poster.url}}">
+    {% if video.fixed_manifest_url %}
+        <source src="{{video.fixed_manifest_url}}">
+    {% endif %}
+</video-js>
+
+<script>
+    videojs("player", {
+        "enableDocumentPictureInPicture": true,
+        "aspectRatio": "{{video.player_ratio}}",
+        "fluid": true,
+        "liveui": true,
+        "playbackRates": [3, 2.5, 2, 1.75, 1.5, 1.25, 1, 0.75, 0.5],
+    })
+</script>

@@ -1,18 +1,21 @@
 import asyncio
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
-from enum import Enum, auto
+from enum import auto
 from functools import lru_cache, partial
 from typing import Annotated, Any, Literal, TypeVar
-from fastapi.datastructures import URL
+from urllib.parse import quote
 
+from fastapi.datastructures import URL
 from pydantic import BaseModel, Field
 from yt_dlp import YoutubeDL
+
+from .utils import AutoStrEnum, int_ratio
 
 EntryT = TypeVar("EntryT", bound="Entry")
 
 
-class LiveStatus(Enum):
+class LiveStatus(AutoStrEnum):
     not_live = auto()
     is_upcoming = auto()
     is_live = auto()
@@ -22,12 +25,28 @@ class LiveStatus(Enum):
 
 class Thumbnail(BaseModel):
     url: str
-    width: int
-    height: int
+    width: int | None
+    height: int | None
 
     @property
     def fixed_url(self) -> str:
         return f"https://{self.url}" if self.url.startswith("/") else self.url
+
+
+class Format(BaseModel):
+    name: str | None = Field(alias="format_note")
+    url: str
+    filesize: int | None
+    manifest_url: str | None
+    width: int | None
+    height: int | None
+    fps: float | None
+
+    @property
+    def fixed_manifest_url(self) -> str | None:
+        if self.manifest_url:
+            return "/proxy/get?url=" + quote(self.manifest_url)
+        return None
 
 
 class Entry(BaseModel):
@@ -36,13 +55,18 @@ class Entry(BaseModel):
     title: str
     thumbnails: list[Thumbnail] = Field(default_factory=list)
 
+    @property
+    def poster(self) -> Thumbnail:
+        bad = Thumbnail(url="/404", width=0, height=0)
+        return max(self.thumbnails, default=bad, key=lambda t: t.width or 0)
+
     def thumb_for(self, width: int) -> Thumbnail:
-        for thumb in sorted(self.thumbnails, key=lambda t: t.width):
-            if thumb.width >= width:
+        for thumb in sorted(self.thumbnails, key=lambda t: t.width or 0):
+            if thumb.width or 0 >= width:
                 return thumb
 
-        missing = Thumbnail(url="/404", width=0, height=0)
-        return self.thumbnails[0] if len(self.thumbnails) else missing
+        bad = Thumbnail(url="/404", width=0, height=0)
+        return self.thumbnails[0] if len(self.thumbnails) else bad
 
 
 class ShortEntry(Entry):
@@ -78,7 +102,7 @@ class ChannelEntry(Entry):
 
 
 class Entries(BaseModel, Sequence[EntryT]):
-    entries: list[EntryT]
+    entries: list[EntryT] = Field(default_factory=list)
 
     def __getitem__(self, index: int) -> EntryT:
         return self.entries[index]
@@ -91,11 +115,26 @@ class SearchResults(Entries[Entry]):
     entries: list[Annotated[
         ShortEntry | VideoEntry | ChannelEntry | PlaylistEntry,
         Field(discriminator="entry_type")
-    ]]
+    ]] = Field(default_factory=list)
 
 
 class Video(VideoEntry):
+    entry_type: Literal["Video"] = "Video"
+    url: str = Field(alias="original_url")
+    width: int
+    height: int
     upload_date: str
+    formats: list[Format]
+
+    @property
+    def fixed_manifest_url(self) -> str | None:
+        gen = (f.fixed_manifest_url for f in self.formats)
+        return next((f for f in gen if f), None)
+
+    @property
+    def player_ratio(self) -> str:
+        w, h = int_ratio(self.width, self.height)
+        return f"{w}:{h}"
 
 
 class Playlist(Entries[ShortEntry | VideoEntry]):
@@ -119,8 +158,7 @@ class YoutubeClient:
             "compat_opts": ["no-youtube-unavailable-videos"],
             "extractor_args": {
                 "youtube": {
-                    "skip": ["hls", "dash"],
-                    "player_client": ["web"],
+                    "player_client": ["ios"],  # gives HLS format
                 },
             },
         })
