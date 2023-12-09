@@ -1,8 +1,17 @@
-<video-js id=player controls playsinline poster="{{video.poster.url}}">
+<video-js id=player controls playsinline poster="{{video.poster.url}}"
+>
     {% if video.fixed_manifest_url %}
         <source src="{{video.fixed_manifest_url}}">
     {% endif %}
 </video-js>
+
+{# Putting these attrs on <video-js> causes duplicate triggering #}
+<div
+    hx-get="{{get_related}}"
+    hx-trigger=load
+    hx-select=#results
+    hx-target=#results
+></div>
 
 <script>
     videojs("player", {

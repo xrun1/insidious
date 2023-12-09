@@ -6,6 +6,7 @@ from functools import lru_cache, partial
 from typing import Annotated, Any, Literal, TypeVar
 from urllib.parse import quote
 
+import backoff
 from fastapi.datastructures import URL
 from pydantic import BaseModel, Field
 from yt_dlp import YoutubeDL
@@ -102,6 +103,7 @@ class ChannelEntry(Entry):
 
 
 class Entries(BaseModel, Sequence[EntryT]):
+    title: str = ""
     entries: list[EntryT] = Field(default_factory=list)
 
     def __getitem__(self, index: int) -> EntryT:
@@ -111,7 +113,7 @@ class Entries(BaseModel, Sequence[EntryT]):
         return len(self.entries)
 
 
-class SearchResults(Entries[Entry]):
+class Search(Entries[Entry]):
     entries: list[Annotated[
         ShortEntry | VideoEntry | ChannelEntry | PlaylistEntry,
         Field(discriminator="entry_type")
@@ -139,6 +141,14 @@ class Video(VideoEntry):
 
 class Playlist(Entries[ShortEntry | VideoEntry]):
     id: str
+    entries: list[Annotated[
+        ShortEntry | VideoEntry,
+        Field(discriminator="entry_type")
+    ]] = Field(default_factory=list)
+
+
+class NoDataReceived(Exception):
+    """ytdlp failed to return any data after retrying"""
 
 
 @lru_cache(64)
@@ -152,6 +162,7 @@ class YoutubeClient:
     ) -> None:
         offset = per_page * (page - 1)
         self._ytdl = YoutubeDL({
+            "quiet": True,
             "playliststart": offset + 1,
             "playlistend": offset + per_page,
             "extract_flat": "in_playlist",
@@ -166,9 +177,8 @@ class YoutubeClient:
     def convert_url(self, url: URL) -> URL:
         return url.replace(scheme="https", hostname="youtube.com", port=None)
 
-    async def search(self, url: URL | str) -> SearchResults:
-        data = self._extend_entries(await self._get(url))
-        return SearchResults.parse_obj(data)
+    async def search(self, url: URL | str) -> Search:
+        return Search.parse_obj(await self._get(url))
 
     async def playlist(self, url: URL | str) -> Playlist:
         return Playlist.parse_obj(await self._get(url))
@@ -176,9 +186,12 @@ class YoutubeClient:
     async def video(self, url: URL | str) -> Video:
         return Video.parse_obj(await self._get(url))
 
+    @backoff.on_exception(backoff.expo, NoDataReceived, max_tries=10)
     async def _get(self, url: URL | str) -> dict[str, Any]:
         func = partial(self._ytdl.extract_info, str(url), download=False)
-        return await self._thread(func)
+        if (data := await self._thread(func)) is None:
+            raise NoDataReceived
+        return self._extend_entries(data)
 
     def _extend_entries(self, data: dict[str, Any]) -> dict[str, Any]:
         def extend(entry: dict[str, Any]) -> dict[str, Any]:
@@ -190,10 +203,9 @@ class YoutubeClient:
                 etype = PlaylistEntry.__name__
             else:
                 etype = VideoEntry.__name__
-
             return entry | {"entry_type": etype}
 
-        return data | {"entries": [extend(e) for e in data["entries"]]}
+        return data | {"entries": [extend(e) for e in data.get("entries", [])]}
 
     @classmethod
     def _thread(cls, *args, **kwargs) -> asyncio.Future:

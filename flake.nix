@@ -24,6 +24,7 @@
                 yt-dlp
                 docopt
                 httpx
+                backoff
             ];
         };
         devShells.${sys}.default = pkgs.mkShell {
