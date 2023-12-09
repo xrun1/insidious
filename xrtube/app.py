@@ -63,6 +63,10 @@ class Index:
     def local_url(url: str) -> str:
         return str(URL(url).replace(scheme="", netloc=""))
 
+    @staticmethod
+    def proxy(url: str, method: str = "get") -> str:
+        return f"/proxy/{method}?url={quote(url)}"
+
 
 @APP.get("/")
 async def home(request: Request) -> Response:

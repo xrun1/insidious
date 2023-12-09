@@ -1,7 +1,7 @@
 <video-js id=player controls playsinline poster="{{video.poster.url}}"
 >
-    {% if video.fixed_manifest_url %}
-        <source src="{{video.fixed_manifest_url}}">
+    {% if video.manifest_url %}
+        <source src="{{proxy(video.manifest_url)}}">
     {% endif %}
 </video-js>
 

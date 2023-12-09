@@ -43,12 +43,6 @@ class Format(BaseModel):
     height: int | None
     fps: float | None
 
-    @property
-    def fixed_manifest_url(self) -> str | None:
-        if self.manifest_url:
-            return "/proxy/get?url=" + quote(self.manifest_url)
-        return None
-
 
 class Entry(BaseModel):
     id: str
@@ -129,8 +123,8 @@ class Video(VideoEntry):
     formats: list[Format]
 
     @property
-    def fixed_manifest_url(self) -> str | None:
-        gen = (f.fixed_manifest_url for f in self.formats)
+    def manifest_url(self) -> str | None:
+        gen = (f.manifest_url for f in self.formats)
         return next((f for f in gen if f), None)
 
     @property
