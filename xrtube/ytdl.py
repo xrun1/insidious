@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from enum import auto
 from functools import lru_cache, partial
 from typing import Annotated, Any, Literal, TypeVar
@@ -16,11 +17,11 @@ EntryT = TypeVar("EntryT", bound="Entry")
 
 
 class LiveStatus(AutoStrEnum):
-    not_live = auto()
     is_upcoming = auto()
     is_live = auto()
     post_live = auto()  # was live, but VOD is not yet processed
     was_live = auto()
+    not_live = auto()
 
 
 class Thumbnail(BaseModel):
@@ -68,8 +69,9 @@ class ShortEntry(Entry):
     views: int = Field(alias="view_count")
 
 
-class VideoEntry(ShortEntry):
+class VideoEntry(Entry):
     entry_type: Literal["VideoEntry"]
+    views: int = Field(alias="view_count")
     description: str | None
     duration: int
     channel_id: str
@@ -79,8 +81,13 @@ class VideoEntry(ShortEntry):
     uploader_name: str = Field(alias="uploader")
     uploader_url: str | None
     live_status: LiveStatus | None
-    live_watching: int | None = \
-        Field(alias="concurrent_view_count", default=None)
+    live_release_date: datetime | None = Field(alias="release_timestamp")
+
+
+class PartialEntry(VideoEntry):
+    entry_type: Literal["PartialEntry"]
+    duration: int | None
+    views: int | None = Field(alias="concurrent_view_count")
 
 
 class PlaylistEntry(Entry):
@@ -108,7 +115,7 @@ class Entries(BaseModel, Sequence[EntryT]):
 
 class Search(Entries[Entry]):
     entries: list[Annotated[
-        ShortEntry | VideoEntry | ChannelEntry | PlaylistEntry,
+        ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry,
         Field(discriminator="entry_type")
     ]] = Field(default_factory=list)
 
@@ -131,7 +138,7 @@ class Video(VideoEntry):
 class Playlist(Entries[ShortEntry | VideoEntry]):
     id: str
     entries: list[Annotated[
-        ShortEntry | VideoEntry,
+        ShortEntry | VideoEntry | PartialEntry,
         Field(discriminator="entry_type")
     ]] = Field(default_factory=list)
 
@@ -192,6 +199,8 @@ class YoutubeClient:
                 etype = ChannelEntry.__name__
             elif "/playlist?" in entry["url"]:
                 etype = PlaylistEntry.__name__
+            elif "concurrent_view_count" in entry:
+                etype = PartialEntry.__name__
             else:
                 etype = VideoEntry.__name__
             return entry | {"entry_type": etype}
