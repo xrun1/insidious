@@ -16,9 +16,10 @@
     </head>
     <body>
         <form
+            id=search
             hx-get="/results"
-            hx-select="#results"
-            hx-target="#results"
+            hx-select="#explore-column"
+            hx-target="#explore-column"
             hx-push-url=true
         >
             <input
@@ -30,33 +31,39 @@
             >
         </form>
 
-        <div id=player-holder>
-            {% if video %}
-                {% include "player.html.jinja" %}
-            {% endif %}
+        <div id=main-column class="{{'' if video else 'empty'}}">
+            <div id=player-holder style="--ratio: {{video.aspect_ratio}}">
+                {% if video %}
+                    {% include "player.html.jinja" %}
+                {% endif %}
+            </div>
+            <p>{{video.title}}</p>
         </div>
 
-        <div id=results>
-            {% for entry in results.entries %}
-                <a
-                    href="{{local_url(entry.url)}}"
-                    hx-get="{{local_url(entry.url)}}"
-                    hx-select=#player-holder
-                    hx-target=#player-holder
-                    hx-push-url=true
-                >
-                    <img src="{{entry.thumb_for(160).fixed_url}}">
-                    <p>{{entry.title}}</p>
-                </a>
-            {% endfor %}
+        <div id=explore-column class="{{'' if results.entries else 'empty'}}">
+            <div id=results>
+                {% for entry in results.entries %}
+                    <a
+                        class=result
+                        href="{{local_url(entry.url)}}"
+                        hx-get="{{local_url(entry.url)}}"
+                        hx-select=#player-holder
+                        hx-target=#player-holder
+                        hx-push-url=true
+                    >
+                        <img src="{{entry.thumb_for(160).fixed_url}}">
+                        <p title="{{entry.title}}">{{entry.title}}</p>
+                    </a>
+                {% endfor %}
+            </div>
 
             {% if next_page %}
                 <div
                     class=lazy-loader
                     hx-get="{{next_page}}"
                     hx-trigger="intersect once"
-                    hx-select="#results > *"
-                    hx-target=#results
+                    hx-select="#explore-column > *"
+                    hx-target=#explore-column
                     hx-swap=beforeend
                 ></div>
             {% endif %}

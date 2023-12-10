@@ -10,7 +10,7 @@ from fastapi.datastructures import URL
 from pydantic import BaseModel, Field
 from yt_dlp import YoutubeDL
 
-from .utils import AutoStrEnum, int_ratio
+from .utils import AutoStrEnum
 
 EntryT = TypeVar("EntryT", bound="Entry")
 
@@ -118,6 +118,7 @@ class Video(VideoEntry):
     url: str = Field(alias="original_url")
     width: int
     height: int
+    aspect_ratio: float
     upload_date: str
     formats: list[Format]
 
@@ -125,11 +126,6 @@ class Video(VideoEntry):
     def manifest_url(self) -> str | None:
         gen = (f.manifest_url for f in self.formats)
         return next((f for f in gen if f), None)
-
-    @property
-    def player_ratio(self) -> str:
-        w, h = int_ratio(self.width, self.height)
-        return f"{w}:{h}"
 
 
 class Playlist(Entries[ShortEntry | VideoEntry]):
