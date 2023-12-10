@@ -1,11 +1,13 @@
 import asyncio
 import logging as log
 import math
+import os
 import re
 import time
 from dataclasses import dataclass, field
 from importlib import resources
 from urllib.parse import quote
+from uuid import uuid4
 
 import httpx
 import jinja2
@@ -37,10 +39,15 @@ TEMPLATES = Jinja2Templates(env=jinja2.Environment(loader=LOADER))
 SASS = resources.read_text(f"{NAME}.style", "main.sass")
 CSS = sass.compile(string=SASS, indented=True)
 APP = FastAPI(default_response_class=HTMLResponse)
+
 APP.mount("/static", StaticFiles(packages=[(NAME, "static")]), name="static")
+if os.getenv("UVICORN_RELOAD"):
+    # Fix browser reusing cached files at reload despite disk modifications
+    StaticFiles.is_not_modified = lambda *_, **k: [k] and False  # type: ignore
 
 HTTPX = httpx.AsyncClient()
 MANIFEST_URL = re.compile(r'(^|")(https?://[^"]+?)($|")', re.MULTILINE)
+UUID = uuid4()
 
 
 @dataclass
@@ -57,7 +64,7 @@ class Index:
         return TEMPLATES.TemplateResponse("index.html.jinja", {
             a: getattr(self, a) for a in dir(self)
             if not a.startswith("_") and a != "response"
-        })
+        } | {"UVICORN_RELOAD": os.getenv("UVICORN_RELOAD")})
 
     @staticmethod
     def local_url(url: str) -> str:
@@ -254,3 +261,16 @@ async def proxy(
 
     background_tasks.add_task(reply.aclose)
     return StreamingResponse(reply.aiter_raw())
+
+
+@APP.get("/instance_id")
+def instance_id() -> Response:
+    return Response(str(UUID))
+
+
+@APP.get("/wait_reload", response_class=Response)
+async def wait_reload() -> Response:
+    try:
+        await asyncio.Future()  # sleep until the server shutsdown/reloads
+    finally:
+        return instance_id()

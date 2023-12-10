@@ -8,6 +8,7 @@ Options:
     --version             Show the {NAME} version and exit.
 """
 
+import os
 import docopt
 import uvicorn
 
@@ -17,13 +18,17 @@ from . import NAME, __version__
 def run() -> None:
     args = docopt.docopt(__doc__.format(NAME=NAME), version=__version__)
     dir = args["--reload"]
+    if dir:
+        os.putenv("UVICORN_RELOAD", "1")
+
     uvicorn.run(
         f"{NAME}.app:APP",
         host = args["HOST"] or "127.0.0.1",
         port = int(args["PORT"] or 8000),
         reload = bool(dir),
         reload_dirs = [dir] if dir else [],
-        reload_includes=["*.jinja", "*.sass"],
+        reload_includes = ["*.jinja", "*.sass", "*.js"],
+        timeout_graceful_shutdown = 0,
     )
 
 
