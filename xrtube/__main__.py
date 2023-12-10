@@ -19,6 +19,7 @@ def run() -> None:
     args = docopt.docopt(__doc__.format(NAME=NAME), version=__version__)
     dir = args["--reload"]
     if dir:
+        dir = os.path.abspath(dir)  # We change the cwd later, "." would break
         os.putenv("UVICORN_RELOAD", dir)
 
     uvicorn.run(

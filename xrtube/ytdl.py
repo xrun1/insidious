@@ -1,15 +1,19 @@
 import asyncio
+import os
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from enum import auto
 from functools import lru_cache, partial
+from pathlib import Path
+from tempfile import gettempdir
 from typing import Annotated, Any, Literal, TypeVar
-from urllib.parse import quote
 
 import backoff
 from fastapi.datastructures import URL
 from pydantic import BaseModel, Field
 from yt_dlp import YoutubeDL
+
+from xrtube import NAME
 
 from .utils import AutoStrEnum, int_ratio
 
@@ -157,6 +161,8 @@ class YoutubeClient:
         offset = per_page * (page - 1)
         self._ytdl = YoutubeDL({
             "quiet": True,
+            "write_pages": True,
+            "load_pages": True,
             "playliststart": offset + 1,
             "playlistend": offset + per_page,
             "extract_flat": "in_playlist",
@@ -205,3 +211,8 @@ class YoutubeClient:
     def _thread(cls, *args, **kwargs) -> asyncio.Future:
         exe = cls._executor
         return asyncio.get_event_loop().run_in_executor(exe, *args, **kwargs)
+
+
+CACHE_DIR = Path(gettempdir()) / NAME / "cache"
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
