@@ -21,7 +21,13 @@
         fill: true,
         liveui: true,
         playbackRates: [3, 2.5, 2, 1.75, 1.5, 1.25, 1, 0.75, 0.5],
+        vhs: {
+            overrideNative: true,
+        },
+        nativeAudioTracks: false,
+        nativeVideoTracks: false
     })
+    // Requires disabling native HLS as done above
     player.hlsQualitySelector({
         displayCurrentQuality: true,
         placementIndex: 12,
