@@ -29,7 +29,7 @@ def yt_to_html(text: str) -> str:
             hx-push-url=true
         >#{match[1]}</a>"""
 
-    text = html.escape(text)
+    text = html.escape(text, quote=False)
 
     for tag, regex in YT_MARKUP.items():
         text = regex.sub(rf"<{tag}>\1</{tag}>", text)
