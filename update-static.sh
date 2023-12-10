@@ -1,8 +1,9 @@
 #!/usr/bin/env sh
 set -e
 
-dir="$(dirname "$0")/xrtube/static/"
-wget -nv https://unpkg.com/htmx.org@^1.9.9 -O "$dir/htmx.min.js"
-wget -nv https://unpkg.com/video.js@^8.6.1/dist/video.min.js -O "$dir/video.min.js"
-wget -nv https://unpkg.com/video.js@^8.6.1/dist/video-js.min.css -O "$dir/video-js.min.css"
-wget -nv https://cdn.jsdelivr.net/npm/modern-normalize/modern-normalize.min.css -O "$dir/modern-normalize.min.css"
+get() { wget -nv "$1" -O "$(dirname "$0")/xrtube/static/${1##*/}" & }
+get https://unpkg.com/htmx.org@^1.9.9/dist/htmx.min.js
+get https://unpkg.com/video.js@^8.6.1/dist/video.min.js
+get https://unpkg.com/video.js@^8.6.1/dist/video-js.min.css
+get https://cdn.jsdelivr.net/npm/modern-normalize/modern-normalize.min.css
+wait
