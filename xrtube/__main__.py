@@ -19,7 +19,7 @@ def run() -> None:
     args = docopt.docopt(__doc__.format(NAME=NAME), version=__version__)
     dir = args["--reload"]
     if dir:
-        os.putenv("UVICORN_RELOAD", "1")
+        os.putenv("UVICORN_RELOAD", dir)
 
     uvicorn.run(
         f"{NAME}.app:APP",
@@ -27,7 +27,6 @@ def run() -> None:
         port = int(args["PORT"] or 8000),
         reload = bool(dir),
         reload_dirs = [dir] if dir else [],
-        reload_includes = ["*.jinja", "*.scss", "*.js"],
         timeout_graceful_shutdown = 0,
     )
 

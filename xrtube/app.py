@@ -1,7 +1,9 @@
 import asyncio
+from contextlib import suppress
 import logging as log
 import math
 import os
+from pathlib import Path
 import re
 import shutil
 import time
@@ -18,6 +20,7 @@ from fastapi.datastructures import URL
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from watchfiles import awatch
 
 from xrtube.utils import report
 
@@ -48,6 +51,8 @@ if os.getenv("UVICORN_RELOAD"):
 
 HTTPX = httpx.AsyncClient()
 MANIFEST_URL = re.compile(r'(^|")(https?://[^"]+?)($|")', re.MULTILINE)
+RELOAD = asyncio.Event()
+RELOAD_SCSS = asyncio.Event()
 UUID = uuid4()
 
 
@@ -270,9 +275,41 @@ def instance_id() -> Response:
 @APP.get("/wait_reload", response_class=Response)
 async def wait_reload() -> Response:
     try:
-        await asyncio.Future()  # sleep until the server shutsdown/reloads
-    finally:
+        await RELOAD.wait()
+    except asyncio.CancelledError:
         return instance_id()
+    else:
+        RELOAD.clear()
+        return Response("direct")
+
+
+@APP.get("/wait_reload_scss", response_class=Response)
+async def wait_reload_scss() -> Response:
+    global CSS
+    with suppress(asyncio.CancelledError):
+        await RELOAD_SCSS.wait()
+        RELOAD_SCSS.clear()
+        CSS = resources.read_text(f"{NAME}.style", "main.scss")
+        return Response("reload")
+    return Response()
+
+
+@APP.on_event("startup")
+async def watch_files() -> None:
+    async def task() -> None:
+        with report(Exception):
+            with suppress(asyncio.CancelledError):
+                if not (dir := os.getenv("UVICORN_RELOAD")):
+                    return
+
+                async for changes in awatch(dir):
+                    exts = {Path(p).suffix for _, p in changes}
+                    if ".scss" in exts or ".css" in exts:
+                        RELOAD_SCSS.set()
+                    elif ".jinja" in exts or ".js" in exts:
+                        RELOAD.set()
+
+    asyncio.create_task(task())
 
 
 @APP.on_event("shutdown")

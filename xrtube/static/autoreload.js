@@ -5,13 +5,28 @@ function wait(endpoint, callback) {
     req.send()
 }
 
-wait("/wait_reload", instanceId => {
-    if (! instanceId) return
+wait("/wait_reload", text => {
+    if (! text) return
+    if (text === "direct") {
+        location.reload()
+        return
+    }
     const interval = setInterval(() => {
-        wait("/instance_id", newId => {
-            if (! newId || instanceId === newId) return
+        wait("/instance_id", newText => {
+            if (! newText || text === newText) return
             clearInterval(interval)
             location.reload()
         })
     }, 100)
 })
+
+function reloadCss() {
+    wait("/wait_reload_scss", text => {
+        if (! text) return
+        document.querySelectorAll("link[rel=stylesheet]").forEach(link =>
+            link.href = link.href.replace(/\?.*|$/, "?" + Date.now())
+        )
+        reloadCss()
+    })
+}
+reloadCss()

@@ -19,7 +19,7 @@
                 jinja2
                 pydantic
                 uvicorn
-                watchfiles  # for watching non-.py files with uvicorn
+                watchfiles
                 libsass
                 yt-dlp
                 docopt
