@@ -64,7 +64,7 @@ os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
 @dataclass
 class Index:
     request: Request
-    title: str = NAME
+    title: str | None = None
     results: Search = field(default_factory=Search)
     next_page: URL | None = None
     get_related: URL | None = None
@@ -88,7 +88,7 @@ class Index:
 
 @APP.get("/")
 async def home(request: Request) -> Response:
-    return Index(request).response
+    return Index(request, title=NAME).response
 
 
 @APP.get("/style.css")
