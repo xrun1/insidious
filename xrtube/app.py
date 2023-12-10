@@ -18,7 +18,7 @@ import jinja2
 import sass
 from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
-from fastapi.responses import HTMLResponse, Response, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
@@ -125,6 +125,7 @@ async def hashtag(request: Request, tag: str, page: int = 1) -> Response:
 
 
 @APP.get("/watch")
+@APP.get("/v/{v}")
 async def watch(request: Request, v: str) -> Response:
     client = YoutubeClient()
     video = await client.video(client.convert_url(request.url))
@@ -285,6 +286,15 @@ async def proxy(
 
     background_tasks.add_task(reply.aclose)
     return StreamingResponse(reply.aiter_raw())
+
+
+@APP.get("/{v}", response_class=RedirectResponse)
+async def short_url_watch(request: Request, v: str) -> Response:
+    if v == "favicon.ico":
+        return Response(status_code=404)
+
+    url = request.url.replace(path="/watch").include_query_params(v=v)
+    return RedirectResponse(url)
 
 
 @APP.websocket("/wait_reload")
