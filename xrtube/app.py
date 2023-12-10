@@ -65,7 +65,7 @@ os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
 class Index:
     request: Request
     title: str | None = None
-    results: Search = field(default_factory=Search)
+    results: Search | Playlist = field(default_factory=Search)
     next_page: URL | None = None
     get_related: URL | None = None
     video: Video | None = None
@@ -110,6 +110,17 @@ async def results(
         title = f"{search_query} | {NAME}" if search_query else NAME,
         next_page = request.url.include_query_params(page=page + 1),
         results = await client.search(client.convert_url(request.url)),
+    ).response
+
+
+@APP.get("/hashtag/{tag}")
+async def hashtag(request: Request, tag: str, page: int = 1) -> Response:
+    client = YoutubeClient(page=page)
+    return Index(
+        request,
+        title = f"#{tag} | {NAME}",
+        next_page = request.url.include_query_params(page=page + 1),
+        results = await client.playlist(client.convert_url(request.url)),
     ).response
 
 
