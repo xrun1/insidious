@@ -1,23 +1,22 @@
 import asyncio
-from collections.abc import Coroutine
-from contextlib import suppress
 import logging as log
 import math
 import os
-from pathlib import Path
 import re
 import shutil
 import time
+from collections.abc import Coroutine
+from contextlib import suppress
 from dataclasses import dataclass, field
 from importlib import resources
+from pathlib import Path
 from urllib.parse import quote
-from uuid import uuid4
 
 import appdirs
 import httpx
 import jinja2
 import sass
-from fastapi import BackgroundTasks, FastAPI, Request
+from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -53,9 +52,9 @@ if os.getenv("UVICORN_RELOAD"):
 
 HTTPX = httpx.AsyncClient()
 MANIFEST_URL = re.compile(r'(^|")(https?://[^"]+?)($|")', re.MULTILINE)
-RELOAD = asyncio.Event()
-RELOAD_SCSS = asyncio.Event()
-UUID = uuid4()
+DYING = False
+RELOAD_PAGE = asyncio.Event()
+RELOAD_STYLE = asyncio.Event()
 
 CACHE_DIR = Path(appdirs.user_cache_dir(NAME))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -273,31 +272,38 @@ async def proxy(
     return StreamingResponse(reply.aiter_raw())
 
 
-@APP.get("/instance_id")
-def instance_id() -> Response:
-    return Response(str(UUID))
+@APP.websocket("/wait_reload")
+async def wait_reload(ws: WebSocket) -> None:
+    global DYING
+    if DYING:
+        return
 
+    async def wait_page() -> None:
+        while True:
+            await RELOAD_PAGE.wait()
+            RELOAD_PAGE.clear()
+            await ws.send_text("page")
 
-@APP.get("/wait_reload", response_class=Response)
-async def wait_reload() -> Response:
-    try:
-        await RELOAD.wait()
-    except asyncio.CancelledError:
-        return instance_id()
-    else:
-        RELOAD.clear()
-        return Response("direct")
+    async def wait_style() -> None:
+        global SCSS
+        global CSS
+        while True:
+            await RELOAD_STYLE.wait()
+            RELOAD_STYLE.clear()
+            SCSS = resources.read_text(f"{NAME}.style", "main.scss")
+            CSS = sass.compile(string=SCSS, indented=False)
+            await ws.send_text("style")
 
-
-@APP.get("/wait_reload_scss", response_class=Response)
-async def wait_reload_scss() -> Response:
-    global CSS
+    await ws.accept()
     with suppress(asyncio.CancelledError):
-        await RELOAD_SCSS.wait()
-        RELOAD_SCSS.clear()
-        CSS = resources.read_text(f"{NAME}.style", "main.scss")
-        return Response("reload")
-    return Response()
+        await asyncio.gather(wait_page(), wait_style())
+    DYING = True
+
+
+@APP.websocket("/wait_alive")
+async def wait_alive(ws: WebSocket) -> None:
+    if not DYING:
+        await ws.accept()
 
 
 def create_background_job(coro: Coroutine) -> asyncio.Task:
@@ -306,22 +312,6 @@ def create_background_job(coro: Coroutine) -> asyncio.Task:
             with suppress(asyncio.CancelledError):
                 await coro
     return asyncio.create_task(task())
-
-
-@APP.on_event("startup")
-async def watch_files() -> None:
-    async def job() -> None:
-        if not (dir := os.getenv("UVICORN_RELOAD")):
-            return
-
-        async for changes in awatch(dir):
-            exts = {Path(p).suffix for _, p in changes}
-            if ".scss" in exts or ".css" in exts:
-                RELOAD_SCSS.set()
-            elif ".jinja" in exts or ".js" in exts:
-                RELOAD.set()
-
-    create_background_job(job())
 
 
 @APP.on_event("startup")
@@ -339,6 +329,22 @@ async def prune_cache() -> None:
                 log.info("Cache: freed %d MiB", round(mib, 1))
 
             await asyncio.sleep(300)
+
+    create_background_job(job())
+
+
+@APP.on_event("startup")
+async def watch_files() -> None:
+    async def job() -> None:
+        if not (dir := os.getenv("UVICORN_RELOAD")):
+            return
+
+        async for changes in awatch(dir):
+            exts = {Path(p).suffix for _, p in changes}
+            if ".jinja" in exts or ".js" in exts:
+                RELOAD_PAGE.set()
+            elif ".scss" in exts or ".css" in exts:
+                RELOAD_STYLE.set()
 
     create_background_job(job())
 

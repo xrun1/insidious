@@ -1,32 +1,30 @@
-function wait(endpoint, callback) {
-    const req = new XMLHttpRequest()
-    req.onreadystatechange = () => { callback(req.responseText) }
-    req.open("GET", endpoint, true)
-    req.send()
-}
+let ws = new WebSocket(`ws://${location.host}/wait_reload`)
 
-wait("/wait_reload", text => {
-    if (! text) return
-    if (text === "direct") {
+ws.onmessage = event => {
+    console.log(event)
+
+    if (event.data === "page") {
         location.reload()
-        return
-    }
-    const interval = setInterval(() => {
-        wait("/instance_id", newText => {
-            if (! newText || text === newText) return
-            clearInterval(interval)
-            location.reload()
-        })
-    }, 100)
-})
-
-function reloadCss() {
-    wait("/wait_reload_scss", text => {
-        if (! text) return
+    } else if (event.data === "style") {
         document.querySelectorAll("link[rel=stylesheet]").forEach(link =>
             link.href = link.href.replace(/\?.*|$/, "?" + Date.now())
         )
-        reloadCss()
-    })
+    }
 }
-reloadCss()
+
+ws.onclose = event => {
+    console.log(event)
+
+    const interval = setInterval(() => {
+        let ws = new WebSocket(`ws://${location.host}/wait_alive`)
+        ws.onopen = () => {
+            clearInterval(interval)
+            location.reload()
+        }
+        ws.onclose = console.log
+        ws.onerror = console.log
+    }, 250)
+
+};
+
+ws.onerror = console.log

@@ -26,6 +26,7 @@
                 httpx
                 backoff
                 appdirs
+                websockets
             ];
         };
         devShells.${sys}.default = pkgs.mkShell {
