@@ -58,6 +58,15 @@ body {
     grid-row: 2 / -1;
 }
 
+#player {
+    overflow-wrap: initial;  // Fix timestamp tooltip on progress bar hover
+
+    .vjs-menu-content {
+        max-height: 80vh;
+        overflow-x: hidden;
+    }
+}
+
 #results {
     display: grid;
     grid-template-columns: repeat(auto-fit, 35rem);
