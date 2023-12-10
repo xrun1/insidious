@@ -50,7 +50,7 @@ if os.getenv("UVICORN_RELOAD"):
     # Fix browser reusing cached files at reload despite disk modifications
     StaticFiles.is_not_modified = lambda *_, **k: [k] and False  # type: ignore
 
-HTTPX = httpx.AsyncClient()
+HTTPX = httpx.AsyncClient(follow_redirects=True)
 MANIFEST_URL = re.compile(r'(^|")(https?://[^"]+?)($|")', re.MULTILINE)
 DYING = False
 RELOAD_PAGE = asyncio.Event()
