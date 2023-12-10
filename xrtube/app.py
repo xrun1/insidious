@@ -111,7 +111,6 @@ async def watch(request: Request, v: str) -> Response:
             video_title = video.title,
             channel_name = video.channel_name,
             channel_url = video.channel_url,
-            video_id = video.id,
             exclude_video_ids = video.id,
         ),
     ).response
@@ -123,7 +122,6 @@ async def related(
     video_title: str,
     channel_name: str,
     channel_url: str,
-    video_id: str,
     exclude_video_ids: str,
     page: int = 1,
     low_confidence: bool = False,
