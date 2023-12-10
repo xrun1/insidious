@@ -23,9 +23,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
 
-from xrtube.utils import report
-
 from . import NAME
+from .markup import yt_to_html
+from .utils import report
 from .ytdl import (
     NoDataReceived,
     Playlist,
@@ -84,6 +84,10 @@ class Index:
     @staticmethod
     def proxy(url: str, method: str = "get") -> str:
         return f"/proxy/{method}?url={quote(url)}"
+
+    @staticmethod
+    def youtube_markup(text: str) -> str:
+        return yt_to_html(text)
 
 
 @APP.get("/")

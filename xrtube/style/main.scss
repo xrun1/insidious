@@ -35,6 +35,10 @@ body {
     grid-column: 1;
 }
 
+.yt-markup {
+    white-space: pre-wrap;
+}
+
 [style*="--ratio"] {
     position: relative;
     width: 90rem;

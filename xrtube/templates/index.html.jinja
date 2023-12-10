@@ -35,7 +35,12 @@
                     {% include "player.html.jinja" %}
                 {% endif %}
             </div>
-            <p>{{video.title}}</p>
+            {% if video %}
+                <h1>{{video.title}}</h1>
+            {% endif %}
+            {% if video.description %}
+                <p class=yt-markup>{{youtube_markup(video.description)}}</p>
+            {% endif %}
         </div>
 
         <div id=explore-column class="{{'' if results.entries else 'empty'}}">
@@ -45,8 +50,8 @@
                         class=result
                         href="{{local_url(entry.url)}}"
                         hx-get="{{local_url(entry.url)}}"
-                        hx-select=#player-holder
-                        hx-target=#player-holder
+                        hx-select=#main-column
+                        hx-target=#main-column
                         hx-push-url=true
                     >
                         <img src="{{entry.thumb_for(160).fixed_url}}">
