@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import Coroutine
 from contextlib import suppress
 import logging as log
 import math
@@ -12,6 +13,7 @@ from importlib import resources
 from urllib.parse import quote
 from uuid import uuid4
 
+import appdirs
 import httpx
 import jinja2
 import sass
@@ -54,6 +56,10 @@ MANIFEST_URL = re.compile(r'(^|")(https?://[^"]+?)($|")', re.MULTILINE)
 RELOAD = asyncio.Event()
 RELOAD_SCSS = asyncio.Event()
 UUID = uuid4()
+
+CACHE_DIR = Path(appdirs.user_cache_dir(NAME))
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
 
 
 @dataclass
@@ -294,22 +300,47 @@ async def wait_reload_scss() -> Response:
     return Response()
 
 
-@APP.on_event("startup")
-async def watch_files() -> None:
+def create_background_job(coro: Coroutine) -> asyncio.Task:
     async def task() -> None:
         with report(Exception):
             with suppress(asyncio.CancelledError):
-                if not (dir := os.getenv("UVICORN_RELOAD")):
-                    return
+                await coro
+    return asyncio.create_task(task())
 
-                async for changes in awatch(dir):
-                    exts = {Path(p).suffix for _, p in changes}
-                    if ".scss" in exts or ".css" in exts:
-                        RELOAD_SCSS.set()
-                    elif ".jinja" in exts or ".js" in exts:
-                        RELOAD.set()
 
-    asyncio.create_task(task())
+@APP.on_event("startup")
+async def watch_files() -> None:
+    async def job() -> None:
+        if not (dir := os.getenv("UVICORN_RELOAD")):
+            return
+
+        async for changes in awatch(dir):
+            exts = {Path(p).suffix for _, p in changes}
+            if ".scss" in exts or ".css" in exts:
+                RELOAD_SCSS.set()
+            elif ".jinja" in exts or ".js" in exts:
+                RELOAD.set()
+
+    create_background_job(job())
+
+
+@APP.on_event("startup")
+async def prune_cache() -> None:
+    async def job() -> None:
+        while True:
+            freed = 0
+            for file in CACHE_DIR.glob("*.dump"):
+                stats = file.stat()
+                if stats.st_mtime < time.time() - 600:
+                    file.unlink()
+                    freed += stats.st_size
+
+            if (mib := freed / 1024 / 1024) >= 0.1:
+                log.info("Cache: freed %d MiB", round(mib, 1))
+
+            await asyncio.sleep(300)
+
+    create_background_job(job())
 
 
 @APP.on_event("shutdown")

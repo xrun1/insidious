@@ -25,6 +25,7 @@
                 docopt
                 httpx
                 backoff
+                appdirs
             ];
         };
         devShells.${sys}.default = pkgs.mkShell {

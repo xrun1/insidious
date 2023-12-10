@@ -21,6 +21,7 @@ yt-dlp = "2023.11.16"
 docopt = "^=0.6.2"
 httpx = "^=0.25.0"
 backoff = "^=2.2.1"
+appdirs = "^=1.4.4"
 
 [build-system]
 requires = ["poetry-core"]
