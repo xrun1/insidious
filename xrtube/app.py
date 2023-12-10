@@ -3,6 +3,7 @@ import logging as log
 import math
 import os
 import re
+import shutil
 import time
 from dataclasses import dataclass, field
 from importlib import resources
@@ -274,3 +275,8 @@ async def wait_reload() -> Response:
         await asyncio.Future()  # sleep until the server shutsdown/reloads
     finally:
         return instance_id()
+
+
+@APP.on_event("shutdown")
+async def separate_log() -> None:
+    print("─" * shutil.get_terminal_size()[0]  )
