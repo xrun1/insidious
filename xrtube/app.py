@@ -37,8 +37,8 @@ log.basicConfig(level=log.INFO)
 
 LOADER = jinja2.PackageLoader(NAME, "templates")
 TEMPLATES = Jinja2Templates(env=jinja2.Environment(loader=LOADER))
-SASS = resources.read_text(f"{NAME}.style", "main.sass")
-CSS = sass.compile(string=SASS, indented=True)
+SCSS = resources.read_text(f"{NAME}.style", "main.scss")
+CSS = sass.compile(string=SCSS, indented=False)
 APP = FastAPI(default_response_class=HTMLResponse)
 
 APP.mount("/static", StaticFiles(packages=[(NAME, "static")]), name="static")

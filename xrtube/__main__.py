@@ -27,7 +27,7 @@ def run() -> None:
         port = int(args["PORT"] or 8000),
         reload = bool(dir),
         reload_dirs = [dir] if dir else [],
-        reload_includes = ["*.jinja", "*.sass", "*.js"],
+        reload_includes = ["*.jinja", "*.scss", "*.js"],
         timeout_graceful_shutdown = 0,
     )
 
