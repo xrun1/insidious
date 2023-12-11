@@ -27,6 +27,7 @@
                 backoff
                 appdirs
                 websockets
+                humanize
             ];
         };
         devShells.${sys}.default = pkgs.mkShell {

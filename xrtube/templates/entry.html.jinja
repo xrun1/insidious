@@ -7,7 +7,7 @@
     hx-push-url=true
 >
     <div
-        class=thumb
+        class=thumbnail
         style="background: url('{{entry.thumb_for(160).fixed_url}}')"
     >
         {% if entry.live_status == LiveStatus.is_live %}
@@ -18,5 +18,12 @@
             <span class=duration>{{format_duration(entry.duration)}}</span>
         {% endif %}
     </div>
-    <p title="{{entry.title}}">{{entry.title}}</p>
+
+    <div class=info>
+        <div class=title title="{{entry.title}}">{{entry.title}}</div>
+
+        {% if entry.release_date %}
+            <div class=date>{{relative_time(entry.release_date)}}</div>
+        {% endif %}
+    </div>
 </a>

@@ -73,7 +73,8 @@ class VideoEntry(Entry):
     entry_type: Literal["VideoEntry"]
     views: int = Field(alias="view_count")
     description: str | None
-    duration: int
+    duration: int | None
+    upload_date: datetime | None = Field(alias="timestamp")
     channel_id: str
     channel_name: str = Field(alias="channel")
     channel_url: str
@@ -82,6 +83,10 @@ class VideoEntry(Entry):
     uploader_url: str | None
     live_status: LiveStatus | None
     live_release_date: datetime | None = Field(alias="release_timestamp")
+
+    @property
+    def release_date(self) -> datetime | None:
+        return self.live_release_date or self.upload_date
 
 
 class PartialEntry(VideoEntry):
@@ -166,9 +171,10 @@ class YoutubeClient:
             "extract_flat": "in_playlist",
             "compat_opts": ["no-youtube-unavailable-videos"],
             "extractor_args": {
-                "youtube": {
-                    "player_client": ["ios"],  # gives HLS format
-                },
+                # This client has the HLS manifests, no need for others
+                "youtube": {"player_client": ["ios"]},
+                # Retrieve upload dates in flat playlists
+                "youtubetab": {"approximate_date": ["timestamp"]},
             },
         })
 
