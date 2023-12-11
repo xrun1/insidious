@@ -50,11 +50,11 @@ def yt_to_html(text: str) -> str:
     # which is why do their replacements in two steps
     text = URL_RE.sub(prepare_url, text)
     text = HASHTAG_RE.sub(prepare_hashtag, text)
+    text = html.escape(text, quote=False)
+
+    # Only after escaping normal text, we can inject our custom HTML
     for tag, regex in MARKUP_RE.items():
         text = regex.sub(rf"<{tag}>\1</{tag}>", text)
-
-    text = html.escape(text, quote=False)
-    # Only after escaping normal text, we can inject our custom HTML
     for uuid, replacement in parts.items():
         text = text.replace(str(uuid), replacement)
 
