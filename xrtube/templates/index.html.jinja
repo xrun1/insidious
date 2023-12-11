@@ -49,7 +49,7 @@
         </div>
 
         <div id=explore-column class="{{'' if results.entries else 'empty'}}">
-            <dl id=results>
+            <div id=results>
                 {% for entry in results.entries %}
                     {% include "entry.html.jinja" %}
                 {% endfor %}
