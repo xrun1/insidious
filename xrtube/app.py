@@ -33,6 +33,7 @@ from . import NAME
 from .markup import yt_to_html
 from .utils import report
 from .ytdl import (
+    LiveStatus,
     NoDataReceived,
     Playlist,
     PlaylistEntry,
@@ -78,10 +79,15 @@ class Index:
 
     @property
     def response(self) -> Response:
+        enums = {LiveStatus}
         return TEMPLATES.TemplateResponse("index.html.jinja", {
             a: getattr(self, a) for a in dir(self)
             if not a.startswith("_") and a != "response"
-        } | {"UVICORN_RELOAD": os.getenv("UVICORN_RELOAD")})
+        } | {
+            e.__name__: e for e in enums
+        } | {
+            "UVICORN_RELOAD": os.getenv("UVICORN_RELOAD")
+        })
 
     @staticmethod
     def local_url(url: str) -> str:

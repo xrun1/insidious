@@ -10,7 +10,11 @@
         class=thumb
         style="background: url('{{entry.thumb_for(160).fixed_url}}')"
     >
-        {% if entry.duration %}
+        {% if entry.live_status == LiveStatus.is_live %}
+            <span class=duration>live</span>
+        {% elif entry.live_status == LiveStatus.is_upcoming %}
+            <span class=duration>soon</span>
+        {% elif entry.duration %}
             <span class=duration>{{format_duration(entry.duration)}}</span>
         {% endif %}
     </div>
