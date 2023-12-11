@@ -1,5 +1,6 @@
 import html
 import re
+from urllib.parse import unquote
 from uuid import UUID, uuid4
 
 
@@ -24,7 +25,8 @@ def yt_to_html(text: str) -> str:
     parts: dict[UUID, str] = {}
 
     def prepare_url(match: re.Match) -> str:
-        parts[(id := uuid4())] = f'<a href="{match[1]}">{match[1]}</a>'
+        pretty = html.escape(unquote(match[1]), quote=False)
+        parts[(id := uuid4())] = f'<a href="{match[1]}">{pretty}</a>'
         return str(id)
 
     def prepare_hashtag(match: re.Match) -> str:
