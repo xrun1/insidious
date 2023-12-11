@@ -78,19 +78,28 @@ body {
     gap: 1rem;
 }
 
-.result {
+.entry {
     display: grid;
     grid-template-columns: 16rem 1fr;
     grid-template-rows: 9rem;
-    align-items: center;
     gap: 1rem;
 
-    img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+    .thumb {
+        background-size: cover;
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-end;
+    }
+    .duration {
+        font-size: 1.4rem;
+        color: white;
+        background: hsla(0, 0%, 0%, 0.7);
+        font-variant: small-caps;  // for "live" durations
+        margin: 0.4rem;
+        padding: 0.4rem 0.6rem;
     }
     p {
+        align-self: center;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;

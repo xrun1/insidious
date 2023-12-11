@@ -1,0 +1,18 @@
+<a
+    class=entry
+    href="{{local_url(entry.url)}}"
+    hx-get="{{local_url(entry.url)}}"
+    hx-select=#main-column
+    hx-target=#main-column
+    hx-push-url=true
+>
+    <div
+        class=thumb
+        style="background: url('{{entry.thumb_for(160).fixed_url}}')"
+    >
+        {% if entry.duration %}
+            <span class=duration>{{format_duration(entry.duration)}}</span>
+        {% endif %}
+    </div>
+    <p title="{{entry.title}}">{{entry.title}}</p>
+</a>

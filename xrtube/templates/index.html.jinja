@@ -49,19 +49,9 @@
         </div>
 
         <div id=explore-column class="{{'' if results.entries else 'empty'}}">
-            <div id=results>
+            <dl id=results>
                 {% for entry in results.entries %}
-                    <a
-                        class=result
-                        href="{{local_url(entry.url)}}"
-                        hx-get="{{local_url(entry.url)}}"
-                        hx-select=#main-column
-                        hx-target=#main-column
-                        hx-push-url=true
-                    >
-                        <img src="{{entry.thumb_for(160).fixed_url}}">
-                        <p title="{{entry.title}}">{{entry.title}}</p>
-                    </a>
+                    {% include "entry.html.jinja" %}
                 {% endfor %}
             </div>
 

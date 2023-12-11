@@ -8,6 +8,7 @@ import time
 from collections.abc import Coroutine
 from contextlib import suppress
 from dataclasses import dataclass, field
+from datetime import timedelta
 from importlib import resources
 from pathlib import Path
 from urllib.parse import quote
@@ -18,7 +19,12 @@ import jinja2
 import sass
 from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
-from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
+from fastapi.responses import (
+    HTMLResponse,
+    RedirectResponse,
+    Response,
+    StreamingResponse,
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
@@ -88,6 +94,12 @@ class Index:
     @staticmethod
     def youtube_markup(text: str) -> str:
         return yt_to_html(text)
+
+    @staticmethod
+    def format_duration(seconds: float) -> str:
+        wild = "" if seconds < 60 else "*"
+        text = re.sub(rf"^0:0{wild}", "", str(timedelta(seconds=seconds)))
+        return re.sub(r", 0:00:00", "", text)  # e.g. 1 day, 0:00:00
 
 
 @APP.get("/")
