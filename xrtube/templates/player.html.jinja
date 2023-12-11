@@ -1,6 +1,6 @@
 <video-js id=player controls playsinline poster="{{video.poster.url}}">
     {% if video.manifest_url %}
-        <source src="{{proxy(video.manifest_url)}}">
+        <source title="{{video.title}}" src="{{proxy(video.manifest_url)}}">
     {% endif %}
 </video-js>
 
@@ -12,26 +12,28 @@
     hx-target=#results
 ></div>
 
-<link rel=stylesheet href=/static/video-js.min.css>
-<script src=/static/video.min.js></script>
-<script src=/static/videojs-contrib-quality-levels.js></script>
-<script src=/static/jb-videojs-hls-quality-selector.js></script>
 <script>
-    const player = videojs("player", {
-        fill: true,
-        liveui: true,
-        playbackRates: [3, 2.5, 2, 1.75, 1.5, 1.25, 1, 0.75, 0.5],
-        vhs: {
-            useBandwidthFromLocalStorage: true,
-            useDevicePixelRatio: true,
-            overrideNative: true,
-        },
-        nativeAudioTracks: false,
-        nativeVideoTracks: false
-    })
-    // Requires disabling native HLS as done above
-    player.hlsQualitySelector({
-        displayCurrentQuality: true,
-        placementIndex: 12,
-    })
+    while (videojs.getAllPlayers().length) {
+        videojs("player").dispose()
+    }
+    (() => {
+        const player = videojs("player", {
+            fill: true,
+            liveui: true,
+            playbackRates: [3, 2.5, 2, 1.75, 1.5, 1.25, 1, 0.75, 0.5],
+            vhs: {
+                useBandwidthFromLocalStorage: true,
+                useDevicePixelRatio: true,
+                overrideNative: true,
+            },
+            nativeAudioTracks: false,
+            nativeVideoTracks: false
+        })
+        // Requires disabling native HLS as done above
+        player.hlsQualitySelector({
+            displayCurrentQuality: true,
+            placementIndex: 12,
+        })
+        console.log("new", player)
+    })()
 </script>
