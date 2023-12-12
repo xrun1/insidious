@@ -22,7 +22,7 @@ MARKUP_RE = {
 }
 
 
-def yt_to_html(text: str) -> str:
+def yt_to_html(text: str, allow_markup: bool = True) -> str:
     parts: dict[UUID, str] = {}
 
     def prepare_url(match: re.Match[str]) -> str:
@@ -53,8 +53,9 @@ def yt_to_html(text: str) -> str:
     text = html.escape(text, quote=False)
 
     # Only after escaping normal text, we can inject our custom HTML
-    for tag, regex in MARKUP_RE.items():
-        text = regex.sub(rf"<{tag}>\1</{tag}>", text)
+    if allow_markup:
+        for tag, regex in MARKUP_RE.items():
+            text = regex.sub(rf"<{tag}>\1</{tag}>", text)
     for uuid, replacement in parts.items():
         text = text.replace(str(uuid), replacement)
 

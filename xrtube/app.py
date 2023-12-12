@@ -99,8 +99,8 @@ class Index:
         return f"/proxy/{method}?url={quote(url)}"
 
     @staticmethod
-    def youtube_markup(text: str) -> str:
-        return yt_to_html(text)
+    def youtube_format(text: str, allow_markup: bool = True) -> str:
+        return yt_to_html(text, allow_markup)
 
     @staticmethod
     def format_duration(seconds: float) -> str:

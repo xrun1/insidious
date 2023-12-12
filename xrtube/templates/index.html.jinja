@@ -42,10 +42,10 @@
                 {% endif %}
             </div>
             {% if video %}
-                <h1>{{video.title}}</h1>
+            <h1>{{youtube_format(video.title, allow_markup=False)}}</h1>
             {% endif %}
             {% if video.description %}
-                <p class=yt-markup>{{youtube_markup(video.description)}}</p>
+                <p class=yt-markup>{{youtube_format(video.description)}}</p>
             {% endif %}
         </div>
 
