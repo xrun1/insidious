@@ -124,22 +124,26 @@ async def results(
     request: Request, search_query: str = "", page: int = 1,
 ) -> Response:
     client = YoutubeClient(page=page)
+    search = await client.search(client.convert_url(request.url))
+    next_page = request.url.include_query_params(page=page + 1)
     return Index(
         request,
         title = f"{search_query} | {NAME}" if search_query else NAME,
-        next_page = request.url.include_query_params(page=page + 1),
-        results = await client.search(client.convert_url(request.url)),
+        next_page = next_page if search else None,
+        results = search,
     ).response
 
 
 @APP.get("/hashtag/{tag}")
 async def hashtag(request: Request, tag: str, page: int = 1) -> Response:
     client = YoutubeClient(page=page)
+    playlist = await client.playlist(client.convert_url(request.url))
+    next_page = request.url.include_query_params(page=page + 1)
     return Index(
         request,
         title = f"#{tag} | {NAME}",
-        next_page = request.url.include_query_params(page=page + 1),
-        results = await client.playlist(client.convert_url(request.url)),
+        next_page = next_page if playlist else None,
+        results = playlist,
     ).response
 
 
