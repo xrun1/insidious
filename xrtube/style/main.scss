@@ -43,9 +43,12 @@ a {
     white-space: pre-wrap;
 }
 
+[style*="--ratio"], [style*="--ratio"] ~ * {
+    width: 90rem;
+    max-width: #{"calc(100svw - 35rem - 4.5rem)"};
+}
 [style*="--ratio"] {
     position: relative;
-    width: 90rem;
     max-width: #{"min(100svw - 35rem - 4.5rem, 85svh * (var(--ratio)))"};
 
     &::before {
