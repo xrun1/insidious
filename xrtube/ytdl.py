@@ -58,7 +58,7 @@ class Entry(BaseModel):
 
     def thumb_for(self, width: int) -> Thumbnail:
         for thumb in sorted(self.thumbnails, key=lambda t: t.width or 0):
-            if thumb.width or 0 >= width:
+            if (thumb.width or 0) >= width:
                 return thumb
 
         bad = Thumbnail(url="/404", width=0, height=0)
