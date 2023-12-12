@@ -98,9 +98,9 @@ a {
     grid-template-columns: 16rem 1fr;
     grid-template-rows: 9rem;
     gap: 1rem;
-
     .thumbnail {
-        background-size: cover;
+        grid-row: 1 / 1;
+        background-size: cover !important;
         display: flex;
         justify-content: flex-end;
         align-items: flex-end;
@@ -115,11 +115,6 @@ a {
     }
     .title {
         -webkit-line-clamp: 2;
-    }
-    .info > :not(.title) {
-        text-decoration-line: none;
-        color: black;
-
     }
 }
 

@@ -1,12 +1,14 @@
-<a
-    class=entry
-    href="{{local_url(entry.url)}}"
-    hx-get="{{local_url(entry.url)}}"
-    hx-select=#main-column
-    hx-target=#main-column
+{%- macro link_attrs(url=entry.url, target="#main-column") %}
+    href="{{local_url(url)}}"
+    hx-get="{{local_url(url)}}"
+    hx-select={{target}}
+    hx-target={{target}}
     hx-push-url=true
->
-    <div
+{%- endmacro %} 
+
+<div class=entry>
+    <a
+        {{link_attrs()}}
         class=thumbnail
         style="background: url('{{entry.thumb_for(160).fixed_url}}')"
     >
@@ -17,15 +19,28 @@
         {% elif entry.duration %}
             <span class=duration>{{format_duration(entry.duration)}}</span>
         {% endif %}
-    </div>
+    </a>
 
     <div class=info>
-        <div class="title elide" title="{{entry.title}}">{{entry.title}}</div>
+        <a class="title elide" title="{{entry.title}}" {{link_attrs()}}>
+            {{entry.title}}
+        </a>
+
+        {% if entry.channel_name %}
+            <div class="channel elide">
+                <span class=icon>👤{{no_emoji}}</span>
+                <a
+                    {{link_attrs(entry.channel_url)}}"
+                    title="{{entry.channel_name}}"
+                >{{entry.channel_name}}</a>
+            </div>
+        {% endif %}
 
         {% if entry.release_date %}
             <div class=date>
                 <span class=icon>🕒{{no_emoji}}</span>
-                <span class=youtube-date raw="{{entry.release_date.timestamp()}}"></span>
+                <span class=youtube-date
+                      raw="{{entry.release_date.timestamp()}}"></span>
             </div>
         {% endif %}
 
@@ -36,4 +51,4 @@
             </div>
         {% endif %}
     </div>
-</a>
+</div>
