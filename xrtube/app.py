@@ -145,6 +145,7 @@ async def hashtag(request: Request, tag: str, page: int = 1) -> Response:
 
 @APP.get("/watch")
 @APP.get("/v/{v}")
+@APP.get("/shorts/{v}")
 async def watch(request: Request, v: str) -> Response:
     client = YoutubeClient()
     video = await client.video(client.convert_url(request.url))
