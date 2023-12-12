@@ -192,6 +192,8 @@ input, button {
         .title {
             grid-column: 1 / -1;
             -webkit-line-clamp: 3;
+            &:has(+ :not(.channel)) { -webkit-line-clamp: 4; }
+            &:last-child { -webkit-line-clamp: 5; }
         }
         .channel {
             grid-column: 1 / -1;
