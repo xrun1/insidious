@@ -88,6 +88,12 @@ class VideoEntry(Entry):
     def release_date(self) -> datetime | None:
         return self.live_release_date or self.upload_date
 
+    @property
+    def shortest_channel_url(self) -> str:
+        if not self.uploader_url:
+            return self.channel_url
+        return min((self.channel_url, self.uploader_url), key=len)
+
 
 class PartialEntry(VideoEntry):
     entry_type: Literal["PartialEntry"]
