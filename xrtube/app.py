@@ -38,6 +38,7 @@ from .ytdl import (
     Playlist,
     PlaylistEntry,
     Search,
+    SearchLink,
     ShortEntry,
     Video,
     VideoEntry,
@@ -147,6 +148,33 @@ async def hashtag(request: Request, tag: str, page: int = 1) -> Response:
     ).response
 
 
+@APP.get("/@{id}")
+@APP.get("/@{id}/{tab}")
+@APP.get("/c/{id}")
+@APP.get("/c/{id}/{tab}")
+@APP.get("/channel/{id}")
+@APP.get("/channel/{id}/{tab}")
+@APP.get("/user/{id}")
+@APP.get("/user/{id}/{tab}")
+async def channel(
+    request: Request, id: str, tab: str = "featured", page: int = 1,
+) -> Response:
+    client = YoutubeClient(page=page)
+    url = client.convert_url(request.url)
+
+    if tab == "featured" and not request.url.path.endswith("/featured"):
+        url = url.replace(path=url.path + "/featured")
+
+    search = await client.search(url)
+    next_page = request.url.include_query_params(page=page + 1)
+    return Index(
+        request,
+        title = f"{search.title} | {NAME}",
+        next_page = next_page if search else None,
+        results = search,
+    ).response
+
+
 @APP.get("/watch")
 @APP.get("/v/{v}")
 @APP.get("/shorts/{v}")
@@ -199,9 +227,10 @@ async def related(
 
         exclude = bump = add = ignore = 0
         for entry in entries.entries:
-            if entry.id in excluded:
+            if isinstance(entry, SearchLink):
+                ignore += 1
+            elif entry.id in excluded:
                 exclude += 1
-                continue
             elif entry.id in by_id:
                 bump += 1
                 result = by_id[entry.id]

@@ -10,7 +10,9 @@
     <a
         {{link_attrs()}}
         class=thumbnail
-        style="background: url('{{entry.thumb_for(160).fixed_url}}')"
+        {% if entry.thumbnails %}
+            style="background: url('{{entry.thumb_for(160).fixed_url}}')"
+        {% endif %}
     >
         {% if entry.live_status == LiveStatus.is_live %}
             <span class=duration>live</span>

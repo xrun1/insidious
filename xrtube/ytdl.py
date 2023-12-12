@@ -5,6 +5,7 @@ from datetime import datetime
 from enum import auto
 from functools import lru_cache, partial
 from typing import Annotated, Any, Literal, TypeVar
+from urllib.parse import parse_qs
 
 import backoff
 from fastapi.datastructures import URL
@@ -13,7 +14,7 @@ from yt_dlp import YoutubeDL
 
 from .utils import AutoStrEnum
 
-EntryT = TypeVar("EntryT", bound="Entry")
+T = TypeVar("T")
 
 
 class LiveStatus(AutoStrEnum):
@@ -75,11 +76,11 @@ class VideoEntry(Entry):
     description: str | None
     duration: int | None
     upload_date: datetime | None = Field(alias="timestamp")
-    channel_id: str
-    channel_name: str = Field(alias="channel")
-    channel_url: str
+    channel_id: str | None
+    channel_name: str | None = Field(alias="channel")
+    channel_url: str | None
     uploader_id: str | None
-    uploader_name: str = Field(alias="uploader")
+    uploader_name: str | None = Field(alias="uploader")
     uploader_url: str | None
     live_status: LiveStatus | None
     live_release_date: datetime | None = Field(alias="release_timestamp")
@@ -89,9 +90,11 @@ class VideoEntry(Entry):
         return self.live_release_date or self.upload_date
 
     @property
-    def shortest_channel_url(self) -> str:
+    def shortest_channel_url(self) -> str | None:
         if not self.uploader_url:
             return self.channel_url
+        if not self.channel_url:
+            return None
         return min((self.channel_url, self.uploader_url), key=len)
 
 
@@ -113,20 +116,27 @@ class ChannelEntry(Entry):
     followers: int = Field(alias="channel_follower_count")
 
 
-class Entries(BaseModel, Sequence[EntryT]):
+class Entries(BaseModel, Sequence[T]):
     title: str = ""
-    entries: list[EntryT] = Field(default_factory=list)
+    entries: list[T] = Field(default_factory=list)
 
-    def __getitem__(self, index: int) -> EntryT:
+    def __getitem__(self, index: int) -> T:
         return self.entries[index]
 
     def __len__(self) -> int:
         return len(self.entries)
 
 
-class Search(Entries[Entry]):
+class SearchLink(BaseModel):
+    entry_type: Literal["SearchLink"]
+    url: str
+    title: str
+
+
+class Search(Entries[Entry | SearchLink]):
     entries: list[Annotated[
-        ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry,
+        ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry |
+        SearchLink,
         Field(discriminator="entry_type")
     ]] = Field(default_factory=list)
 
@@ -146,7 +156,7 @@ class Video(VideoEntry):
         return next((f for f in gen if f), None)
 
 
-class Playlist(Entries[ShortEntry | VideoEntry]):
+class Playlist(Entries[ShortEntry | VideoEntry | PartialEntry]):
     id: str
     entries: list[Annotated[
         ShortEntry | VideoEntry | PartialEntry,
@@ -205,17 +215,22 @@ class YoutubeClient:
 
     def _extend_entries(self, data: dict[str, Any]) -> dict[str, Any]:
         def extend(entry: dict[str, Any]) -> dict[str, Any]:
+            data = {}
             if "/shorts/" in entry["url"]:
                 etype = ShortEntry.__name__
             elif "/channel/" in entry["url"]:
                 etype = ChannelEntry.__name__
             elif "/playlist?" in entry["url"]:
                 etype = PlaylistEntry.__name__
+                data["id"] = entry.get("id") or \
+                    parse_qs(URL(entry["url"]).query)["list"][-1]
+            elif "/videos?" in entry["url"]:
+                etype = SearchLink.__name__
             elif "concurrent_view_count" in entry:
                 etype = PartialEntry.__name__
             else:
                 etype = VideoEntry.__name__
-            return entry | {"entry_type": etype}
+            return entry | data | {"entry_type": etype}
 
         return data | {"entries": [extend(e) for e in data.get("entries", [])]}
 
