@@ -53,5 +53,13 @@
                 <span class=compact-number raw="{{entry.views}}"></span>
             </span>
         {% endif %}
+
+        {% if entry.followers %}
+            <span class=followers>
+                <span class=icon>👥{{no_emoji}}</span>
+                <span class=compact-number raw="{{entry.followers}}"></span>
+            </span>
+        {% endif %}
+
     </div>
 </div>

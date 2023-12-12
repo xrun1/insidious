@@ -198,6 +198,9 @@ input, button {
         .channel {
             grid-column: 1 / -1;
         }
+        .followers > .icon {
+            font-weight: bold; 
+        }
         :not(.title) {
             font-size: 1.4rem;
             > :not(.icon) { font-weight: 300; }
