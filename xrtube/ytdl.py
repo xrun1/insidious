@@ -115,6 +115,10 @@ class ChannelEntry(Entry):
     uploader_url: str
     followers: int = Field(alias="channel_follower_count")
 
+    @property
+    def shortest_url(self) -> str | None:
+        return min((self.url, self.uploader_url), key=len)
+
 
 class Entries(BaseModel, Sequence[T]):
     title: str = ""
