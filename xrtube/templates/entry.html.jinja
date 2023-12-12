@@ -37,18 +37,18 @@
         {% endif %}
 
         {% if entry.release_date %}
-            <div class=date>
+            <span class=date>
                 <span class=icon>🕒{{no_emoji}}</span>
                 <span class=youtube-date
                       raw="{{entry.release_date.timestamp()}}"></span>
-            </div>
+            </span>
         {% endif %}
 
         {% if entry.views %}
-            <div class=views>
+            <span class=views>
                 <span class=icon>👁{{no_emoji}}</span>
                 <span class=compact-number raw="{{entry.views}}"></span>
-            </div>
+            </span>
         {% endif %}
     </div>
 </div>
