@@ -112,6 +112,11 @@ input, button {
     border-radius: 20px;
     overflow-wrap: initial;  // Fix timestamp tooltip on progress bar hover
 
+    .vjs-big-play-button {
+        border-radius: 1.63332em;
+        width: 1.63332em;
+    }
+
     // HACK: ...So let's make them smaller by turning them into grids
     .vjs-menu-content {
         max-height: 80vh;
