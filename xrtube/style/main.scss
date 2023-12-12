@@ -108,7 +108,7 @@ a {
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
-    .date {
+    .info > :not(.title) {
         text-decoration-line: none;
         color: black;
 

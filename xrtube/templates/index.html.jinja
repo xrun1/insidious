@@ -11,6 +11,7 @@
 
         <script src=/static/htmx.min.js></script>
         <script>htmx.config.defaultSwapStyle = "outerHTML"</script>
+        <script src=/static/shared.js></script>
 
         <link rel=stylesheet href=/static/video-js.min.css>
         <script src=/static/video.min.js></script>
@@ -54,6 +55,7 @@
                     {% include "entry.html.jinja" %}
                 {% endfor %}
             </div>
+            <script>compactAll()</script>
 
             {% if next_page %}
                 <div

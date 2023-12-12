@@ -25,5 +25,9 @@
         {% if entry.release_date %}
             <div class=date>{{relative_time(entry.release_date)}}</div>
         {% endif %}
+
+        <div class=views>
+            <span class=compact-number raw="{{entry.views}}"></span>
+        </div>
     </div>
 </a>
