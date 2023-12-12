@@ -61,11 +61,8 @@ input, button {
     }
 }
 
-#main-column, #results {
-    grid-row: 2
-}
-
 #main-column {
+    grid-row: 2;
     grid-column: 1;
 }
 
@@ -93,10 +90,6 @@ input, button {
         left: 0;
         height: 100%;
     }
-}
-
-#explore-column {
-    grid-row: 2 / -1;
 }
 
 // HACK: Round corners won't show without overflow: hidden, but then menues
@@ -148,11 +141,19 @@ input, button {
     }
 }
 
-#results {
+#explore-column {
+    grid-row: 2 / -1;
+}
+
+.page {
     display: grid;
     grid-template-columns: repeat(auto-fit, 35rem);
     justify-content: center;
     gap: 1rem;
+
+    &:not(:first-child) {
+        margin-top: 1rem;
+    }
 }
 
 .entry {
