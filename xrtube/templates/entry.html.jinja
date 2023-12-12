@@ -12,7 +12,7 @@
         {{link_attrs()}}
         class=thumbnail
         {% if entry.thumbnails %}
-            style="background: url('{{entry.thumb_for(160).fixed_url}}')"
+            style="background: url('{{proxy(entry.thumb_for(160).fixed_url)}}')"
         {% endif %}
     >
         {% if entry.live_status == LiveStatus.is_live %}

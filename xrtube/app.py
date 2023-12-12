@@ -328,7 +328,8 @@ async def proxy(
             data,
         )
 
-    req = HTTPX.build_request("GET", url)
+    headers = {"Referer": "https://www.youtube.com/"}
+    req = HTTPX.build_request("GET", url, headers=headers)
     reply = await HTTPX.send(req, stream=True)
     mime = reply.headers.get("content-type")
 
