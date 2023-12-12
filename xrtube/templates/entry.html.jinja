@@ -8,20 +8,20 @@
 {%- endmacro %} 
 
 <div class=entry>
-    <a
-        {{link_attrs()}}
-        class=thumbnail
-        {% if entry.thumbnails %}
-            style="background: url('{{proxy(entry.thumb_for(160).fixed_url)}}')"
-        {% endif %}
-    >
-        {% if entry.live_status == LiveStatus.is_live %}
-            <span class=duration>live</span>
-        {% elif entry.live_status == LiveStatus.is_upcoming %}
-            <span class=duration>soon</span>
-        {% elif entry.duration %}
-            <span class=duration>{{format_duration(entry.duration)}}</span>
-        {% endif %}
+    <a {{link_attrs()}} class=thumbnail>
+        <div>
+            {% if entry.thumbnails %}
+                <img src="{{proxy(entry.thumb_for(160).fixed_url)}}" loading=lazy>
+            {% endif %}
+
+            {% if entry.live_status == LiveStatus.is_live %}
+                <span class=duration>live</span>
+            {% elif entry.live_status == LiveStatus.is_upcoming %}
+                <span class=duration>soon</span>
+            {% elif entry.duration %}
+                <span class=duration>{{format_duration(entry.duration)}}</span>
+            {% endif %}
+        </div>
     </a>
 
     <div class=info>
