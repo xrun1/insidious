@@ -40,7 +40,7 @@
         {% endif %}
 
         {% if entry.release_date %}
-            <span class=date>
+            <span class=date title="Release date">
                 <span class=icon>🕒{{no_emoji}}</span>
                 <span class=youtube-date
                       raw="{{entry.release_date.timestamp()}}"></span>
@@ -48,14 +48,14 @@
         {% endif %}
 
         {% if entry.views %}
-            <span class=views>
+            <span class=views title=Views>
                 <span class=icon>👁{{no_emoji}}</span>
                 <span class=compact-number raw="{{entry.views}}"></span>
             </span>
         {% endif %}
 
         {% if entry.followers %}
-            <span class=followers>
+            <span class=followers title=Suscribers>
                 <span class=icon>👥{{no_emoji}}</span>
                 <span class=compact-number raw="{{entry.followers}}"></span>
             </span>
