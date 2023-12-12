@@ -23,10 +23,14 @@
         <div class=title title="{{entry.title}}">{{entry.title}}</div>
 
         {% if entry.release_date %}
-            <div class=date>{{relative_time(entry.release_date)}}</div>
+            <div class=date>
+                <span class=icon>🕒{{no_emoji}}</span>
+                {{relative_time(entry.release_date)}}
+            </div>
         {% endif %}
 
         <div class=views>
+            <span class=icon>👁{{no_emoji}}</span>
             <span class=compact-number raw="{{entry.views}}"></span>
         </div>
     </div>

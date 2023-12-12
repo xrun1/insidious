@@ -98,6 +98,7 @@ class Index:
             e.__name__: e for e in enums
         } | {
             "UVICORN_RELOAD": os.getenv("UVICORN_RELOAD"),
+            "no_emoji": "&#xFE0E;",
         })
 
     @staticmethod
