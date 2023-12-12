@@ -139,6 +139,11 @@ input, button {
             order: -1;
         }
     }
+    .vjs-loop-control {
+        cursor: pointer;
+        transition: color 0.4s ease-in-out;
+        &.active { color: cyan; }
+    }
 }
 
 #explore-column {
