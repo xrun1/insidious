@@ -23,7 +23,6 @@ httpx = "^=0.25.0"
 backoff = "^=2.2.1"
 appdirs = "^=1.4.4"
 websockets = "^=11.0.3"
-humanize = "^=4.8.0"
 
 [build-system]
 requires = ["poetry-core"]

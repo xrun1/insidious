@@ -1,23 +1,20 @@
 import asyncio
-import locale
 import logging as log
 import math
 import os
 import re
 import shutil
-import sys
 import time
 from collections.abc import Coroutine
 from contextlib import suppress
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import timedelta
 from importlib import resources
 from pathlib import Path
 from urllib.parse import quote
 
 import appdirs
 import httpx
-import humanize
 import jinja2
 import sass
 from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
@@ -70,14 +67,6 @@ CACHE_DIR = Path(appdirs.user_cache_dir(NAME))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
 
-for var in ("LANGUAGE", "LC_ALL", "LC_TIME", "LANG"):
-    if (value := os.getenv(var)):
-        with report(Exception):
-            if (lc := getattr(locale, var, None)):
-                locale.setlocale(lc, value)  # for datetime.strftime
-            humanize.activate(value)
-            break
-
 
 @dataclass
 class Index:
@@ -118,23 +107,6 @@ class Index:
         wild = "" if seconds < 60 else "*"
         text = re.sub(rf"^0:0{wild}", "", str(timedelta(seconds=seconds)))
         return re.sub(r", 0:00:00", "", text)  # e.g. 1 day, 0:00:00
-
-    @staticmethod
-    def format_date(date: datetime) -> str:
-        if sys.platform != "win32":
-            locale.setlocale(locale.LC_TIME, os.getenv("LC_TIME"))
-        return date.strftime("%x")
-
-    @staticmethod
-    def relative_time(date: datetime) -> str:
-        # Convert YT's low approximate dates that yt-dlp converts to timestamps
-        now = datetime.now()
-        delta = now - date.replace(tzinfo=None)
-        if delta.days >= 365:
-            return date.strftime("%Y")
-        if delta.days >= 31:
-            return date.strftime("%B" if date.year == now.year else "%b %Y")
-        return humanize.naturaltime(delta)
 
 
 @APP.get("/")
