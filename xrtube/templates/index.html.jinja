@@ -35,17 +35,25 @@
             >
         </form>
 
-        <div id=main-column class="{{'' if video else 'empty'}}">
+        <div id=video-column class="{{'' if video else 'empty'}}">
             <div id=player-holder style="--ratio: {{video.aspect_ratio}}">
                 {% if video %}
                     {% include "player.html.jinja" %}
                 {% endif %}
             </div>
+
             {% if video %}
-            <h1>{{youtube_format(video.title, allow_markup=False)}}</h1>
+                <h1>{{youtube_format(video.title, allow_markup=False)}}</h1>
             {% endif %}
+
             {% if video.description %}
                 <p class=yt-markup>{{youtube_format(video.description)}}</p>
+            {% endif %}
+        </div>
+
+        <div id=group class="{{'' if group else 'empty'}}">
+            {% if group %}
+                {% include "group.html.jinja" %}
             {% endif %}
         </div>
 

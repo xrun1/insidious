@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from enum import auto
 from functools import lru_cache, partial
-from typing import Annotated, Any, Literal, TypeVar
+from typing import Annotated, Any, ClassVar, Literal, TypeVar
 from urllib.parse import parse_qs, quote
 
 import backoff
@@ -27,8 +27,10 @@ class LiveStatus(AutoStrEnum):
 
 class Thumbnail(BaseModel):
     url: str
+    id: str | None = None
     width: int | None = None
     height: int | None = None
+    preference: int = 0
 
     @property
     def fixed_url(self) -> str:
@@ -49,11 +51,27 @@ class Thumbnail(BaseModel):
 
 
 class HasThumbnails(BaseModel):
+    has_banner: ClassVar[bool] = False
     thumbnails: list[Thumbnail] = Field(default_factory=list)
 
-    @property 
-    def best_thumbnails(self) -> list[Thumbnail]:
+    @property
+    def best_thumbnail(self) -> Thumbnail:
+        return next(iter(self._best_thumbnails()), Thumbnail(url="/404"))
+
+    @property
+    def thumbnails_srcset(self) -> str:
+        return ", ".join(reversed([t.srcset for t in self._best_thumbnails()]))
+
+    @property
+    def banners_srcset(self) -> str:
+        return ", ".join([t.srcset for t in self._best_thumbnails(True)][::-1])
+
+    def _best_thumbnails(self, banners: bool = False) -> list[Thumbnail]:
         thumbs = self.thumbnails
+
+        if self.has_banner: 
+            thumbs = [t for t in thumbs if banners == (t.preference < 0)]
+
         thumbs = (
             [t for t in thumbs if t.suffix == "webp" and t.width] or  
             [t for t in thumbs if t.width] or 
@@ -62,14 +80,6 @@ class HasThumbnails(BaseModel):
         )
         thumbs.sort(key=lambda t: t.width or 0, reverse=True)
         return thumbs
-
-    @property
-    def best_thumbnail(self) -> Thumbnail:
-        return next(iter(self.best_thumbnails), Thumbnail(url="/404"))
-
-    @property
-    def thumbnails_srcset(self) -> str:
-        return ", ".join(reversed([t.srcset for t in self.best_thumbnails]))
 
 
 class Format(BaseModel):
@@ -191,6 +201,15 @@ class Playlist(Entries[ShortEntry | VideoEntry | PartialEntry]):
     ]] = Field(default_factory=list)
 
 
+class Channel(Search, HasThumbnails):
+    has_banner: ClassVar[bool] = True
+
+    title: str = Field(alias="channel")
+    description: str
+    tab: str = Field(alias="webpage_url_basename", default="featured")
+    followers: int = Field(alias="channel_follower_count")
+
+
 class NoDataReceived(Exception):
     """ytdlp failed to return any data after retrying"""
 
@@ -226,6 +245,9 @@ class YoutubeClient:
 
     async def search(self, url: URL | str) -> Search:
         return Search.parse_obj(await self._get(url))
+
+    async def channel(self, url: URL | str) -> Channel:
+        return Channel.parse_obj(await self._get(url))
 
     async def playlist(self, url: URL | str) -> Playlist:
         return Playlist.parse_obj(await self._get(url))

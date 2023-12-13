@@ -33,6 +33,7 @@ from . import NAME
 from .markup import yt_to_html
 from .utils import report
 from .ytdl import (
+    Channel,
     LiveStatus,
     NoDataReceived,
     Playlist,
@@ -73,6 +74,7 @@ os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
 class Index:
     request: Request
     title: str | None = None
+    group: Channel | Playlist | None = None
     results: Search | Playlist = field(default_factory=Search)
     next_page: URL | None = None
     get_related: URL | None = None
@@ -165,13 +167,14 @@ async def channel(
     if tab == "featured" and not request.url.path.endswith("/featured"):
         url = url.replace(path=url.path + "/featured")
 
-    search = await client.search(url)
+    channel = await client.channel(url)
     next_page = request.url.include_query_params(page=page + 1)
     return Index(
         request,
-        title = f"{search.title} | {NAME}",
-        next_page = next_page if search else None,
-        results = search,
+        title = f"{channel.title} | {NAME}",
+        next_page = next_page if channel.entries else None,
+        group = channel,
+        results = channel,
     ).response
 
 

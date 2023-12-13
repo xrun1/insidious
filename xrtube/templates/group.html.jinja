@@ -1,0 +1,25 @@
+{% if group.banners_srcset %}
+    <img class=banner srcset="{{group.banners_srcset}}">
+{% endif %}
+
+<div class=avatar-info>
+    {% if group.thumbnails_srcset %}
+        <img class=avatar sizes=10rem
+            srcset="{{group.thumbnails_srcset}}">
+    {% endif %}
+
+    <div class=info>
+        <h1>{{youtube_format(group.title, allow_markup=False)}}</h1>
+
+        {% if group.followers %}
+            <span class=followers title=Suscribers>
+                <span class=icon>👥{{no_emoji}}</span>
+                <span class=compact-number raw="{{group.followers}}">
+                </span>
+            </span>
+            <script>processAllText()</script>
+        {% endif %}
+
+        <p class=yt-markup>{{youtube_format(group.description)}}</p>
+    </div>
+</div>
