@@ -32,7 +32,9 @@ class Thumbnail(BaseModel):
 
     @property
     def fixed_url(self) -> str:
-        url = f"https://{self.url}" if self.url.startswith("/") else self.url
+        if self.url == "/404":
+            return self.url
+        url = f"https:{self.url}" if self.url.startswith("//") else self.url
         return f"/proxy/get?url={quote(url)}"
 
     @property
