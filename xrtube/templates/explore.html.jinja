@@ -1,0 +1,17 @@
+<div class=page>
+    {% for entry in results.entries %}
+        {% include "entry.html.jinja" %}
+    {% endfor %}
+</div>
+<script>processAllText()</script>
+
+{% if next_page %}
+    <div
+        class=lazy-loader
+        hx-get="{{next_page}}"
+        hx-trigger="intersect once"
+        hx-select="#explore-column > *"
+        hx-target=#explore-column
+        hx-swap=beforeend
+    ></div>
+{% endif %}

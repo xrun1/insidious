@@ -19,36 +19,10 @@
         <script src=/static/jb-videojs-hls-quality-selector.js></script>
     </head>
     <body>
-        <form
-            id=search
-            hx-get="/results"
-            hx-select="#explore-column"
-            hx-target="#explore-column"
-            hx-push-url=true
-        >
-            <input
-                type=search
-                placeholder="Search"
-                autocomplete=true
-                autofocus={{"false" if video else "true"}}
-                name=search_query
-            >
-        </form>
+        {% include "header.html.jinja" %}
 
         <div id=video-column class="{{'' if video else 'empty'}}">
-            <div id=player-holder style="--ratio: {{video.aspect_ratio}}">
-                {% if video %}
-                    {% include "player.html.jinja" %}
-                {% endif %}
-            </div>
-
-            {% if video %}
-                <h1>{{youtube_format(video.title, allow_markup=False)}}</h1>
-            {% endif %}
-
-            {% if video.description %}
-                <p class=yt-markup>{{youtube_format(video.description)}}</p>
-            {% endif %}
+            {% include "video.html.jinja" %}
         </div>
 
         <div id=group class="{{'' if group else 'empty'}}">
@@ -58,23 +32,7 @@
         </div>
 
         <div id=explore-column class="{{'' if results.entries else 'empty'}}">
-            <div class=page>
-                {% for entry in results.entries %}
-                    {% include "entry.html.jinja" %}
-                {% endfor %}
-            </div>
-            <script>processAllText()</script>
-
-            {% if next_page %}
-                <div
-                    class=lazy-loader
-                    hx-get="{{next_page}}"
-                    hx-trigger="intersect once"
-                    hx-select="#explore-column > *"
-                    hx-target=#explore-column
-                    hx-swap=beforeend
-                ></div>
-            {% endif %}
+            {% include "explore.html.jinja" %}
         </div>
 
         {% if UVICORN_RELOAD %}
