@@ -1,4 +1,6 @@
-<video-js id=player controls playsinline poster="{{proxy(video.poster.url)}}">
+<video-js id=player controls playsinline
+    poster="{{video.best_thumbnail.fixed_url}}"
+>
     {% if video.manifest_url %}
         <source title="{{video.title}}" src="{{proxy(video.manifest_url)}}">
     {% endif %}

@@ -5,7 +5,7 @@ from datetime import datetime
 from enum import auto
 from functools import lru_cache, partial
 from typing import Annotated, Any, Literal, TypeVar
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, quote
 
 import backoff
 from fastapi.datastructures import URL
@@ -27,12 +27,47 @@ class LiveStatus(AutoStrEnum):
 
 class Thumbnail(BaseModel):
     url: str
-    width: int | None
-    height: int | None
+    width: int | None = None
+    height: int | None = None
 
     @property
     def fixed_url(self) -> str:
-        return f"https://{self.url}" if self.url.startswith("/") else self.url
+        url = f"https://{self.url}" if self.url.startswith("/") else self.url
+        return f"/proxy/get?url={quote(url)}"
+
+    @property
+    def suffix(self) -> str | None:
+        if "." not in (path := URL(self.url).path):
+            return None
+        return path.split(".")[-1]
+
+    @property
+    def srcset(self) -> str:
+        return f"{self.fixed_url} {self.width or 0}w"
+
+
+class HasThumbnails(BaseModel):
+    thumbnails: list[Thumbnail] = Field(default_factory=list)
+
+    @property 
+    def best_thumbnails(self) -> list[Thumbnail]:
+        thumbs = self.thumbnails
+        thumbs = (
+            [t for t in thumbs if t.suffix == "webp" and t.width] or  
+            [t for t in thumbs if t.width] or 
+            [t for t in thumbs if t.suffix == "webp"] or 
+            thumbs
+        )
+        thumbs.sort(key=lambda t: t.width or 0, reverse=True)
+        return thumbs
+
+    @property
+    def best_thumbnail(self) -> Thumbnail:
+        return next(iter(self.best_thumbnails), Thumbnail(url="/404"))
+
+    @property
+    def thumbnails_srcset(self) -> str:
+        return ", ".join(reversed([t.srcset for t in self.best_thumbnails]))
 
 
 class Format(BaseModel):
@@ -45,24 +80,10 @@ class Format(BaseModel):
     fps: float | None
 
 
-class Entry(BaseModel):
+class Entry(HasThumbnails):
     id: str
     url: str
     title: str
-    thumbnails: list[Thumbnail] = Field(default_factory=list)
-
-    @property
-    def poster(self) -> Thumbnail:
-        bad = Thumbnail(url="/404", width=0, height=0)
-        return max(self.thumbnails, default=bad, key=lambda t: t.width or 0)
-
-    def thumb_for(self, width: int) -> Thumbnail:
-        for thumb in sorted(self.thumbnails, key=lambda t: t.width or 0):
-            if (thumb.width or 0) >= width:
-                return thumb
-
-        bad = Thumbnail(url="/404", width=0, height=0)
-        return self.thumbnails[0] if len(self.thumbnails) else bad
 
 
 class ShortEntry(Entry):
