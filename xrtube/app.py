@@ -70,7 +70,7 @@ CACHE_DIR.mkdir(parents=True, exist_ok=True)
 os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
 
 
-@dataclass
+@dataclass(slots=True)
 class Index:
     request: Request
     title: str | None = None
