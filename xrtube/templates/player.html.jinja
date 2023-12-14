@@ -48,6 +48,7 @@
             add("vjs-icon-repeat")
 
         loop.update = () => {
+            if (! player) return  // player is being disposed
             if (player.loop()) {
                 loop.controlText("Stop looping")
                 loop.addClass("active")
