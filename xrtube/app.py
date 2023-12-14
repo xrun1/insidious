@@ -16,7 +16,7 @@ import appdirs
 import httpx
 import jinja2
 import sass
-from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, WebSocket
 from fastapi.datastructures import URL
 from fastapi.responses import (
     HTMLResponse,
@@ -204,8 +204,13 @@ async def proxy(
 
     req = HTTPX.build_request("GET", url)
     reply = await HTTPX.send(req, stream=True)
-    mime = reply.headers.get("content-type")
+    try:
+        reply.raise_for_status()
+    except httpx.HTTPStatusError:
+        detail = f"Couldn't reach target page: {reply.reason_phrase}"
+        raise HTTPException(reply.status_code, detail)
 
+    mime = reply.headers.get("content-type")
     if mime == "application/vnd.apple.mpegurl":
         data = await reply.aread()
         data = patch_hls_manifest(data.decode())
