@@ -26,7 +26,7 @@ body {
     margin: var(--gap);
 
     &:has(#group.empty) {
-        grid-template-rows: 1.75rem 0 1fr;
+        grid-template-rows: 1.75rem 1fr;
     }
     &:has(#video-column.empty) {
         grid-template-columns: 
@@ -188,7 +188,7 @@ img {
 }
 
 #explore-column {
-    grid-row: 3 / -1;
+    grid-row: -2 / -1;
     grid-column: -2 / -1;
 }
 
