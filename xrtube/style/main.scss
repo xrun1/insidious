@@ -126,6 +126,7 @@ img {
 #video-column {
     grid-row: 2 / -1;
     grid-column: 1;
+    min-width: #{"min(120svh, 40svw)"};
     max-width: #{"min(120svh, max(50rem, 40svw))"};
 }
 
