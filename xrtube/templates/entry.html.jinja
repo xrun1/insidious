@@ -1,4 +1,4 @@
-{%- macro link_attrs(url=None, target="#main-column") %}
+{%- macro link_attrs(url=None, target="#video-column") %}
     {% set url = url or entry.shortest_url or entry.url %}
     href="{{local_url(url)}}"
     hx-get="{{local_url(url)}}"
