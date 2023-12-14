@@ -7,7 +7,7 @@
 
 {% if pagination.next_url %}
     <div
-        class=lazy-loader
+        class="lazy-loader {{'large' if pagination.running_short else ''}}"
         hx-get="{{pagination.next_url}}"
         hx-trigger="intersect once"
         hx-select="#explore-column > *"

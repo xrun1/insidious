@@ -266,6 +266,15 @@ img {
 
 .lazy-loader {
     position: absolute;
-    margin-top: -200svh;
-    height: 200svh;
+    pointer-events: none;
+    margin-top: -10svh;
+    height: 10svh;
+    // width: 20svw;
+    // background: rgba(0, 255, 0, 0.5);
+
+    &.large {
+        margin-top: -200svh;
+        height: 200svh;
+        // background: rgba(255, 0, 0, 0.2);
+    }
 }

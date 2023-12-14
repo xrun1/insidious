@@ -50,6 +50,10 @@ class Pagination(Generic[T]):
         return not self._data and not self.done
 
     @property
+    def running_short(self) -> bool:
+        return len(self._data) <= self.per_page and not self.done
+
+    @property
     def next_url(self) -> URL | None:
         if self.done:
             return None
