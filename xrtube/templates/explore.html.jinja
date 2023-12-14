@@ -15,3 +15,7 @@
         hx-swap=beforeend
     ></div>
 {% endif %}
+
+{% if pagination and pagination.page < 2 and not pagination.next_url %}
+    <p class=nothing-found>Nothing found</p>
+{% endif %}

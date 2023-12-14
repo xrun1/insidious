@@ -159,6 +159,7 @@ async def channel(request: Request, tab: str = "featured") -> Response:
             log.warning("%s", e)
             path = url.path.removesuffix(f"/{tab}") + "/featured"
             group = await pg.extender_with(0).channel(url.replace(path=path))
+            pg.done = True
 
     return Index(request, group.title if group else "", pg, group).response
 
