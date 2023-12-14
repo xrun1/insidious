@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from enum import auto
 from functools import lru_cache, partial
-from typing import Annotated, Any, ClassVar, Literal, TypeVar
+from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal, TypeVar
 from urllib.parse import parse_qs, quote
 
 import backoff
@@ -153,7 +153,8 @@ class ChannelEntry(Entry):
         return min((self.url, self.uploader_url), key=len)
 
 
-class Entries(BaseModel, Sequence[T]):
+# NOTE: Inherit Sequence first to avoid BaseModel overriding __iter__
+class Entries(Sequence[T], BaseModel):
     title: str = ""
     entries: list[T] = Field(default_factory=list)
 
@@ -214,7 +215,6 @@ class NoDataReceived(Exception):
     """ytdlp failed to return any data after retrying"""
 
 
-@lru_cache(64)
 class YoutubeClient:
     _executor = ThreadPoolExecutor(max_workers=16)
 
@@ -287,3 +287,7 @@ class YoutubeClient:
     def _thread(cls, *args, **kwargs) -> asyncio.Future:
         exe = cls._executor
         return asyncio.get_event_loop().run_in_executor(exe, *args, **kwargs)
+
+
+if not TYPE_CHECKING:
+    YoutubeClient = lru_cache(64)(YoutubeClient)

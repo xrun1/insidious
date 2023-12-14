@@ -1,14 +1,14 @@
 <div class=page>
-    {% for entry in results.entries %}
+    {% for entry in pagination.items %}
         {% include "entry.html.jinja" %}
     {% endfor %}
 </div>
 <script>processAllText()</script>
 
-{% if next_page %}
+{% if pagination.next_url %}
     <div
         class=lazy-loader
-        hx-get="{{next_page}}"
+        hx-get="{{pagination.next_url}}"
         hx-trigger="intersect once"
         hx-select="#explore-column > *"
         hx-target=#explore-column

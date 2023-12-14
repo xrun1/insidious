@@ -10,7 +10,7 @@
 <div class=entry>
     <a {{link_attrs()}} class=thumbnail>
         <div>
-            <img loading=lazy sizes=10rem srcset="{{entry.thumbnails_srcset}}">
+            <img sizes=10rem srcset="{{entry.thumbnails_srcset}}">
 
             {% if entry.live_status == LiveStatus.is_live %}
                 <span class=duration>live</span>

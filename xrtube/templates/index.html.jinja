@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        {% if title %}<title>{{title}}</title>{% endif %}
+        <title>{{full_title}}</title>
         <meta charset=utf-8>
         <meta name=viewport content="width=device-width, initial-scale=1">
         <meta name=referrer content=strict-origin>
@@ -31,7 +31,7 @@
             {% endif %}
         </div>
 
-        <div id=explore-column class="{{'' if results.entries else 'empty'}}">
+        <div id=explore-column class="{{'' if pagination.items else 'empty'}}">
             {% include "explore.html.jinja" %}
         </div>
 
