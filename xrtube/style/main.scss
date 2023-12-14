@@ -1,8 +1,9 @@
 :root {
-    --thumb-width: 10rem;
+    --thumb-width: min(33svw, 10rem);
+    --thumb-height: calc(10rem / (16 / 9));
     --text-big: 1.25rem;
     --text-small: 0.875rem;
-    --side: 20rem;
+    --side: min(90svw, 20rem);
     --gap: 1rem;
     --gap-small: 0.6rem;
     --hpad: 0.25rem;
@@ -206,7 +207,7 @@ img {
 .entry {
     display: grid;
     grid-template-columns: var(--thumb-width) 1fr;
-    grid-template-rows: calc(var(--thumb-width) / (16 / 9));
+    grid-template-rows: var(--thumb-height);
     gap: var(--gap-small);
 
     .thumbnail {
@@ -277,5 +278,42 @@ img {
         margin-top: -200svh;
         height: 200svh;
         // background: rgba(255, 0, 0, 0.2);
+    }
+}
+
+@media all and (max-width: 48rem) {  // 768px at 16px font size
+    body {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1.75rem auto auto;
+
+        // TODO: there has to be a better way
+        &:has(#video-column.empty) {
+            grid-template-rows: 1.75rem auto;
+        }
+        &:has(#group.empty) {
+            grid-template-rows: 1.75rem auto;
+            &:has(#video-column.empty) {
+                grid-template-rows: auto;
+            }
+        }
+    }
+    #explore-column {
+        grid-row: -1;
+    }
+}
+// calc(var(--side) + var(--gap) * 2) * 2
+@media all and (max-width: calc((20rem + 1rem * 2) * 2)) {
+    .page {
+        grid-template-columns: auto;
+    }
+}
+@media all and (max-width: 20rem) {  // var(--side)
+    .entry .info:has(.title + :not(.channel))  {
+        grid-template-columns: 1fr;
+    }
+    .entry .info .title {
+        -webkit-line-clamp: 2;
+        &:has(+ :not(.channel)) { -webkit-line-clamp: 3; }
+        &:last-child { -webkit-line-clamp: 4; }
     }
 }
