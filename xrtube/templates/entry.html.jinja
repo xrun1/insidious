@@ -1,5 +1,9 @@
-{%- macro link_attrs(url=None, target="#video-column") %}
+{%- macro link_attrs(url=None) %}
     {% set url = url or entry.shortest_url or entry.url %}
+    {% set target = "#explore-column" %}
+    {% if entry.entry_type in ("VideoEntry", "ShortEntry") %}
+        {% set target = "#video-column" %}
+    {% endif %}
     href="{{local_url(url)}}"
     hx-get="{{local_url(url)}}"
     hx-select={{target}}
