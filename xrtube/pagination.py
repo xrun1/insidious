@@ -1,6 +1,7 @@
 import asyncio
 import logging as log
 import math
+import re
 from collections import deque
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -25,6 +26,7 @@ from .ytdl import (
 )
 
 T = TypeVar("T")
+NON_WORD_CHARS = re.compile(r"\W+")
 
 @dataclass(slots=True)
 class Pagination(Generic[T]):
@@ -159,7 +161,8 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
 
     async def find_playlists(self, explicit_channel: bool) -> None:
         """Search site-wide for playlists related to the watched video."""
-        query = self.video_name
+        query = NON_WORD_CHARS.sub(" ", self.video_name).strip()
+        query = query or self.video_name
         weight = 1
         if explicit_channel:
             query += " " + self.channel_name
