@@ -112,6 +112,10 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
     current_batch: dict[str, Related] = field(default_factory=dict)
 
     @property
+    def video_id(self) -> str:
+        return self.request.query_params["video_id"]
+
+    @property
     def video_name(self) -> str:
         return self.request.query_params["video_name"]
 
@@ -130,7 +134,8 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
         for entry in entries.entries:
             if isinstance(entry, SearchLink):
                 ignore += 1
-            elif entry.id in self.returned_videos_id:
+            elif entry.id == self.video_id or \
+                    entry.id in self.returned_videos_id:
                 exclude += 1
             elif entry.id in self.current_batch:
                 bump += 1

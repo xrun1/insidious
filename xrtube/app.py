@@ -171,10 +171,10 @@ async def watch(request: Request) -> Response:
     client = YoutubeClient()
     video = await client.video(client.convert_url(request.url))
     rel = request.url_for("related").include_query_params(
+        video_id = video.id,
         video_name = video.title,
         channel_name = video.channel_name,
         channel_url = video.channel_url,
-        exclude_video_ids = video.id,
     )
     return Index(request, video.title, video=video, get_related=rel).response
 
