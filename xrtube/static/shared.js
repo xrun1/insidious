@@ -11,8 +11,7 @@ const todayFormatter = new Intl.DateTimeFormat(lang, {
     hour: "numeric", minute: "numeric",
 })
 const futureFormatter = new Intl.DateTimeFormat(lang, {
-    year: "numeric", month: "short", day: "numeric",
-    hour: "numeric", minute: "numeric",
+    month: "short", day: "numeric", hour: "numeric", minute: "numeric",
 })
 const relativeFormatter = new Intl.RelativeTimeFormat(lang, {
     numeric: "auto", style: "short",
