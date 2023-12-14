@@ -23,7 +23,6 @@
             fill: true,
             liveui: true,
             playbackRates: [3, 2.5, 2, 1.75, 1.5, 1.25, 1, 0.75, 0.5],
-            experimentalSvgIcons: true,
             vhs: {
                 useBandwidthFromLocalStorage: true,
                 useDevicePixelRatio: true,
@@ -45,10 +44,10 @@
                 player.loop(! player.loop())
             },
         }, 2)
-        loop.setIcon("repeat")
+        loop.el().querySelector(".vjs-icon-placeholder").classList.
+            add("vjs-icon-repeat")
 
         loop.update = () => {
-            console.log("up", player.loop())
             if (player.loop()) {
                 loop.controlText("Stop looping")
                 loop.addClass("active")
