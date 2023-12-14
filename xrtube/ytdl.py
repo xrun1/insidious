@@ -3,8 +3,8 @@ from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from enum import auto
-from functools import lru_cache, partial
-from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal, TypeVar
+from functools import partial
+from typing import Annotated, Any, ClassVar, Literal, TypeVar
 from urllib.parse import parse_qs, quote
 
 import backoff
@@ -226,15 +226,12 @@ class NoDataReceived(Exception):
 
 
 class YoutubeClient:
+    _ytdl_instances: ClassVar[dict[tuple[int, int], YoutubeDL]] = {}
     _executor = ThreadPoolExecutor(max_workers=16)
 
-    def __init__(
-        self,
-        page: int = 1,
-        per_page: int = 12,
-    ) -> None:
+    def __init__(self, page: int = 1, per_page: int = 12) -> None:
         offset = per_page * (page - 1)
-        self._ytdl = YoutubeDL({
+        self._ytdl = self._ytdl_instances.get((page, per_page)) or YoutubeDL({
             "quiet": True,
             "write_pages": True,
             "load_pages": True,
@@ -297,7 +294,3 @@ class YoutubeClient:
     def _thread(cls, *args, **kwargs) -> asyncio.Future:
         exe = cls._executor
         return asyncio.get_event_loop().run_in_executor(exe, *args, **kwargs)
-
-
-if not TYPE_CHECKING:
-    YoutubeClient = lru_cache(64)(YoutubeClient)
