@@ -25,8 +25,9 @@
             {% include "video.html.jinja" %}
         </div>
 
-        <div id=group class="{{'' if group else 'empty'}}">
-            {% if group %}
+        {# Channels can be empty yet still have a banner, title, etc to show #}
+        <div id=group class="{{'empty' if group is none else ''}}">
+            {% if group is not none %}
                 {% include "group.html.jinja" %}
             {% endif %}
         </div>
