@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 import appdirs
+import backoff
 import httpx
 import jinja2
 import sass
@@ -67,6 +68,8 @@ CACHE_DIR = Path(appdirs.user_cache_dir(NAME))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
 
+breakpoint()
+
 
 @dataclass(slots=True)
 class Index:
@@ -111,6 +114,12 @@ class Index:
         wild = "" if seconds < 60 else "*"
         text = re.sub(rf"^0:0{wild}", "", str(timedelta(seconds=seconds)))
         return re.sub(r", 0:00:00", "", text)  # e.g. 1 day, 0:00:00
+
+
+def giveup(error: HTTPException) -> bool:
+    # Request Timeout, Too Early, Too Many Requests, Internal Server Error,
+    # Bad Gateway, Service Unavailable, Gateway Timeout
+    return error.status_code not in (408, 425, 429, 500, 502, 503, 504)
 
 
 @APP.get("/")
@@ -190,6 +199,7 @@ async def related(request: Request) -> Response:
 
 
 @APP.get("/proxy/get", response_class=Response)
+@backoff.on_exception(backoff.expo, HTTPException, giveup=giveup, max_tries=10)
 async def proxy(
     request: Request, url: str, background_tasks: BackgroundTasks,
 ) -> Response:
