@@ -43,6 +43,7 @@ from .ytdl import (
 )
 
 log.basicConfig(level=log.INFO)
+log.getLogger("httpx").setLevel(log.WARNING)
 
 LOADER = jinja2.PackageLoader(NAME, "templates")
 TEMPLATES = Jinja2Templates(env=jinja2.Environment(loader=LOADER))
@@ -67,8 +68,6 @@ RELOAD_STYLE = asyncio.Event()
 CACHE_DIR = Path(appdirs.user_cache_dir(NAME))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
-
-breakpoint()
 
 
 @dataclass(slots=True)
