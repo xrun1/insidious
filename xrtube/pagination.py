@@ -28,6 +28,13 @@ from .ytdl import (
 T = TypeVar("T")
 NON_WORD_CHARS = re.compile(r"\W+")
 
+
+class Extender(YoutubeClient):
+    def convert_url(self, url: URL) -> URL:
+        params = ("page", "pagination_id")
+        return super().convert_url(url).remove_query_params(params)
+
+
 @dataclass(slots=True)
 class Pagination(Generic[T]):
     _instances: ClassVar[dict[UUID, Self]] = {}
@@ -63,11 +70,11 @@ class Pagination(Generic[T]):
         return f(page=self.page, pagination_id=self.id)
 
     @property
-    def extender(self) -> YoutubeClient:
+    def extender(self) -> Extender:
         return self.extender_with(self.per_page)
 
-    def extender_with(self, per_page: int) -> YoutubeClient:
-        return YoutubeClient(page=self.page, per_page=per_page)
+    def extender_with(self, per_page: int) -> Extender:
+        return Extender(page=self.page, per_page=per_page)
 
     def advance(self) -> Self:
         for _ in range(min(len(self._data), self.per_page)):
