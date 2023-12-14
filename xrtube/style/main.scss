@@ -122,6 +122,12 @@ img {
             }
         }
     }
+
+    > nav {
+        display: flex;
+        flex-flow: row wrap;
+        gap: var(--gap-small);
+    }
 }
 
 #video-column {

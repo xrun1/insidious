@@ -23,3 +23,16 @@
         <p class=yt-markup>{{youtube_format(group.description)}}</p>
     </div>
 </div>
+
+<nav>
+    {% for tab in group.tabs %}
+        {% set url = group.tab_url(request.url, tab) %}
+        <a
+            href="{{url}}"
+            hx-get="{{url}}"
+            hx-select=#explore-column
+            hx-target=#explore-column
+            hx-push-url=true
+        >{{tab.capitalize()}}</a>
+    {% endfor %}
+</nav>
