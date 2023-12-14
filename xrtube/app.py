@@ -144,9 +144,7 @@ async def hashtag(request: Request, tag: str) -> Response:
 @APP.get("/channel/{id}/{tab}")
 @APP.get("/user/{id}")
 @APP.get("/user/{id}/{tab}")
-async def channel(
-    request: Request, id: str, tab: str = "featured", 
-) -> Response:
+async def channel(request: Request, tab: str = "featured") -> Response:
     group = None
 
     if (pg := Pagination.get(request).advance()).needs_more_data:
@@ -168,7 +166,7 @@ async def channel(
 @APP.get("/watch")
 @APP.get("/v/{v}")
 @APP.get("/shorts/{v}")
-async def watch(request: Request, v: str) -> Response:
+async def watch(request: Request) -> Response:
     client = YoutubeClient()
     video = await client.video(client.convert_url(request.url))
     rel = request.url_for("related").include_query_params(
