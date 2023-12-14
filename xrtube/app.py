@@ -27,6 +27,7 @@ from fastapi.responses import (
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
+import yt_dlp
 
 from . import NAME
 from .markup import yt_to_html
@@ -154,7 +155,12 @@ async def channel(
         if tab == "featured" and not request.url.path.endswith("/featured"):
             url = url.replace(path=url.path + "/featured")
 
-        pg.add(group := await pg.extender.channel(url))
+        try:
+            pg.add(group := await pg.extender.channel(url))
+        except yt_dlp.DownloadError as e:
+            log.warning("%s", e)
+            path = url.path.removesuffix(f"/{tab}") + "/featured"
+            group = await pg.extender_with(0).channel(url.replace(path=path))
 
     return Index(request, group.title if group else "", pg, group).response
 
