@@ -247,6 +247,10 @@ class YoutubeClient:
             },
         })
 
+    @property
+    def headers(self) -> dict[str, str]:
+        return self._ytdl.params["http_headers"]
+
     def convert_url(self, url: URL) -> URL:
         return url.replace(scheme="https", hostname="youtube.com", port=None)
 
