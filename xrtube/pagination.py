@@ -219,9 +219,10 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
             tg.create_task(self.find_playlists(explicit_channel=True))
             tg.create_task(self.find_channel_videos())
 
-        if self.done and not self.vaguer_search:
+        if not self.current_batch and not self.vaguer_search:
             log.info("Related: now using vague search for %r", self.video_name)
             self.reset()
+            self.vaguer_search = True
             return await self.find()
 
         return self.finish_batch()
