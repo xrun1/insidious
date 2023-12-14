@@ -203,12 +203,16 @@ async def proxy(
         )
 
     req = HTTPX.build_request("GET", url)
-    reply = await HTTPX.send(req, stream=True)
     try:
+        reply = await HTTPX.send(req, stream=True)
         reply.raise_for_status()
-    except httpx.HTTPStatusError:
-        detail = f"Couldn't reach target page: {reply.reason_phrase}"
-        raise HTTPException(reply.status_code, detail)
+    except httpx.NetworkError as e:
+        raise HTTPException(502, f"Couldn't reach target URL: {e}")
+    except httpx.TimeoutException as e:
+        raise HTTPException(504, f"Target URL timed out: {e}")
+    except httpx.HTTPStatusError as e:
+        detail = f"Target URL returned error: {e.response.reason_phrase}"
+        raise HTTPException(e.response.status_code, detail)
 
     mime = reply.headers.get("content-type")
     if mime == "application/vnd.apple.mpegurl":
