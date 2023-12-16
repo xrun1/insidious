@@ -14,7 +14,7 @@ URL_RE = re.compile(
     r"(https?://(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}"
     r"\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))"
 )
-HASHTAG_RE = re.compile(r"(?:^|(?<=\W))#(\w+)")
+HASHTAG_RE = re.compile(r"(?:^|(?<=\W))#([\w-]+)")
 MARKUP_RE = {
     "strong": build_youtube_markup_regex("*"),
     "em": build_youtube_markup_regex("_"),
