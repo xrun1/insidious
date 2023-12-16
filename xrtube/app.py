@@ -30,7 +30,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
 
-from xrtube.streaming import HLS_M3U8_MIME, master_playlist, variant_playlist
+from xrtube.streaming import HLS_M3U8_MIME, dash_variant_playlist, master_playlist, variant_playlist
 
 from . import NAME
 from .markup import yt_to_html
@@ -38,6 +38,7 @@ from .pagination import Pagination, RelatedPagination
 from .utils import report
 from .ytdl import (
     Channel,
+    Format,
     LiveStatus,
     Playlist,
     Video,
@@ -202,17 +203,25 @@ async def related(request: Request) -> Response:
 
 # TODO: backoff
 @APP.get("/generate_hls/master")
-async def generate_master_m3u8(request: Request, video_json: str) -> Response:
-    api = f"{request.base_url}generate_hls/variant?mp4_url=%s"
-    text = master_playlist(api, Video.parse_raw(video_json))
+async def make_master_m3u8(request: Request, video_url: str) -> Response:
+    api = f"{request.base_url}generate_hls/variant?format_json=%s"
+    # WARN: relying on the implicit caching mechanism here
+    text = master_playlist(api, await YoutubeClient().video(video_url))
     return Response(text, media_type="application/x-mpegURL")
 
 
 @APP.get("/generate_hls/variant")
-async def generate_variant_m3u8(request: Request, mp4_url: str) -> Response:
-    uri = f"{request.base_url}proxy/get?url=%s" % quote(mp4_url)
-    async with HTTPX.stream("GET", mp4_url) as reply:
-        text = await variant_playlist(uri, reply.aiter_bytes())
+async def make_variant_m3u8(request: Request, format_json: str) -> Response:
+    format = Format.parse_raw(format_json)
+    api = f"{request.base_url}proxy/get?url=%s"
+
+    if format.has_dash:
+        text = dash_variant_playlist(api, format)
+        return Response(text, media_type=HLS_M3U8_MIME)
+
+    async with HTTPX.stream("GET", format.url) as reply:
+        mp4_data = reply.aiter_bytes()
+        text = await variant_playlist(api % quote(format.url), mp4_data)
         return Response(text, media_type=HLS_M3U8_MIME)
 
 

@@ -1,7 +1,11 @@
 <video-js id=player controls playsinline
     poster="{{video.best_thumbnail.fixed_url}}"
 >
-    <source type="application/vnd.apple.mpegurl" title="{{video.title}}" src="{{video.manifest_url}}">
+    <source
+        type="application/vnd.apple.mpegurl"
+        src="{{video.manifest_url}}"
+        title="{{video.title}}"
+    >
 </video-js>
 
 {# Putting these attrs on <video-js> causes duplicate triggering #}

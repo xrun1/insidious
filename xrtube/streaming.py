@@ -24,13 +24,25 @@ def master_playlist(api: str, video: Video) -> str:
 
 
 async def variant_playlist(uri: str, mp4_data: AsyncIterator[bytes]) -> str:
-    return "".join([part async for part in _variant_playlist(uri, mp4_data)])
+    return "".join([x async for x in _variant_playlist(uri, mp4_data)])
+
+
+def dash_variant_playlist(api: str, format: Format) -> str:
+    return "".join(_dash_variant_playlist(api, format))
 
 
 def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
-    if format.container not in ("mp4_dash", "m4a_dash"):
-        return
-    if format.protocol == "http_dash_segments":  # TODO
+    has_any_dash = any(f.has_dash for f in all)
+    def can_use(fmt: Format) -> bool:
+        if has_any_dash and not fmt.has_dash:
+            return False
+        if has_any_dash and not fmt.vcodec and "-dash" not in fmt.id:
+            return False
+        if fmt.container not in ("mp4_dash", "m4a_dash"):
+            return False
+        return True
+
+    if not can_use(format):
         return
 
     if not format.vcodec:
@@ -45,7 +57,7 @@ def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
         if not format.id.endswith("-drc"):  # Dynamic Range Compression
             yield "DEFAULT=YES,"
             yield "AUTOSELECT=YES,"
-        yield 'URI="%s"\n' % (api % quote(format.url))
+        yield 'URI="%s"\n' % (api % quote(format.json(by_alias=True)))
         return
 
     def stream(
@@ -71,13 +83,12 @@ def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
             yield 'CODECS="%s",' % format.vcodec
 
         yield "BANDWIDTH=%d\n" % math.ceil(bitrate * 1000)
-        yield (api % quote(format.url)) + "\n"
+        yield (api % quote(format.json(by_alias=True))) + "\n"
 
 
     audio_groups: dict[str, list[Format]] = {}
     for f in all:
-        if not f.vcodec and f.acodec and f.container == "m4a_dash" and \
-                f.protocol != "http_dash_segments":
+        if can_use(f) and not f.vcodec and f.acodec:
             audio_groups.setdefault(f.id.removesuffix("-drc"), []).append(f)
 
     if format.acodec or not audio_groups:
@@ -140,5 +151,29 @@ async def _variant_playlist(
         yield "#EXT-X-BYTERANGE:%d@%d\n" % (seg.referenced_size, offset)
         yield "%s\n" % uri
         offset += seg.referenced_size
+
+    yield "#EXT-X-ENDLIST"
+
+
+def _dash_variant_playlist(api: str, format: Format) -> Iterator[str]:
+    assert format.dash_fragments_base_url and format.fragments
+    assert format.fragments[0].path
+    assert not format.fragments[0].duration
+
+    base_url = api % quote(format.dash_fragments_base_url)
+    init_url = base_url + quote(format.fragments[0].path)
+
+    yield "#EXTM3U\n"
+    yield "#EXT-X-VERSION:7\n"
+    yield "#EXT-X-INDEPENDENT-SEGMENTS\n"
+    yield '#EXT-X-MAP:URI="%s"\n' % init_url
+    yield "#EXT-X-TARGETDURATION:%d\n" % max((
+        round(f.duration) for f in format.fragments if f.duration
+    ), default=0)
+
+    for frag in format.fragments:
+        if frag.duration and frag.path:
+            yield "#EXTINF:%f,\n" % frag.duration
+            yield "%s%s\n" % (base_url, quote(frag.path))
 
     yield "#EXT-X-ENDLIST"

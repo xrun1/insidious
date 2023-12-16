@@ -84,12 +84,20 @@ class HasThumbnails(BaseModel):
         return thumbs
 
 
+class Fragments(BaseModel):
+    url: str | None = None
+    path: str | None = None
+    duration: float | None = None
+
+
 class Format(BaseModel):
     id: str = Field(alias="format_id")
     name: str | None = Field(alias="format_note")
     protocol: str
     url: str
     manifest_url: str | None
+    dash_fragments_base_url: str | None = Field(alias="fragment_base_url")
+    fragments: list[Fragments] = Field(alias="fragments", default_factory=list)
     filesize: int | None
     container: str | None
     video_codec: str | None = Field(alias="vcodec")
@@ -101,6 +109,10 @@ class Format(BaseModel):
     dynamic_range: str | None
     audio_channels: int | None
     language: str | None
+
+    @property
+    def has_dash(self) -> bool:
+        return self.protocol == "http_dash_segments"
 
     @property
     def vcodec(self) -> str | None:
@@ -215,10 +227,9 @@ class Video(VideoEntry):
     @property
     def manifest_url(self) -> str:
         for fmt in self.formats:
-            if fmt.protocol == "m3u8_native" and fmt.manifest_url:
+            if fmt.manifest_url and not fmt.has_dash:
                 return "/proxy/get?url=%s" % quote(fmt.manifest_url)
-        dump = self.json(by_alias=True)
-        return "/generate_hls/master?video_json=%s" % quote(dump)
+        return "/generate_hls/master?video_url=%s" % quote(self.url)
 
     @property
     def manifest_mime(self) -> str:
