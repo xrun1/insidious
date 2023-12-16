@@ -87,6 +87,7 @@ class HasThumbnails(BaseModel):
 class Format(BaseModel):
     id: str = Field(alias="format_id")
     name: str | None = Field(alias="format_note")
+    protocol: str
     url: str
     manifest_url: str | None
     filesize: int | None
@@ -214,7 +215,7 @@ class Video(VideoEntry):
     @property
     def manifest_url(self) -> str:
         for fmt in self.formats:
-            if fmt.manifest_url:
+            if fmt.protocol == "m3u8_native" and fmt.manifest_url:
                 return "/proxy/get?url=%s" % quote(fmt.manifest_url)
         dump = self.json(by_alias=True)
         return "/generate_hls/master?video_json=%s" % quote(dump)

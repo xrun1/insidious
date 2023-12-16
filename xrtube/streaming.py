@@ -30,6 +30,8 @@ async def variant_playlist(uri: str, mp4_data: AsyncIterator[bytes]) -> str:
 def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
     if format.container not in ("mp4_dash", "m4a_dash"):
         return
+    if format.protocol == "http_dash_segments":  # TODO
+        return
 
     if not format.vcodec:
         yield "#EXT-X-MEDIA:"
@@ -74,7 +76,8 @@ def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
 
     audio_groups: dict[str, list[Format]] = {}
     for f in all:
-        if not f.vcodec and f.acodec and f.container == "m4a_dash":
+        if not f.vcodec and f.acodec and f.container == "m4a_dash" and \
+                f.protocol != "http_dash_segments":
             audio_groups.setdefault(f.id.removesuffix("-drc"), []).append(f)
 
     if format.acodec or not audio_groups:
