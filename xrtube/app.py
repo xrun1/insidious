@@ -115,9 +115,10 @@ class Index:
         return re.sub(r", 0:00:00", "", text)  # e.g. 1 day, 0:00:00
 
 
-def giveup(error: HTTPException) -> bool:
+def giveup(error: Exception) -> bool:
     # Request Timeout, Too Early, Too Many Requests, Internal Server Error,
     # Bad Gateway, Service Unavailable, Gateway Timeout
+    assert isinstance(error, HTTPException)
     return error.status_code not in (408, 425, 429, 500, 502, 503, 504)
 
 
