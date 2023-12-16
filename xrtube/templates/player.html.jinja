@@ -1,9 +1,7 @@
 <video-js id=player controls playsinline
     poster="{{video.best_thumbnail.fixed_url}}"
 >
-    {% if video.manifest_url %}
-        <source title="{{video.title}}" src="{{proxy(video.manifest_url)}}">
-    {% endif %}
+    <source type="application/vnd.apple.mpegurl" title="{{video.title}}" src="{{video.manifest_url}}">
 </video-js>
 
 {# Putting these attrs on <video-js> causes duplicate triggering #}

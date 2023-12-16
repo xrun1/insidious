@@ -12,6 +12,8 @@ from fastapi.datastructures import URL
 from pydantic import BaseModel, Field
 from yt_dlp import YoutubeDL
 
+from xrtube.streaming import HLS_M3U8_MIME
+
 from .utils import AutoStrEnum
 
 T = TypeVar("T")
@@ -83,13 +85,34 @@ class HasThumbnails(BaseModel):
 
 
 class Format(BaseModel):
+    id: str = Field(alias="format_id")
     name: str | None = Field(alias="format_note")
     url: str
-    filesize: int | None
     manifest_url: str | None
+    filesize: int | None
+    container: str | None
+    video_codec: str | None = Field(alias="vcodec")
+    audio_codec: str | None = Field(alias="acodec")
+    average_bitrate: float | None = Field(alias="tbr")  # in KB/s
     width: int | None
     height: int | None
     fps: float | None
+    dynamic_range: str | None
+    audio_channels: int | None
+    language: str | None
+
+    @property
+    def vcodec(self) -> str | None:
+        if self.video_codec == "none":
+            return None
+        return self.video_codec or None
+
+    @property
+    def acodec(self) -> str | None:
+        if self.audio_codec == "none":
+            return None
+        return self.audio_codec or None
+
 
 
 class Entry(HasThumbnails):
@@ -189,9 +212,16 @@ class Video(VideoEntry):
     formats: list[Format]
 
     @property
-    def manifest_url(self) -> str | None:
-        gen = (f.manifest_url for f in self.formats)
-        return next((f for f in gen if f), None)
+    def manifest_url(self) -> str:
+        for fmt in self.formats:
+            if fmt.manifest_url:
+                return "/proxy/get?url=%s" % quote(fmt.manifest_url)
+        dump = self.json(by_alias=True)
+        return "/generate_hls/master?video_json=%s" % quote(dump)
+
+    @property
+    def manifest_mime(self) -> str:
+        return HLS_M3U8_MIME
 
 
 class Playlist(Entries[ShortEntry | VideoEntry | PartialEntry]):

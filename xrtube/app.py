@@ -11,6 +11,7 @@ from datetime import timedelta
 from importlib import resources
 from pathlib import Path
 from urllib.parse import quote
+from uuid import uuid4
 
 import appdirs
 import backoff
@@ -29,6 +30,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
 import yt_dlp
+
+from xrtube.streaming import master_playlist, variant_playlist, HLS_M3U8_MIME
 
 from . import NAME
 from .markup import yt_to_html
@@ -198,6 +201,25 @@ async def related(request: Request) -> Response:
     return Index(request, pagination=pg).response
 
 
+# TODO: backoff
+@APP.get("/generate_hls/master")
+async def generate_master_m3u8(request: Request, video_json: str) -> Response:
+    api = f"{request.base_url}generate_hls/variant?mp4_url=%s"
+    text = master_playlist(api, Video.parse_raw(video_json))
+    return Response(text, media_type="application/x-mpegURL")
+
+
+@APP.get("/generate_hls/variant")
+async def generate_variant_m3u8(request: Request, mp4_url: str) -> Response:
+    uri = f"{request.base_url}proxy/get?url=%s" % quote(mp4_url)
+    uuid = uuid4()
+    async with HTTPX.stream("GET", mp4_url) as reply:
+        print("gen: begin", uuid)
+        text = await variant_playlist(uri, reply.aiter_bytes())
+        print("gen: finish", len(text))
+        return Response(text, media_type=HLS_M3U8_MIME)
+
+
 @APP.get("/proxy/get", response_class=Response)
 @backoff.on_exception(backoff.expo, HTTPException, giveup=giveup, max_tries=10)
 async def proxy(
@@ -212,7 +234,11 @@ async def proxy(
             data,
         )
 
-    req = HTTPX.build_request("GET", url)
+    headers = {}
+    if "Range" in request.headers:
+        headers["Range"] = request.headers["Range"]
+
+    req = HTTPX.build_request("GET", url, headers=headers)
     try:
         reply = await HTTPX.send(req, stream=True)
         reply.raise_for_status()
@@ -225,7 +251,7 @@ async def proxy(
         raise HTTPException(e.response.status_code, detail)
 
     mime = reply.headers.get("content-type")
-    if mime == "application/vnd.apple.mpegurl":
+    if mime == HLS_M3U8_MIME:
         data = await reply.aread()
         data = patch_hls_manifest(data.decode())
         return Response(content=data, media_type=mime)
