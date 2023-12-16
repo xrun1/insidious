@@ -11,13 +11,13 @@ from datetime import timedelta
 from importlib import resources
 from pathlib import Path
 from urllib.parse import quote
-from uuid import uuid4
 
 import appdirs
 import backoff
 import httpx
 import jinja2
 import sass
+import yt_dlp
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, WebSocket
 from fastapi.datastructures import URL
 from fastapi.responses import (
@@ -29,9 +29,8 @@ from fastapi.responses import (
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
-import yt_dlp
 
-from xrtube.streaming import master_playlist, variant_playlist, HLS_M3U8_MIME
+from xrtube.streaming import HLS_M3U8_MIME, master_playlist, variant_playlist
 
 from . import NAME
 from .markup import yt_to_html
@@ -212,11 +211,8 @@ async def generate_master_m3u8(request: Request, video_json: str) -> Response:
 @APP.get("/generate_hls/variant")
 async def generate_variant_m3u8(request: Request, mp4_url: str) -> Response:
     uri = f"{request.base_url}proxy/get?url=%s" % quote(mp4_url)
-    uuid = uuid4()
     async with HTTPX.stream("GET", mp4_url) as reply:
-        print("gen: begin", uuid)
         text = await variant_playlist(uri, reply.aiter_bytes())
-        print("gen: finish", len(text))
         return Response(text, media_type=HLS_M3U8_MIME)
 
 
