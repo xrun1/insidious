@@ -262,7 +262,7 @@ async def proxy(
         return Response(content=data, media_type=mime)
 
     background_tasks.add_task(reply.aclose)
-    return StreamingResponse(reply.aiter_bytes())
+    return StreamingResponse(reply.aiter_bytes(), media_type=mime)
 
 
 @APP.get("/{v}", response_class=RedirectResponse)
