@@ -53,3 +53,20 @@ function processAllText() {
     processText(".compact-number", numberFormatter.format)
     processText(".youtube-date", formatYoutubeDate)
 }
+
+function setCookie(name, obj, secondsAlive=0) {  // 0 = die on browser close
+    const body = encodeURIComponent(JSON.stringify(obj))
+    const age = secondsAlive ? `; max-age=${secondsAlive}` : ""
+    document.cookie = `${name}=${body}; path=/; samesite=lax` + age
+}
+
+function setToughCookie(name, obj) {
+    setCookie(name, obj, 60 * 60 * 24 * 400)  // max age of 400 days
+}
+
+function getCookie(name, default_=null) {
+    for (const cookie of document.cookie.split("; "))
+        if (cookie.split("=")[0] === name)
+            return JSON.parse(decodeURIComponent(cookie.split("=")[1]))
+    return default_
+}

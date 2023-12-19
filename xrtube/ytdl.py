@@ -12,8 +12,6 @@ from fastapi.datastructures import URL
 from pydantic import BaseModel, Field
 from yt_dlp import YoutubeDL
 
-from xrtube.streaming import HLS_M3U8_MIME
-
 from .utils import AutoStrEnum
 
 T = TypeVar("T")
@@ -71,13 +69,13 @@ class HasThumbnails(BaseModel):
     def _best_thumbnails(self, banners: bool = False) -> list[Thumbnail]:
         thumbs = self.thumbnails
 
-        if self.has_banner: 
+        if self.has_banner:
             thumbs = [t for t in thumbs if banners == (t.preference < 0)]
 
         thumbs = (
-            [t for t in thumbs if t.suffix == "webp" and t.width] or  
-            [t for t in thumbs if t.width] or 
-            [t for t in thumbs if t.suffix == "webp"] or 
+            [t for t in thumbs if t.suffix == "webp" and t.width] or
+            [t for t in thumbs if t.width] or
+            [t for t in thumbs if t.suffix == "webp"] or
             thumbs
         )
         thumbs.sort(key=lambda t: t.width or 0, reverse=True)
@@ -221,6 +219,7 @@ class Video(VideoEntry):
     width: int
     height: int
     aspect_ratio: float
+    fps: float
     upload_date: str
     formats: list[Format]
 
@@ -230,10 +229,6 @@ class Video(VideoEntry):
             if fmt.manifest_url and not fmt.has_dash:
                 return "/proxy/get?url=%s" % quote(fmt.manifest_url)
         return "/generate_hls/master?video_url=%s" % quote(self.url)
-
-    @property
-    def manifest_mime(self) -> str:
-        return HLS_M3U8_MIME
 
 
 class Playlist(Entries[ShortEntry | VideoEntry | PartialEntry]):

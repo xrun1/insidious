@@ -4,7 +4,7 @@ import os
 import re
 import shutil
 import time
-from collections.abc import Coroutine
+from collections.abc import AsyncIterator, Coroutine
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import timedelta
@@ -13,7 +13,6 @@ from pathlib import Path
 from urllib.parse import quote
 
 import appdirs
-import backoff
 import httpx
 import jinja2
 import sass
@@ -30,12 +29,19 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
 
-from xrtube.streaming import HLS_M3U8_MIME, dash_variant_playlist, master_playlist, variant_playlist
+from xrtube.streaming import (
+    HLS_ALT_MIME,
+    HLS_MIME,
+    dash_variant_playlist,
+    filter_master_playlist,
+    master_playlist,
+    variant_playlist,
+)
 
 from . import NAME
 from .markup import yt_to_html
 from .pagination import Pagination, RelatedPagination
-from .utils import report
+from .utils import httpx_to_fastapi_errors, report
 from .ytdl import (
     Channel,
     Format,
@@ -118,13 +124,6 @@ class Index:
         return re.sub(r", 0:00:00", "", text)  # e.g. 1 day, 0:00:00
 
 
-def giveup(error: Exception) -> bool:
-    # Request Timeout, Too Early, Too Many Requests, Internal Server Error,
-    # Bad Gateway, Service Unavailable, Gateway Timeout
-    assert isinstance(error, HTTPException)
-    return error.status_code not in (408, 425, 429, 500, 502, 503, 504)
-
-
 @APP.get("/")
 async def home(request: Request) -> Response:
     return Index(request).response
@@ -201,7 +200,6 @@ async def related(request: Request) -> Response:
     return Index(request, pagination=pg).response
 
 
-# TODO: backoff
 @APP.get("/generate_hls/master")
 async def make_master_m3u8(request: Request, video_url: str) -> Response:
     api = f"{request.base_url}generate_hls/variant?format_json=%s"
@@ -217,16 +215,22 @@ async def make_variant_m3u8(request: Request, format_json: str) -> Response:
 
     if format.has_dash:
         text = dash_variant_playlist(api, format)
-        return Response(text, media_type=HLS_M3U8_MIME)
+        return Response(text, media_type=HLS_MIME)
 
-    async with HTTPX.stream("GET", format.url) as reply:
-        mp4_data = reply.aiter_bytes()
-        text = await variant_playlist(api % quote(format.url), mp4_data)
-        return Response(text, media_type=HLS_M3U8_MIME)
+    with httpx_to_fastapi_errors():
+        async with HTTPX.stream("GET", format.url) as reply:
+            mp4_data = reply.aiter_bytes()
+            text = await variant_playlist(api % quote(format.url), mp4_data)
+            return Response(text, media_type=HLS_MIME)
+
+
+@APP.get("/filter_hls/master")
+async def filter_master(content: str, height: int, fps: float) -> Response:
+    modified = filter_master_playlist(content, height, fps)
+    return Response(modified, media_type=HLS_MIME)
 
 
 @APP.get("/proxy/get", response_class=Response)
-@backoff.on_exception(backoff.expo, HTTPException, giveup=giveup, max_tries=10)
 async def proxy(
     request: Request, url: str, background_tasks: BackgroundTasks,
 ) -> Response:
@@ -237,32 +241,37 @@ async def proxy(
         return MANIFEST_URL.sub(
             lambda m: m[1] + request.url.path + "?url=" + quote(m[2]) + m[3],
             data,
-        )
+            )
 
     headers = {}
     if "Range" in request.headers:
         headers["Range"] = request.headers["Range"]
 
     req = HTTPX.build_request("GET", url, headers=headers)
-    try:
+    with httpx_to_fastapi_errors():
         reply = await HTTPX.send(req, stream=True)
         reply.raise_for_status()
-    except httpx.NetworkError as e:
-        raise HTTPException(502, f"Couldn't reach target URL: {e}")
-    except httpx.TimeoutException as e:
-        raise HTTPException(504, f"Target URL timed out: {e}")
-    except httpx.HTTPStatusError as e:
-        detail = f"Target URL returned error: {e.response.reason_phrase}"
-        raise HTTPException(e.response.status_code, detail)
 
     mime = reply.headers.get("content-type")
-    if mime == HLS_M3U8_MIME:
+    reply_headers = {k: v for k, v in reply.headers.items() if k in {
+        "accept-ranges", "content-length", "x-content-type-options",
+        # FIXME: breaks video delivery
+        # "date", "expires", "cache-control", "age", "etag",
+    }}
+    if mime in (HLS_MIME, HLS_ALT_MIME):
         data = await reply.aread()
         data = patch_hls_manifest(data.decode())
         return Response(content=data, media_type=mime)
+    if URL(url).path.endswith(".ts"):
+        mime = "video/mp2t"
+
+    async def iter() -> AsyncIterator[bytes]:
+        with httpx_to_fastapi_errors():
+            async for chunk in reply.aiter_bytes():
+                yield chunk
 
     background_tasks.add_task(reply.aclose)
-    return StreamingResponse(reply.aiter_bytes(), media_type=mime)
+    return StreamingResponse(iter(), 200, reply_headers, mime)
 
 
 @APP.get("/{v}", response_class=RedirectResponse)

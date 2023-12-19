@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import logging as log
 import math
+import re
 from collections.abc import AsyncIterator, Iterator
 from typing import TYPE_CHECKING, cast
 from urllib.parse import quote
@@ -10,10 +11,14 @@ from urllib.parse import quote
 from construct import Container, StreamError
 from pymp4.parser import Box
 
+from xrtube.utils import report
+
 if TYPE_CHECKING:
     from xrtube.ytdl import Format, Video
 
-HLS_M3U8_MIME = "application/vnd.apple.mpegurl"
+HLS_MIME = "application/x-mpegURL"
+HLS_ALT_MIME = "application/vnd.apple.mpegurl"
+STREAM_TAGS_RE = re.compile(r"([A-Z\d_-]+=(?:\".*?\"|'.*?'|.*?))(?:,|$)")
 
 
 def master_playlist(api: str, video: Video) -> str:
@@ -96,6 +101,26 @@ def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
     else:
         for group_name, formats in audio_groups.items():
             yield from stream(group_name, *formats)
+
+
+def filter_master_playlist(content: str, height: int, fps: float) -> str:
+    skip = False
+    lines = []
+    for line in content.splitlines():
+        if skip:
+            skip = False
+            continue
+        if line.startswith("#EXT-X-STREAM-INF:"):
+            parts = (p for p in STREAM_TAGS_RE.split(line) if "=" in p)
+            tags = dict(t.split("=", maxsplit=1) for t in parts)
+            with report(ValueError, IndexError):
+                stream_h = int(tags.get("RESOLUTION", "0,0").split("x")[1])
+                stream_fps = float(tags.get("FRAME-RATE", "30"))
+                if stream_h != height or stream_fps != fps:
+                    skip = True
+                    continue
+        lines.append(line)
+    return "\n".join(lines)
 
 
 async def _mp4_boxes(

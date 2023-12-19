@@ -1,12 +1,4 @@
-<video-js id=player controls playsinline
-    poster="{{video.best_thumbnail.fixed_url}}"
->
-    <source
-        type="application/vnd.apple.mpegurl"
-        src="{{video.manifest_url}}"
-        title="{{video.title}}"
-    >
-</video-js>
+<div id=player></div>
 
 {# Putting these attrs on <video-js> causes duplicate triggering #}
 <div
@@ -17,51 +9,87 @@
 ></div>
 
 <script>
-    while (videojs.getAllPlayers().length) {
-        videojs("player").dispose()
-    }
-    (() => {
-        const player = videojs("player", {
-            fill: true,
-            liveui: true,
+    function createPlayer() {
+        const maxBandwidthRemembered = 2048 * 8192  // 2MiB/s in bits
+        const Hls = window.HlsJsPlayer.HlsJs
+        const player = new window.HlsJsPlayer({
+            id: "player",
+            url: "{{video.manifest_url}}",
+            poster: "{{video.best_thumbnail.fixed_url}}",
+            fluid: true,
+            volume: 1.0,
+            playsinline: true,
             playbackRates: [3, 2.5, 2, 1.75, 1.5, 1.25, 1, 0.75, 0.5],
-            vhs: {
-                useBandwidthFromLocalStorage: true,
-                useDevicePixelRatio: true,
-                overrideNative: true,
+            screenShot: true,
+            download: true,
+            pip: true,
+            keyShortcut: "on",
+            hlsOpts: {
+                <!-- debug: true, -->
+                autoStartLoad: true,
+                maxBufferSize: 128 * 1024 * 1024,  // 128MiB in bytes
+                maxFragLookUpTolerance: 0.5,
+                maxMaxBufferLength: 60 * 30,
+                startFragPrefetch: true,
+                progressive: true,
+                stretchShortVideoTrack: true,
+                abrEwmaDefaultEstimate: getCookie("bandwidth", 50 * 8192),
+                abrEwmaDefaultEstimateMax: maxBandwidthRemembered,
+                abrBandWidthUpFactor: 0.8,
+                abrMaxWithRealBitrate: true,
+                maxLoadingDelay: 1,
+                capLevelToPlayerSize: {{video["fps"]}} < 40,
+                capLevelOnFPSDrop: true,
             },
-            nativeAudioTracks: false,
-            nativeVideoTracks: false
-        })
-        // Requires disabling native HLS as done above
-        player.hlsQualitySelector({
-            displayCurrentQuality: true,
-            placementIndex: 12,
         })
 
-        const loop = player.getChild("ControlBar").addChild("button", {
-            controlText: "Loop",
-            className: "vjs-loop-control",
-            clickHandler: event => {
-                player.loop(! player.loop())
-            },
-        }, 2)
-        loop.el().querySelector(".vjs-icon-placeholder").classList.
-            add("vjs-icon-repeat")
-
-        loop.update = () => {
-            if (! player) return  // player is being disposed
-            if (player.loop()) {
-                loop.controlText("Stop looping")
-                loop.addClass("active")
-            } else {
-                loop.controlText("Loop")
-                loop.removeClass("active")
-            }
+        function levelFps(level) {
+            return parseFloat(level.attrs["FRAME-RATE"] || "30")
         }
-        player.one("loadstart", loop.update)
-        loop.observer = new MutationObserver(loop.update)
-        const vid = document.getElementsByTagName("video")[0]
-        loop.observer.observe(vid, {attributes: true})
-    })()
+
+        function levelName(level) {
+            const height = level.height
+            const fps = levelFps(level)
+            return `${height}p${fps > 23 && fps < 31 ? "" : Math.round(fps)}`
+        }
+
+        player.hls.on(Hls.Events.MANIFEST_LOADED, (event, data) => {
+            const auto = {url: "{{video.manifest_url}}", name: "Auto"}
+            const names = new Set()
+            const manual = data.levels.map(lvl => {
+                const content = data.networkDetails.responseText
+                const height = lvl.height
+                const fps = levelFps(lvl)
+                const params = new URLSearchParams({content, height, fps})
+                const url = `/filter_hls/master?${params}`
+
+                const name = levelName(lvl)
+                if (names.has(name)) return null
+                names.add(name)
+                return {url, name}
+            }).filter(Boolean)
+            player.emit("resourceReady", [auto, ...manual])
+        })
+
+        player.hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
+            const max = maxBandwidthRemembered
+            setCookie("bandwidth", Math.min(max, player.hls.bandwidthEstimate))
+        })
+
+        let lastQuality = ""
+        player.hls.on(Hls.Events.FRAG_CHANGED, (event, data) => {
+            if (! player.getCurrentDefinition().name.startsWith("Auto")) return
+            const name = levelName(player.hls.levels[data.frag.level])
+            if (name !== lastQuality) console.log("Auto quality:", name)
+            lastQuality = name
+        })
+
+        player.hls.on(Hls.Events.FPS_DROP, (event, data) => {
+            if (data.currentDropped) console.log(event, data)
+        })
+
+        return player
+    }
+    if (window.hlsPlayer) window.hlsPlayer.destroy(true)
+    window.hlsPlayer = createPlayer()
 </script>
