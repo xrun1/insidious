@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import asyncio
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 from enum import auto
 from functools import partial
-from typing import Annotated, Any, ClassVar, Literal, TypeVar
+from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal, TypeVar
 from urllib.parse import parse_qs, quote
 
 import backoff
@@ -13,6 +14,9 @@ from pydantic import BaseModel, Field
 from yt_dlp import YoutubeDL
 
 from .utils import AutoStrEnum
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 T = TypeVar("T")
 
@@ -209,7 +213,7 @@ class Search(Entries[Entry | SearchLink]):
     entries: list[Annotated[
         ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry |
         SearchLink,
-        Field(discriminator="entry_type")
+        Field(discriminator="entry_type"),
     ]] = Field(default_factory=list)
 
 
@@ -235,7 +239,7 @@ class Playlist(Entries[ShortEntry | VideoEntry | PartialEntry]):
     id: str
     entries: list[Annotated[
         ShortEntry | VideoEntry | PartialEntry,
-        Field(discriminator="entry_type")
+        Field(discriminator="entry_type"),
     ]] = Field(default_factory=list)
 
 
@@ -288,9 +292,6 @@ class YoutubeClient:
     def headers(self) -> dict[str, str]:
         return self._ytdl.params["http_headers"]
 
-    def convert_url(self, url: URL) -> URL:
-        return url.replace(scheme="https", hostname="youtube.com", port=None)
-
     async def search(self, url: URL | str) -> Search:
         return Search.parse_obj(await self._get(url))
 
@@ -310,7 +311,17 @@ class YoutubeClient:
             raise NoDataReceived
         return self._extend_entries(data)
 
-    def _extend_entries(self, data: dict[str, Any]) -> dict[str, Any]:
+    @classmethod
+    def _thread(cls, *args, **kwargs) -> asyncio.Future:
+        exe = cls._executor
+        return asyncio.get_event_loop().run_in_executor(exe, *args, **kwargs)
+
+    @staticmethod
+    def convert_url(url: URL) -> URL:
+        return url.replace(scheme="https", hostname="youtube.com", port=None)
+
+    @staticmethod
+    def _extend_entries(data: dict[str, Any]) -> dict[str, Any]:
         def extend(entry: dict[str, Any]) -> dict[str, Any]:
             data = {}
             if "/shorts/" in entry["url"]:
@@ -330,8 +341,3 @@ class YoutubeClient:
             return entry | data | {"entry_type": etype}
 
         return data | {"entries": [extend(e) for e in data.get("entries", [])]}
-
-    @classmethod
-    def _thread(cls, *args, **kwargs) -> asyncio.Future:
-        exe = cls._executor
-        return asyncio.get_event_loop().run_in_executor(exe, *args, **kwargs)

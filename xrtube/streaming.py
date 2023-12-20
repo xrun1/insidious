@@ -4,7 +4,6 @@ import io
 import logging as log
 import math
 import re
-from collections.abc import AsyncIterator, Iterator
 from typing import TYPE_CHECKING, cast
 from urllib.parse import quote
 
@@ -14,6 +13,8 @@ from pymp4.parser import Box
 from xrtube.utils import report
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Iterator
+
     from xrtube.ytdl import Format, Video
 
 HLS_MIME = "application/x-mpegURL"
@@ -43,7 +44,7 @@ def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
             return False
         if has_any_dash and not fmt.vcodec and "-dash" not in fmt.id:
             return False
-        if fmt.container not in ("mp4_dash", "m4a_dash"):
+        if fmt.container not in {"mp4_dash", "m4a_dash"}:
             return False
         return True
 
@@ -134,13 +135,9 @@ async def _mp4_boxes(
         buffer.write(chunk)
         buffer.seek(initial)
 
-        while True:
-            try:
+        try:
+            while True:
                 box = cast(Container, Box.parse_stream(buffer))
-            except StreamError:
-                buffer.seek(initial)
-                break
-            else:
                 if box.type == "ftyp":
                     filetype = box
                 elif box.type == "moov":
@@ -151,6 +148,8 @@ async def _mp4_boxes(
                 if filetype and movie and segments:
                     log.info("Found boxes after %d bytes", buffer.tell())
                     return (filetype, movie, segments)
+        except StreamError:
+            buffer.seek(initial)
 
     raise ValueError(f"Missing boxes - {filetype=}, {movie=}, {segments=}")
 
@@ -167,21 +166,22 @@ async def _variant_playlist(
     yield "#EXT-X-INDEPENDENT-SEGMENTS\n"
     yield '#EXT-X-MAP:URI="%s",BYTERANGE="%d@0"\n' % (uri, segments_end)
     yield "#EXT-X-TARGETDURATION:%d\n" % max((
-        round(seg.segment_duration / segments.data.timescale)
-        for seg in segments.data.references
+        round(sg.segment_duration / segments.data.timescale)
+        for sg in segments.data.references
     ), default=0)
 
-    for seg in segments.data.references:
-        yield "#EXTINF:%f,\n" % (seg.segment_duration / segments.data.timescale)
-        yield "#EXT-X-BYTERANGE:%d@%d\n" % (seg.referenced_size, offset)
+    for sg in segments.data.references:
+        yield "#EXTINF:%f,\n" % (sg.segment_duration / segments.data.timescale)
+        yield "#EXT-X-BYTERANGE:%d@%d\n" % (sg.referenced_size, offset)
         yield "%s\n" % uri
-        offset += seg.referenced_size
+        offset += sg.referenced_size
 
     yield "#EXT-X-ENDLIST"
 
 
 def _dash_variant_playlist(api: str, format: Format) -> Iterator[str]:
-    assert format.dash_fragments_base_url and format.fragments
+    assert format.dash_fragments_base_url
+    assert format.fragments
     assert format.fragments[0].path
     assert not format.fragments[0].duration
 

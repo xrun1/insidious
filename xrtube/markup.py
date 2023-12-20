@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import html
 import re
 from urllib.parse import unquote
 from uuid import UUID, uuid4
+
 from fastapi.datastructures import URL
 
 
@@ -12,7 +15,7 @@ def build_youtube_markup_regex(symbol: str) -> re.Pattern:
 
 URL_RE = re.compile(
     r"(https?://(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}"
-    r"\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))"
+    r"\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))",
 )
 HASHTAG_RE = re.compile(r"(?:^|(?<=\W))#([\w-]+)")
 MARKUP_RE = {
@@ -30,7 +33,7 @@ def yt_to_html(text: str, allow_markup: bool = True) -> str:
         pretty = html.escape(unquote(str(url)), quote=False)
         host = (url.hostname or "").removeprefix("www.")
 
-        if host in ("youtube.com", "youtube-nocookie.com", "youtu.be"):
+        if host in {"youtube.com", "youtube-nocookie.com", "youtu.be"}:
             url = url.replace(scheme="", hostname="")
 
         parts[(id := uuid4())] = f'<a href="{url}">{pretty}</a>'

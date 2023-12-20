@@ -1,17 +1,15 @@
+from __future__ import annotations
+
 import asyncio
 import logging as log
 import math
 import re
 from collections import deque
-from collections.abc import Sequence
 from dataclasses import dataclass, field
 from itertools import islice
-from typing import ClassVar, Deque, Generic, Self, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Generic, Self, TypeVar
 from urllib.parse import quote
 from uuid import UUID, uuid4
-
-from fastapi import Request
-from fastapi.datastructures import URL
 
 from .utils import report
 from .ytdl import (
@@ -24,6 +22,12 @@ from .ytdl import (
     VideoEntry,
     YoutubeClient,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from fastapi import Request
+    from fastapi.datastructures import URL
 
 T = TypeVar("T")
 NON_WORD_CHARS = re.compile(r"\W+")
@@ -45,7 +49,7 @@ class Pagination(Generic[T]):
     per_page: int = 12
     done: bool = False
 
-    _data: Deque[T] = field(default_factory=deque)
+    _data: deque[T] = field(default_factory=deque)
 
     def __post_init__(self) -> None:
         self._instances[self.id] = self
@@ -190,7 +194,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
     async def find_channel_videos(self) -> None:
         """Search the watched video's source channel for similar videos."""
         words = self.video_name.split()  # TODO: handle spaceless languages
-        query = " ".join(words[:math.ceil(len(words)/2)])
+        query = " ".join(words[:math.ceil(len(words) / 2)])
         url = self.channel_url + "/search?query=" + quote(query)
 
         # NOTE: Failure on "- Topic" auto-generated channels is expected

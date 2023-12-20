@@ -1,15 +1,17 @@
+from __future__ import annotations
+
 import asyncio
 import logging as log
 import os
 import re
 import shutil
 import time
-from collections.abc import AsyncIterator, Coroutine
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import timedelta
 from importlib import resources
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import quote
 
 import appdirs
@@ -17,7 +19,7 @@ import httpx
 import jinja2
 import sass
 import yt_dlp
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, WebSocket
+from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
 from fastapi.responses import (
     HTMLResponse,
@@ -51,11 +53,15 @@ from .ytdl import (
     YoutubeClient,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Coroutine
+
 log.basicConfig(level=log.INFO)
 log.getLogger("httpx").setLevel(log.WARNING)
 
 LOADER = jinja2.PackageLoader(NAME, "templates")
-TEMPLATES = Jinja2Templates(env=jinja2.Environment(loader=LOADER))
+ENV = jinja2.Environment(loader=LOADER, autoescape=True)
+TEMPLATES = Jinja2Templates(env=ENV)
 SCSS = resources.read_text(f"{NAME}.style", "main.scss")
 CSS = sass.compile(string=SCSS, indented=False)
 APP = FastAPI(default_response_class=HTMLResponse)
@@ -63,7 +69,7 @@ APP = FastAPI(default_response_class=HTMLResponse)
 APP.mount("/static", StaticFiles(packages=[(NAME, "static")]), name="static")
 if os.getenv("UVICORN_RELOAD"):
     # Fix browser reusing cached files at reload despite disk modifications
-    StaticFiles.is_not_modified = lambda *_, **k: [k] and False  # type: ignore
+    StaticFiles.is_not_modified = lambda *_, **_kws: False
 
 HTTPX = httpx.AsyncClient(follow_redirects=True, headers={
     **YoutubeClient().headers,
@@ -119,7 +125,7 @@ class Index:
 
     @staticmethod
     def format_duration(seconds: float) -> str:
-        wild = "" if seconds < 60 else "*"
+        wild = "" if seconds < 60 else "*"  # noqa: PLR2004
         text = re.sub(rf"^0:0{wild}", "", str(timedelta(seconds=seconds)))
         return re.sub(r", 0:00:00", "", text)  # e.g. 1 day, 0:00:00
 
@@ -145,7 +151,8 @@ async def results(request: Request, search_query: str = "") -> Response:
 @APP.get("/hashtag/{tag}")
 async def hashtag(request: Request, tag: str) -> Response:
     if (pg := Pagination.get(request).advance()).needs_more_data:
-        pg.add(await pg.extender.playlist(pg.extender.convert_url(request.url)))
+        url = pg.extender.convert_url(request.url)
+        pg.add(await pg.extender.playlist(url))
 
     return Index(request, f"#{tag}", pg).response
 
@@ -258,7 +265,7 @@ async def proxy(
         # FIXME: breaks video delivery
         # "date", "expires", "cache-control", "age", "etag",
     }}
-    if mime in (HLS_MIME, HLS_ALT_MIME):
+    if mime in {HLS_MIME, HLS_ALT_MIME}:
         data = await reply.aread()
         data = patch_hls_manifest(data.decode())
         return Response(content=data, media_type=mime)
@@ -285,7 +292,7 @@ async def short_url_watch(request: Request, v: str) -> Response:
 
 @APP.websocket("/wait_reload")
 async def wait_reload(ws: WebSocket) -> None:
-    global DYING
+    global DYING  # noqa: PLW0603
     if DYING:
         return
 
@@ -296,8 +303,8 @@ async def wait_reload(ws: WebSocket) -> None:
             await ws.send_text("page")
 
     async def wait_style() -> None:
-        global SCSS
-        global CSS
+        global SCSS  # noqa: PLW0603
+        global CSS  # noqa: PLW0603
         while True:
             await RELOAD_STYLE.wait()
             RELOAD_STYLE.clear()
@@ -319,9 +326,8 @@ async def wait_alive(ws: WebSocket) -> None:
 
 def create_background_job(coro: Coroutine) -> asyncio.Task:
     async def task() -> None:
-        with report(Exception):
-            with suppress(asyncio.CancelledError):
-                await coro
+        with report(Exception), suppress(asyncio.CancelledError):
+            await coro
     return asyncio.create_task(task())
 
 
@@ -336,7 +342,8 @@ async def prune_cache() -> None:
                     file.unlink()
                     freed += stats.st_size
 
-            if (mib := freed / 1024 / 1024) >= 0.1:
+            significant_size = 0.1
+            if (mib := freed / 1024 / 1024) >= significant_size:
                 log.info("Cache: freed %d MiB", round(mib, 1))
 
             await asyncio.sleep(300)
@@ -362,4 +369,4 @@ async def watch_files() -> None:
 
 @APP.on_event("shutdown")
 async def separate_log() -> None:
-    print("─" * shutil.get_terminal_size()[0]  )
+    print("─" * shutil.get_terminal_size()[0])

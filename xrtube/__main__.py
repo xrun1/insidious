@@ -9,6 +9,8 @@ Options:
 """
 
 import os
+from pathlib import Path
+
 import docopt
 import uvicorn
 
@@ -19,7 +21,7 @@ def run() -> None:
     args = docopt.docopt(__doc__.format(NAME=NAME), version=__version__)
     dir = args["--reload"]
     if dir:
-        dir = os.path.abspath(dir)  # We change the cwd later, "." would break
+        dir = Path(dir).resolve()  # We change the cwd later, "." would break
         os.putenv("UVICORN_RELOAD", dir)
 
     uvicorn.run(
@@ -27,7 +29,7 @@ def run() -> None:
         host = args["HOST"] or "127.0.0.1",
         port = int(args["PORT"] or 8000),
         reload = bool(dir),
-        reload_dirs = [dir] if dir else [],
+        reload_dirs = [str(dir)] if dir else [],
         timeout_graceful_shutdown = 0,
     )
 
