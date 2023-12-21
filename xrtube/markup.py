@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 from fastapi.datastructures import URL
 
 
-def build_youtube_markup_regex(symbol: str) -> re.Pattern:
+def build_youtube_markup_regex(symbol: str) -> re.Pattern[str]:
     sym = re.escape(symbol)
     return re.compile(rf"(?:^|(?<=\s)){sym}(.*?){sym}(?=\s|$)")
 
@@ -39,7 +39,7 @@ def yt_to_html(text: str, allow_markup: bool = True) -> str:
         parts[(id := uuid4())] = f'<a href="{url}">{pretty}</a>'
         return str(id)
 
-    def prepare_hashtag(match: re.Match) -> str:
+    def prepare_hashtag(match: re.Match[str]) -> str:
         parts[(id := uuid4())] = f"""<a
             href="/hashtag/{match[1]}"
             hx-get="/hashtag/{match[1]}"

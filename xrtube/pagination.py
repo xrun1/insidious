@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, ClassVar, Generic, Self, TypeVar
 from urllib.parse import quote
 from uuid import UUID, uuid4
 
+from typing_extensions import override
+
 from .utils import report
 from .ytdl import (
     NoDataReceived,
@@ -34,9 +36,11 @@ NON_WORD_CHARS = re.compile(r"\W+")
 
 
 class Extender(YoutubeClient):
-    def convert_url(self, url: URL) -> URL:
+    @override
+    @staticmethod
+    def convert_url(url: URL) -> URL:
         params = ("page", "pagination_id")
-        return super().convert_url(url).remove_query_params(params)
+        return YoutubeClient.convert_url(url).remove_query_params(params)
 
 
 @dataclass(slots=True)
@@ -104,7 +108,9 @@ class Pagination(Generic[T]):
     def get(cls, request: Request) -> Self:
         id = UUID(request.query_params.get("pagination_id") or str(uuid4()))
         page = max(1, int(request.query_params.get("page") or 1))
-        return cls._instances.get(id) or cls(request, id, page)
+        if id in cls._instances:
+            return cls._instances[id]
+        return cls(request, id, page)
 
 
 @dataclass(slots=True)

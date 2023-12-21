@@ -5,12 +5,24 @@ from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from enum import auto
 from functools import partial
-from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    Callable,
+    ClassVar,
+    Literal,
+    ParamSpec,
+    TypeAlias,
+    TypeVar,
+    overload,
+)
 from urllib.parse import parse_qs, quote
 
 import backoff
 from fastapi.datastructures import URL
 from pydantic import BaseModel, Field
+from typing_extensions import override
 from yt_dlp import YoutubeDL
 
 from .utils import AutoStrEnum
@@ -19,6 +31,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
 T = TypeVar("T")
+P = ParamSpec("P")
 
 
 class LiveStatus(AutoStrEnum):
@@ -143,7 +156,7 @@ class ShortEntry(Entry):
 
 class VideoEntry(Entry):
     entry_type: Literal["VideoEntry"]
-    views: int = Field(alias="view_count")
+    views: int | None = Field(alias="view_count")
     description: str | None
     duration: int | None
     upload_date: datetime | None = Field(alias="timestamp")
@@ -170,7 +183,7 @@ class VideoEntry(Entry):
 
 
 class PartialEntry(VideoEntry):
-    entry_type: Literal["PartialEntry"]
+    entry_type: Literal["PartialEntry"]  # type: ignore
     duration: int | None
     views: int | None = Field(alias="concurrent_view_count")
 
@@ -196,9 +209,15 @@ class Entries(Sequence[T], BaseModel):
     title: str = ""
     entries: list[T] = Field(default_factory=list)
 
-    def __getitem__(self, index: int) -> T:
+    @overload
+    def __getitem__(self, index: int) -> T: ...
+    @overload
+    def __getitem__(self, index: slice) -> list[T]: ...
+    @override
+    def __getitem__(self, index: int | slice) -> T | list[T]:
         return self.entries[index]
 
+    @override
     def __len__(self) -> int:
         return len(self.entries)
 
@@ -209,22 +228,22 @@ class SearchLink(BaseModel):
     title: str
 
 
-class Search(Entries[Entry | SearchLink]):
-    entries: list[Annotated[
-        ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry |
-        SearchLink,
-        Field(discriminator="entry_type"),
-    ]] = Field(default_factory=list)
+SearchEntry: TypeAlias = (
+    ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry |
+    SearchLink
+)
+class Search(Entries[SearchEntry]):
+    entries: list[Annotated[SearchEntry, Field(discriminator="entry_type")]] =\
+        Field(default_factory=list)
 
 
 class Video(VideoEntry):
-    entry_type: Literal["Video"] = "Video"
+    entry_type: Literal["Video"] = "Video"  # type: ignore
     url: str = Field(alias="original_url")
     width: int
     height: int
     aspect_ratio: float
     fps: float
-    upload_date: str
     formats: list[Format]
 
     @property
@@ -271,6 +290,7 @@ class YoutubeClient:
     _executor = ThreadPoolExecutor(max_workers=16)
 
     def __init__(self, page: int = 1, per_page: int = 12) -> None:
+        super().__init__()
         offset = per_page * (page - 1)
         self._ytdl = self._ytdl_instances.get((page, per_page)) or YoutubeDL({
             "quiet": True,
@@ -312,9 +332,11 @@ class YoutubeClient:
         return self._extend_entries(data)
 
     @classmethod
-    def _thread(cls, *args, **kwargs) -> asyncio.Future:
-        exe = cls._executor
-        return asyncio.get_event_loop().run_in_executor(exe, *args, **kwargs)
+    def _thread(
+        cls, fn: Callable[P, T], *args: P.args, **kwargs: P.kwargs,
+    ) -> asyncio.Future[T]:
+        e = cls._executor
+        return asyncio.get_event_loop().run_in_executor(e, fn, *args, **kwargs)
 
     @staticmethod
     def convert_url(url: URL) -> URL:

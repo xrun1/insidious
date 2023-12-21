@@ -25,6 +25,7 @@
             enableParallelBuild = true;
             nativeBuildInputs = [pyPkgs.poetry-core];
             propagatedBuildInputs = with pyPkgs; [
+                typing-extensions
                 fastapi
                 jinja2
                 pydantic

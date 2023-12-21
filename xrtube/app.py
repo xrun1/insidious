@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from importlib import resources
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Awaitable, Generic
 from urllib.parse import quote
 
 import appdirs
@@ -42,7 +42,7 @@ from xrtube.streaming import (
 
 from . import NAME
 from .markup import yt_to_html
-from .pagination import Pagination, RelatedPagination
+from .pagination import Pagination, RelatedPagination, T
 from .utils import httpx_to_fastapi_errors, report
 from .ytdl import (
     Channel,
@@ -54,7 +54,7 @@ from .ytdl import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Coroutine
+    from collections.abc import AsyncIterator
 
 log.basicConfig(level=log.INFO)
 log.getLogger("httpx").setLevel(log.WARNING)
@@ -62,21 +62,21 @@ log.getLogger("httpx").setLevel(log.WARNING)
 LOADER = jinja2.PackageLoader(NAME, "templates")
 ENV = jinja2.Environment(loader=LOADER, autoescape=True)
 TEMPLATES = Jinja2Templates(env=ENV)
-SCSS = resources.read_text(f"{NAME}.style", "main.scss")
-CSS = sass.compile(string=SCSS, indented=False)
-APP = FastAPI(default_response_class=HTMLResponse)
+scss = resources.read_text(f"{NAME}.style", "main.scss")
+css = sass.compile(string=scss, indented=False)
+app = FastAPI(default_response_class=HTMLResponse)
 
-APP.mount("/static", StaticFiles(packages=[(NAME, "static")]), name="static")
+app.mount("/static", StaticFiles(packages=[(NAME, "static")]), name="static")
 if os.getenv("UVICORN_RELOAD"):
     # Fix browser reusing cached files at reload despite disk modifications
-    StaticFiles.is_not_modified = lambda *_, **_kws: False
+    StaticFiles.is_not_modified = lambda *_, **_kws: False  # type: ignore
 
 HTTPX = httpx.AsyncClient(follow_redirects=True, headers={
     **YoutubeClient().headers,
     "Referer": "https://www.youtube.com/",
 })
 MANIFEST_URL = re.compile(r'(^|")(https?://[^"]+?)($|")', re.MULTILINE)
-DYING = False
+dying = False
 RELOAD_PAGE = asyncio.Event()
 RELOAD_STYLE = asyncio.Event()
 
@@ -86,10 +86,10 @@ os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
 
 
 @dataclass(slots=True)
-class Index:
+class Index(Generic[T]):
     request: Request
     title: str | None = None
-    pagination: Pagination | None = None
+    pagination: Pagination[T] | None = None
     group: Channel | Playlist | None = None
     video: Video | None = None
     get_related: URL | None = None
@@ -130,17 +130,17 @@ class Index:
         return re.sub(r", 0:00:00", "", text)  # e.g. 1 day, 0:00:00
 
 
-@APP.get("/")
+@app.get("/")
 async def home(request: Request) -> Response:
     return Index(request).response
 
 
-@APP.get("/style.css")
+@app.get("/style.css")
 async def style() -> Response:
-    return Response(content=CSS, media_type="text/css")
+    return Response(content=css, media_type="text/css")
 
 
-@APP.get("/results")
+@app.get("/results")
 async def results(request: Request, search_query: str = "") -> Response:
     if (pg := Pagination.get(request).advance()).needs_more_data:
         pg.add(await pg.extender.search(pg.extender.convert_url(request.url)))
@@ -148,7 +148,7 @@ async def results(request: Request, search_query: str = "") -> Response:
     return Index(request, search_query, pg).response
 
 
-@APP.get("/hashtag/{tag}")
+@app.get("/hashtag/{tag}")
 async def hashtag(request: Request, tag: str) -> Response:
     if (pg := Pagination.get(request).advance()).needs_more_data:
         url = pg.extender.convert_url(request.url)
@@ -157,14 +157,14 @@ async def hashtag(request: Request, tag: str) -> Response:
     return Index(request, f"#{tag}", pg).response
 
 
-@APP.get("/@{id}")
-@APP.get("/@{id}/{tab}")
-@APP.get("/c/{id}")
-@APP.get("/c/{id}/{tab}")
-@APP.get("/channel/{id}")
-@APP.get("/channel/{id}/{tab}")
-@APP.get("/user/{id}")
-@APP.get("/user/{id}/{tab}")
+@app.get("/@{id}")
+@app.get("/@{id}/{tab}")
+@app.get("/c/{id}")
+@app.get("/c/{id}/{tab}")
+@app.get("/channel/{id}")
+@app.get("/channel/{id}/{tab}")
+@app.get("/user/{id}")
+@app.get("/user/{id}/{tab}")
 async def channel(request: Request, tab: str = "featured") -> Response:
     group = None
 
@@ -185,9 +185,9 @@ async def channel(request: Request, tab: str = "featured") -> Response:
     return Index(request, group.title if group else "", pg, group).response
 
 
-@APP.get("/watch")
-@APP.get("/v/{v}")
-@APP.get("/shorts/{v}")
+@app.get("/watch")
+@app.get("/v/{v}")
+@app.get("/shorts/{v}")
 async def watch(request: Request) -> Response:
     client = YoutubeClient()
     video = await client.video(client.convert_url(request.url))
@@ -200,14 +200,14 @@ async def watch(request: Request) -> Response:
     return Index(request, video.title, video=video, get_related=rel).response
 
 
-@APP.get("/related")
+@app.get("/related")
 async def related(request: Request) -> Response:
     if (pg := RelatedPagination.get(request).advance()).needs_more_data:
         await pg.find()
     return Index(request, pagination=pg).response
 
 
-@APP.get("/generate_hls/master")
+@app.get("/generate_hls/master")
 async def make_master_m3u8(request: Request, video_url: str) -> Response:
     api = f"{request.base_url}generate_hls/variant?format_json=%s"
     # WARN: relying on the implicit caching mechanism here
@@ -215,7 +215,7 @@ async def make_master_m3u8(request: Request, video_url: str) -> Response:
     return Response(text, media_type="application/x-mpegURL")
 
 
-@APP.get("/generate_hls/variant")
+@app.get("/generate_hls/variant")
 async def make_variant_m3u8(request: Request, format_json: str) -> Response:
     format = Format.parse_raw(format_json)
     api = f"{request.base_url}proxy/get?url=%s"
@@ -231,13 +231,13 @@ async def make_variant_m3u8(request: Request, format_json: str) -> Response:
             return Response(text, media_type=HLS_MIME)
 
 
-@APP.get("/filter_hls/master")
+@app.get("/filter_hls/master")
 async def filter_master(content: str, height: int, fps: float) -> Response:
     modified = filter_master_playlist(content, height, fps)
     return Response(modified, media_type=HLS_MIME)
 
 
-@APP.get("/proxy/get", response_class=Response)
+@app.get("/proxy/get", response_class=Response)
 async def proxy(
     request: Request, url: str, background_tasks: BackgroundTasks,
 ) -> Response:
@@ -281,7 +281,7 @@ async def proxy(
     return StreamingResponse(iter(), 200, reply_headers, mime)
 
 
-@APP.get("/{v}", response_class=RedirectResponse)
+@app.get("/{v}", response_class=RedirectResponse)
 async def short_url_watch(request: Request, v: str) -> Response:
     if v == "favicon.ico":
         return Response(status_code=404)
@@ -290,10 +290,10 @@ async def short_url_watch(request: Request, v: str) -> Response:
     return RedirectResponse(url)
 
 
-@APP.websocket("/wait_reload")
+@app.websocket("/wait_reload")
 async def wait_reload(ws: WebSocket) -> None:
-    global DYING  # noqa: PLW0603
-    if DYING:
+    global dying  # noqa: PLW0603
+    if dying:
         return
 
     async def wait_page() -> None:
@@ -303,35 +303,35 @@ async def wait_reload(ws: WebSocket) -> None:
             await ws.send_text("page")
 
     async def wait_style() -> None:
-        global SCSS  # noqa: PLW0603
-        global CSS  # noqa: PLW0603
+        global scss  # noqa: PLW0603
+        global css  # noqa: PLW0603
         while True:
             await RELOAD_STYLE.wait()
             RELOAD_STYLE.clear()
-            SCSS = resources.read_text(f"{NAME}.style", "main.scss")
-            CSS = sass.compile(string=SCSS, indented=False)
+            scss = resources.read_text(f"{NAME}.style", "main.scss")
+            css = sass.compile(string=scss, indented=False)
             await ws.send_text("style")
 
     await ws.accept()
     with suppress(asyncio.CancelledError):
         await asyncio.gather(wait_page(), wait_style())
-    DYING = True
+    dying = True
 
 
-@APP.websocket("/wait_alive")
+@app.websocket("/wait_alive")
 async def wait_alive(ws: WebSocket) -> None:
-    if not DYING:
+    if not dying:
         await ws.accept()
 
 
-def create_background_job(coro: Coroutine) -> asyncio.Task:
+def create_background_job(coro: Awaitable[None]) -> asyncio.Task[None]:
     async def task() -> None:
         with report(Exception), suppress(asyncio.CancelledError):
             await coro
     return asyncio.create_task(task())
 
 
-@APP.on_event("startup")
+@app.on_event("startup")
 async def prune_cache() -> None:
     async def job() -> None:
         while True:
@@ -351,7 +351,7 @@ async def prune_cache() -> None:
     create_background_job(job())
 
 
-@APP.on_event("startup")
+@app.on_event("startup")
 async def watch_files() -> None:
     async def job() -> None:
         if not (dir := os.getenv("UVICORN_RELOAD")):
@@ -367,6 +367,6 @@ async def watch_files() -> None:
     create_background_job(job())
 
 
-@APP.on_event("shutdown")
+@app.on_event("shutdown")
 async def separate_log() -> None:
     print("─" * shutil.get_terminal_size()[0])

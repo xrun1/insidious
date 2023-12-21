@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import httpx
 from fastapi import HTTPException
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -14,6 +15,7 @@ if TYPE_CHECKING:
 
 class AutoStrEnum(Enum):
     """Enum where auto() value gives the name of the member"""
+    @override
     @staticmethod
     def _generate_next_value_(name: str, *_):
         return name
