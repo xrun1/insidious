@@ -1,29 +1,84 @@
-[tool.poetry]
-name = "xrtube"
-version = "0.1.0"
-description = ""
-authors = ["xrun1 <126838916+xrun1@users.noreply.github.com>"]
-license = "LGPL-3.0-or-later"
-readme = "README.md"
-
-[tool.poetry.scripts]
-xrtube = "xrtube.__main__:run"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-fastapi = "^=0.103.1"
-jinja2 = "^=3.1.2"
-pydantic = "^=1.10.12"
-uvicorn = "^=0.23.2"
-watchfiles = "^=0.21.0"
-libsass = "^=0.22.0"
-yt-dlp = "2023.11.16"
-docopt = "^=0.6.2"
-httpx = "^=0.25.0"
-backoff = "^=2.2.1"
-appdirs = "^=1.4.4"
-websockets = "^=11.0.3"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+    requires = ["poetry-core"]
+    build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+    name = "xrtube"
+    version = "0.1.0"
+    description = "Youtube front-end"
+    authors = ["xrun1 <126838916+xrun1@users.noreply.github.com>"]
+    license = "LGPL-3.0-or-later"
+    readme = "README.md"
+
+    [tool.poetry.scripts]
+        xrtube = "xrtube.__main__:run"
+
+    [tool.poetry.dependencies]
+        python = "^3.11"
+        fastapi = "^=0.103.1"
+        jinja2 = "^=3.1.2"
+        pydantic = "^=1.10.12"
+        uvicorn = "^=0.23.2"
+        watchfiles = "^=0.21.0"
+        libsass = "^=0.22.0"
+        yt-dlp = "2023.11.16"
+        docopt = "^=0.6.2"
+        httpx = "^=0.25.0"
+        backoff = "^=2.2.1"
+        appdirs = "^=1.4.4"
+        websockets = "^=11.0.3"
+
+    [tool.poetry.group.dev.dependencies]
+        ruff = "0.1.8"
+        pyright = "1.1.366"
+
+[tool.ruff]
+    line-length = 79
+    preview = true
+    show-source = true
+    target-version = "py311"
+    select = ["ALL"]
+    ignore = [
+        "A", "ANN", "C90", "CPY", "DTZ", "EM", "FBT", "T20", "TD", "FIX", "D1",
+        "D415", "D417", "E221", "E241", "E251", "E731", "N818", "PGH003",
+        "PLW2901", "S101", "SIM102", "TRY003", "UP031", "UP032",
+    ]
+
+    [tool.ruff.lint.flake8-pytest-style]
+        fixture-parentheses = false
+        mark-parentheses = false
+
+    [tool.ruff.lint.isort]
+        combine-as-imports = true
+
+    [tool.ruff.lint.pycodestyle]
+        max-doc-length = 79
+
+    [tool.ruff.lint.pydocstyle]
+        convention = "google"
+
+    [tool.ruff.lint.pylint]
+        max-args = 15
+        max-public-methods = 30
+        max-returns = 20
+
+[tool.pyright]
+    pythonVersion = "3.11"
+    typeCheckingMode = "strict"
+
+    reportMissingTypeStubs = "none"
+    reportUnknownArgumentType  = "none"
+    reportUnknownMemberType = "none"
+    reportUnknownParameterType = "none"
+    reportUnknownVariableType = "none"
+
+    # Handled by ruff
+    reportPrivateUsage = "none"
+    reportUnusedVariable = "none"
+    reportUnusedImport = "none"
+
+    reportImplicitOverride = "warning"
+    reportImportCycles = "warning"
+    reportMissingSuperCall = "warning"
+    reportUninitializedInstanceVariable = "warning"
+    reportUnnecessaryTypeIgnoreComment = "warning"
