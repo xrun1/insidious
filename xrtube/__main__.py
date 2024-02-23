@@ -25,7 +25,7 @@ def run() -> None:
         os.putenv("UVICORN_RELOAD", dir)
 
     uvicorn.run(
-        f"{NAME}.app:APP",
+        f"{NAME}.app:app",
         host = args["HOST"] or "127.0.0.1",
         port = int(args["PORT"] or 8000),
         reload = bool(dir),
