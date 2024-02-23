@@ -3,10 +3,10 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime  # noqa: TCH003
 from enum import auto
 from functools import partial
 from typing import (
-    TYPE_CHECKING,
     Annotated,
     Any,
     Callable,
@@ -26,9 +26,6 @@ from typing_extensions import override
 from yt_dlp import YoutubeDL
 
 from .utils import AutoStrEnum
-
-if TYPE_CHECKING:
-    from datetime import datetime
 
 T = TypeVar("T")
 P = ParamSpec("P")
