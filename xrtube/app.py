@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from importlib import resources
 from pathlib import Path
-from typing import TYPE_CHECKING, Awaitable, Generic
+from typing import TYPE_CHECKING, Generic
 from urllib.parse import quote
 
 import appdirs
@@ -54,7 +54,7 @@ from .ytdl import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncIterator, Awaitable
 
 log.basicConfig(level=log.INFO)
 log.getLogger("httpx").setLevel(log.WARNING)

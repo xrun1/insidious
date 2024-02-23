@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime  # noqa: TCH003
 from enum import auto
@@ -9,7 +9,6 @@ from functools import partial
 from typing import (
     Annotated,
     Any,
-    Callable,
     ClassVar,
     Literal,
     ParamSpec,
