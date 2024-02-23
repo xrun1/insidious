@@ -6,15 +6,18 @@
         <meta name=viewport content="width=device-width">
         <meta name=referrer content=strict-origin>
 
-        <link rel=stylesheet href=/static/modern-normalize.min.css>
+        <link
+            rel=stylesheet 
+            href="/npm/modern-normalize@^2.0.0/modern-normalize.min.css"
+        >
         <link rel=stylesheet href=/style.css>
 
-        <script src=/static/htmx.min.js></script>
+        <script src="/npm/htmx.org@^1.9.9/dist/htmx.min.js"></script>
         <script>htmx.config.defaultSwapStyle = "outerHTML"</script>
         <script src=/static/shared.js></script>
 
-        <script src="/static/xgplayer.js"></script>
-        <script src="/static/xgplayer-hlsjs.js"></script>
+        <script src="/npm/xgplayer@^2.31.8/browser/index.js"></script>
+        <script src="/npm/xgplayer-hls.js@^2.6.4/browser/index.js"></script>
     </head>
     <body>
         {% include "header.html.jinja" %}

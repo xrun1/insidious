@@ -67,6 +67,7 @@ css = sass.compile(string=scss, indented=False)
 app = FastAPI(default_response_class=HTMLResponse)
 
 app.mount("/static", StaticFiles(packages=[(NAME, "static")]), name="static")
+app.mount("/npm", StaticFiles(packages=[(NAME, "npm")]), name="npm")
 if os.getenv("UVICORN_RELOAD"):
     # Fix browser reusing cached files at reload despite disk modifications
     StaticFiles.is_not_modified = lambda *_, **_kws: False  # type: ignore
