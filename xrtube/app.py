@@ -60,7 +60,7 @@ log.basicConfig(level=log.INFO)
 log.getLogger("httpx").setLevel(log.WARNING)
 
 LOADER = jinja2.PackageLoader(NAME, "templates")
-ENV = jinja2.Environment(loader=LOADER, autoescape=True)
+ENV = jinja2.Environment(loader=LOADER, autoescape=jinja2.select_autoescape())
 TEMPLATES = Jinja2Templates(env=ENV)
 scss = resources.read_text(f"{NAME}.style", "main.scss")
 css = sass.compile(string=scss, indented=False)
