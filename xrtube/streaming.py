@@ -24,7 +24,10 @@ STREAM_TAGS_RE = re.compile(r"([A-Z\d_-]+=(?:\".*?\"|'.*?'|.*?))(?:,|$)")
 
 def master_playlist(api: str, video: Video) -> str:
     content = "".join(
-        "".join(_master_entry(api, f, *video.formats)) for f in video.formats
+        "".join(_master_entry(api, f, *video.formats))
+        for f in sorted(video.formats, key=lambda f:
+            (f.height or 480, f.fps or 30, f.average_bitrate or 0),
+        )
     ).rstrip()
     return f"#EXTM3U\n#EXT-X-VERSION:7\n{content}"
 
@@ -35,6 +38,37 @@ async def variant_playlist(uri: str, mp4_data: AsyncIterator[bytes]) -> str:
 
 def dash_variant_playlist(api: str, format: Format) -> str:
     return "".join(_dash_variant_playlist(api, format))
+
+
+def sort_master_playlist(content: str) -> str:
+    """Sort streams by (height, fps, bandwidth). Required for hls.js."""
+    lines = []
+    streams = []
+    is_stream = False
+
+    for line in content.splitlines():
+        if is_stream:
+            streams[-1] += "\n" + line
+            is_stream = False
+        elif line.startswith("#EXT-X-STREAM-INF:"):
+            streams.append(line)
+            is_stream = True
+        else:
+            lines.append(line)
+
+    def sort_key(stream: str) -> tuple[float, float, float]:
+        tag_line = stream.splitlines()[0]
+        parts = (p for p in STREAM_TAGS_RE.split(tag_line) if "=" in p)
+        tags = dict(t.split("=", maxsplit=1) for t in parts)
+
+        with report(ValueError, IndexError):
+            height = int(tags.get("RESOLUTION", "0,0").split("x")[1])
+            fps = float(tags.get("FRAME-RATE", "30"))
+            bw = int(tags.get("AVERAGE-BANDWIDTH") or tags.get("BANDWIDTH", 0))
+            return (height, fps, bw)
+
+    streams.sort(key=sort_key)
+    return "\n".join(lines + streams)
 
 
 def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:

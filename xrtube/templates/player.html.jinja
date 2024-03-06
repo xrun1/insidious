@@ -1,6 +1,73 @@
-<div id=player></div>
+<media-controller
+    {# autohide #}
+    noautoseektolive
+    style="aspect-ratio: {{video.aspect_ratio}}"
 
-{# Putting these attrs on <video-js> causes duplicate triggering #}
+    {% if video.duration %}
+        defaultduration={{video.duration}}
+    {% endif %}
+
+    {% if video.live_status == LiveStatus.is_live %}
+        defaultstreamtype=live
+    {% else %}
+        defaultstreamtype=on-demand
+    {% endif %}
+>
+    <hls-video id=hls slot=media src="{{video.manifest_url}}" type=hls></hls-video>
+
+    <media-poster-image slot=poster src="{{video.best_thumbnail.fixed_url}}">
+    </media-poster-image>
+
+    <media-loading-indicator slot=centered-chrome noautohide>
+    </media-loading-indicator>
+
+    <media-play-button slot=centered-chrome></media-play-button>
+
+    <!-- <media-preview-thumbnail -->
+
+    <media-playback-rate-menu
+        rates="0.5 0.75 1 1.25 1.5 1.75 2 2.5 3" hidden anchor=auto>
+        <div slot=header>Speed</div>
+    </media-playback-rate-menu>
+    <media-chrome-menu hidden anchor=quality-button id=qualities>
+        <div slot=header>Quality</div>
+        <template id=quality-option-template>
+            <media-chrome-menu-item
+                type=radio role=menuitemradio part="menu-item radio">
+                <span></span>
+            </media-chrome-menu-item>
+        </template>
+    </media-chrome-menu>
+    <media-audio-track-menu hidden anchor=auto>
+        <div slot=header>Audio track</div>
+    </media-audio-track-menu>
+    <media-captions-menu hidden anchor=auto>
+        <div slot=header>Subtitles</div>
+    </media-captions-menu>
+
+    <media-control-bar>
+        <media-play-button></media-play-button>
+        {% if video.live_status == LiveStatus.is_live %}
+            <media-live-button></media-live-button>
+        {% endif %}
+        <media-mute-button></media-mute-button>
+        <media-volume-range></media-volume-range>
+        <media-time-range></media-time-range>
+        <media-time-display showduration></media-time-display>
+        <media-playback-rate-menu-button></media-playback-rate-menu-button>
+        <media-rendition-menu-button id=quality-button invoketarget=qualities>
+            <span slot=icon id=quality-indicator>Auto</span>
+        </media-rendition-menu-button>
+        <media-audio-track-menu-button></media-audio-track-menu-button>
+        <media-captions-menu-button></media-captions-menu-button>
+        <media-airplay-button></media-airplay-button>
+        <media-cast-button></media-cast-button>
+        <media-pip-button mediapipunavailable></media-pip-button>
+        <media-fullscreen-button></media-fullscreen-button>
+    </media-control-bar>
+</media-controller>
+
+{# Putting these attrs on the video itself causes duplicate triggering #}
 <div
     hx-get="{{get_related}}"
     hx-trigger=load
@@ -8,88 +75,87 @@
     hx-target=#explore-column
 ></div>
 
-<script>
-    function createPlayer() {
-        const maxBandwidthRemembered = 2048 * 8192  // 2MiB/s in bits
-        const Hls = window.HlsJsPlayer.HlsJs
-        const player = new window.HlsJsPlayer({
-            id: "player",
-            url: "{{video.manifest_url}}",
-            poster: "{{video.best_thumbnail.fixed_url}}",
-            fluid: true,
-            volume: 1.0,
-            playsinline: true,
-            playbackRates: [3, 2.5, 2, 1.75, 1.5, 1.25, 1, 0.75, 0.5],
-            screenShot: true,
-            download: true,
-            pip: true,
-            keyShortcut: "on",
-            hlsOpts: {
-                <!-- debug: true, -->
-                autoStartLoad: true,
-                maxBufferSize: 128 * 1024 * 1024,  // 128MiB in bytes
-                maxFragLookUpTolerance: 0.5,
-                maxMaxBufferLength: 60 * 30,
-                startFragPrefetch: true,
-                progressive: true,
-                stretchShortVideoTrack: true,
-                abrEwmaDefaultEstimate: getCookie("bandwidth", 50 * 8192),
-                abrEwmaDefaultEstimateMax: maxBandwidthRemembered,
-                abrBandWidthUpFactor: 0.8,
-                abrMaxWithRealBitrate: true,
-                maxLoadingDelay: 1,
-                capLevelToPlayerSize: {{video["fps"]}} < 40,
-                capLevelOnFPSDrop: true,
-            },
-        })
+<script type=module>
+    import { Hls } from "/npm/hls-video-element@1.1.3/+esm"
 
-        function levelFps(level) {
-            return parseFloat(level.attrs["FRAME-RATE"] || "30")
-        }
+    const hls = document.getElementById("hls").api
+    const qualities = document.getElementById("qualities")
 
-        function levelName(level) {
-            const height = level.height
-            const fps = levelFps(level)
-            return `${height}p${fps > 23 && fps < 31 ? "" : Math.round(fps)}`
-        }
-
-        player.hls.on(Hls.Events.MANIFEST_LOADED, (event, data) => {
-            const auto = {url: "{{video.manifest_url}}", name: "Auto"}
-            const names = new Set()
-            const manual = data.levels.map(lvl => {
-                const content = data.networkDetails.responseText
-                const height = lvl.height
-                const fps = levelFps(lvl)
-                const params = new URLSearchParams({content, height, fps})
-                const url = `/filter_hls/master?${params}`
-
-                const name = levelName(lvl)
-                if (names.has(name)) return null
-                names.add(name)
-                return {url, name}
-            }).filter(Boolean)
-            player.emit("resourceReady", [auto, ...manual])
-        })
-
-        player.hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
-            const max = maxBandwidthRemembered
-            setCookie("bandwidth", Math.min(max, player.hls.bandwidthEstimate))
-        })
-
-        let lastQuality = ""
-        player.hls.on(Hls.Events.FRAG_CHANGED, (event, data) => {
-            if (! player.getCurrentDefinition().name.startsWith("Auto")) return
-            const name = levelName(player.hls.levels[data.frag.level])
-            if (name !== lastQuality) console.log("Auto quality:", name)
-            lastQuality = name
-        })
-
-        player.hls.on(Hls.Events.FPS_DROP, (event, data) => {
-            if (data.currentDropped) console.log(event, data)
-        })
-
-        return player
+    function levelFps(level) {
+        return parseFloat(level.attrs["FRAME-RATE"] || "30")
     }
-    if (window.hlsPlayer) window.hlsPlayer.destroy(true)
-    window.hlsPlayer = createPlayer()
+
+    function levelName(level) {
+        const height = level.height
+        const fps = levelFps(level)
+        return `${height}p${fps > 23 && fps < 31 ? "" : Math.round(fps)}`
+    }
+
+    function createOption(name, minBitrate, maxLevel, checked=false) {
+        const option = document.querySelector("#quality-option-template")
+            .content.cloneNode(true).querySelector("media-chrome-menu-item")
+
+        option.value = name
+        option.ariaChecked = checked
+        option.setAttribute("min-bitrate", minBitrate)
+        option.setAttribute("max-level", maxLevel)
+        option.querySelector("span").textContent = name
+        return option
+    }
+
+    function intAttr(element, attr) {
+        return parseInt(element.attributes[attr].value, 10)
+    }
+
+    function onLevelsUpdate(event, data) {
+        const levels = data.levels
+        console.log("levels:", levels)
+        let opts = Object.fromEntries(levels.map(lv => [levelName(lv), lv]))
+
+        opts = Object.values(opts).reverse().map(lv => createOption(
+            levelName(lv),
+            levels.reduce((a, b) =>
+                a.height === lv.height &&
+                levelFps(a) === levelFps(lv) &&
+                a.bitrate < b.bitrate ? a : b
+            ).bitrate,
+            levels.indexOf(levels.filter(other =>
+                other.height === lv.height && levelFps(other) === levelFps(lv)
+            ).slice(-1)[0]),
+        ))
+        opts.push(createOption("Auto", 0, -1, true))
+        const header = qualities.querySelector("[slot=header]")
+        while (header.nextSibling) header.nextSibling.remove()
+        for (const opt of opts) qualities.appendChild(opt)
+    }
+
+    function setQuality() {
+        const opt = document.querySelector("#qualities [aria-checked=true]")
+        if (! opt) return
+        hls.config.minAutoBitrate = intAttr(opt, "min-bitrate") - 1
+        hls.autoLevelCapping = intAttr(opt, "max-level")
+        hls.streamController.nextLevelSwitch()
+        document.querySelector("#quality-indicator").textContent = opt.value
+        //console.log(hls.config.minAutoBitrate, hls.autoLevelCapping)
+    }
+
+    hls.on(Hls.Events.MANIFEST_LOADED, onLevelsUpdate)
+    hls.on(Hls.Events.LEVELS_UPDATED, onLevelsUpdate)
+
+    let refireCooldownTimerId
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mut => {
+            if (! mut.target.ariaChecked) return
+            if (mut.oldValue == mut.target.ariaChecked) return
+            clearTimeout(refireCooldownTimerId)
+            refireCooldownTimerId = setTimeout(setQuality, 100)
+        })
+    })
+    observer.observe(qualities, {
+        attributes: true,
+        childList: true,
+        subtree: true,
+        attributeFilter: ["aria-checked"],
+        attributeOldValue: true,
+    })
 </script>

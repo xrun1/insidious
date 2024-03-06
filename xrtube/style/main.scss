@@ -151,6 +151,59 @@ img {
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
 }
+
+media-controller {
+    display: block;
+
+    &:not([mediahasplayed]), &[mediaended] {
+        > media-loading-indicator {
+            --media-control-display: none;
+        }
+    }
+
+    &[mediahasplayed]:not([mediaended]) {
+        > media-play-button[slot=centered-chrome] {
+            --media-control-display: none;
+        }
+    }
+
+    & media-airplay-button[mediaairplayunavailable],
+    & media-cast-button[mediacastunavailable],
+    & media-pip-button[mediapipunavailable] {
+        --media-control-display: none;
+    }
+
+    & media-airplay-button[mediaisairplaying],
+    & media-pip-button[mediaispip],
+    & media-cast-button[mediaiscasting] {
+        --media-primary-color: cyan;
+    }
+
+    & [part~="select-indicator"] {
+        display: var(--media-option-select-indicator-display);
+        visibility: hidden;
+    }
+    & [aria-selected="true"] > [part~="select-indicator"] {
+        visibility: visible;
+    }
+    & [part~="indicator"] {
+        fill: var(--media-option-indicator-fill, var(--media-icon-color, var(--media-primary-color, rgb(238, 238, 238))));
+        height: var(--media-option-indicator-height, 1.25em);
+        vertical-align: var(--media-option-indicator-vertical-align, text-top);
+    }
+    media-chrome-listbox {
+        user-select: none;
+    }
+    media-chrome-option > span {
+        margin-inline: 0.5ch;
+    }
+
+    [slot=header] {
+        font-weight: 500;
+        padding: 0.4em 0.8em;
+    }
+}
+
 #player {
     overflow-wrap: initial;  // Fix timestamp tooltip on progress bar hover
 

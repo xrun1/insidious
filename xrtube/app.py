@@ -6,12 +6,13 @@ import os
 import re
 import shutil
 import time
+from collections.abc import Awaitable, Callable
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import timedelta
 from importlib import resources
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic
+from typing import TYPE_CHECKING, Generic, TypeAlias
 from urllib.parse import quote
 
 import appdirs
@@ -37,6 +38,7 @@ from xrtube.streaming import (
     dash_variant_playlist,
     filter_master_playlist,
     master_playlist,
+    sort_master_playlist,
     variant_playlist,
 )
 
@@ -54,10 +56,12 @@ from .ytdl import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Awaitable
+    from collections.abc import AsyncIterator
 
 log.basicConfig(level=log.INFO)
 log.getLogger("httpx").setLevel(log.WARNING)
+
+CallNext: TypeAlias = Callable[[Request], Awaitable[Response]]
 
 LOADER = jinja2.PackageLoader(NAME, "templates")
 ENV = jinja2.Environment(loader=LOADER, autoescape=jinja2.select_autoescape())
@@ -129,6 +133,17 @@ class Index(Generic[T]):
         wild = "" if seconds < 60 else "*"  # noqa: PLR2004
         text = re.sub(rf"^0:0{wild}", "", str(timedelta(seconds=seconds)))
         return re.sub(r", 0:00:00", "", text)  # e.g. 1 day, 0:00:00
+
+
+@app.middleware("http")
+async def fix_esm_mime(request: Request, call_next: CallNext) -> Response:
+    # Chrome refuses to load ESM modules with the text/plain MIME that
+    # FastAPI infers from "+esm" filenames
+    response = await call_next(request)
+    path = request.url.path
+    if path.startswith("/npm/") and path.endswith("/+esm"):
+        response.headers["content-type"] = "application/javascript"
+    return response
 
 
 @app.get("/")
@@ -242,14 +257,14 @@ async def filter_master(content: str, height: int, fps: float) -> Response:
 async def proxy(
     request: Request, url: str, background_tasks: BackgroundTasks,
 ) -> Response:
-    """GET request runner for browser to bypass the Same-Origin Policy"""
+    """GET request runner, fix some content and bypass Same-Origin Policy."""
 
     def patch_hls_manifest(data: str) -> str:
-        """Proxy all googlevideo URLs in HLS playlists to defeat SOP."""
-        return MANIFEST_URL.sub(
+        """Sort variant streams and proxy all googlevideo URLs to bypass SOP"""
+        return sort_master_playlist(MANIFEST_URL.sub(
             lambda m: m[1] + request.url.path + "?url=" + quote(m[2]) + m[3],
             data,
-            )
+        ))
 
     headers = {}
     if "Range" in request.headers:
