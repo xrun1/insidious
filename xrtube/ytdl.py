@@ -200,7 +200,7 @@ class ChannelEntry(Entry):
     uploader: str
     uploader_id: str
     uploader_url: str
-    followers: int = Field(alias="channel_follower_count")
+    followers: int | None = Field(alias="channel_follower_count")
 
     @property
     def shortest_url(self) -> str | None:
@@ -338,7 +338,7 @@ class Channel(Search, HasThumbnails):
     title: str = Field(alias="channel")
     description: str
     tab: str = Field(alias="webpage_url_basename", default="featured")
-    followers: int = Field(alias="channel_follower_count")
+    followers: int | None = Field(alias="channel_follower_count")
 
     def tab_url(self, from_url: URL, to_tab: str) -> URL:
         path = from_url.path.rstrip("/")
