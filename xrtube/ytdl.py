@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime  # noqa: TCH003
 from enum import auto
@@ -109,6 +109,8 @@ class Format(BaseModel):
     manifest_url: str | None
     dash_fragments_base_url: str | None = Field(alias="fragment_base_url")
     fragments: list[Fragments] = Field(alias="fragments", default_factory=list)
+    rows: int | None = None
+    columns: int | None = None
     filesize: int | None
     container: str | None
     video_codec: str | None = Field(alias="vcodec")
@@ -248,6 +250,51 @@ class Video(VideoEntry):
             if fmt.manifest_url and not fmt.has_dash:
                 return "/proxy/get?url=%s" % quote(fmt.manifest_url)
         return "/generate_hls/master?video_url=%s" % quote(self.url)
+
+    @property
+    def storyboard_url(self) -> str:
+        return "/storyboard?video_url=%s" % quote(self.url)
+
+    @property
+    def webvtt_storyboard(self) -> str:
+        return "\n".join(self._webvtt_storyboard())
+
+    def _webvtt_storyboard(self) -> Iterator[str]:
+        yield "WEBVTT"
+
+        variants = [f for f in self.formats if f.name == "storyboard"]
+        sb = max(variants, key=lambda f: f.height or 0, default=None)
+        if not sb or not sb.fragments:
+            return
+
+        frag_duration = sb.fragments[0].duration or 0
+        sec_per_thumb = frag_duration / (sb.columns or 1) / (sb.rows or 1)
+        max_sec = sum(f.duration or 0 for f in sb.fragments)
+        now_sec = 0
+
+        def format_time(s: float) -> str:
+            h = s // 3600
+            s -= h * 3600
+            m = s // 60
+            s -= m * 60
+            return f"{h:02.0f}:{m:02.0f}:{s:06.3f}"  # e.g. 00:03:22.067
+
+        for frag in sb.fragments:
+            for row in range(sb.rows or 0):
+                for col in range(sb.columns or 0):
+                    end = now_sec + sec_per_thumb
+                    yield format_time(now_sec) + " --> " + format_time(end)
+
+                    xywh = ",".join(map(str, (
+                        (sb.width or 0) * col,
+                        (sb.height or 0) * row,
+                        sb.width or 0,
+                        sb.height or 0,
+                    )))
+                    yield f"/proxy/get?url={quote(frag.url or '')}#xywh={xywh}"
+
+                    if (now_sec := end) >= max_sec:
+                        return
 
 
 class Playlist(Entries[ShortEntry | VideoEntry | PartialEntry]):

@@ -13,7 +13,11 @@
         defaultstreamtype=on-demand
     {% endif %}
 >
-    <hls-video id=hls slot=media src="{{video.manifest_url}}" type=hls></hls-video>
+    <hls-video id=hls slot=media src="{{video.manifest_url}}" type=hls>
+        <track label=thumbnails default kind=metadata
+            src="{{video.storyboard_url}}"
+        >
+    </hls-video>
 
     <media-poster-image slot=poster src="{{video.best_thumbnail.fixed_url}}">
     </media-poster-image>
@@ -22,8 +26,6 @@
     </media-loading-indicator>
 
     <media-play-button slot=centered-chrome></media-play-button>
-
-    <!-- <media-preview-thumbnail -->
 
     <media-playback-rate-menu
         rates="0.5 0.75 1 1.25 1.5 1.75 2 2.5 3" hidden anchor=auto>

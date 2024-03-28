@@ -216,6 +216,13 @@ async def watch(request: Request) -> Response:
     return Index(request, video.title, video=video, get_related=rel).response
 
 
+@app.get("/storyboard")
+async def storyboard(video_url: str) -> Response:
+    # WARN: relying on the implicit caching mechanism here
+    text = (await YoutubeClient().video(video_url)).webvtt_storyboard
+    return Response(text, media_type="text/vtt")
+
+
 @app.get("/related")
 async def related(request: Request) -> Response:
     if (pg := RelatedPagination.get(request).advance()).needs_more_data:
