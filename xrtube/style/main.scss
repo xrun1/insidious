@@ -152,6 +152,7 @@ img {
 
 media-controller {
     display: block;
+    user-select: none;
 
     &:not([mediahasplayed]), &[mediaended] {
         > media-loading-indicator {
