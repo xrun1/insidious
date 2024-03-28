@@ -60,7 +60,9 @@
         <media-rendition-menu-button id=quality-button invoketarget=qualities>
             <span slot=icon id=quality-indicator>Auto</span>
         </media-rendition-menu-button>
-        <media-audio-track-menu-button id=audio-button invoketarget=audio-tracks>
+        <media-audio-track-menu-button
+            id=audio-button invoketarget=audio-tracks class=no-choice
+        >
         </media-audio-track-menu-button>
         <media-captions-menu-button></media-captions-menu-button>
         <media-airplay-button></media-airplay-button>
@@ -83,7 +85,9 @@
 
     const hls = document.getElementById("hls").api
     const qualities = document.getElementById("qualities")
+    const qualityButton = document.getElementById("quality-button")
     const audioTracks = document.getElementById("audio-tracks")
+    const audioButton = document.getElementById("audio-button")
 
     function levelFps(level) {
         return parseFloat(level.attrs["FRAME-RATE"] || "30")
@@ -116,6 +120,10 @@
         return parseInt(element.attributes[attr].value, 10)
     }
 
+    function haveClass(el, cls, haveIt) {
+        haveIt ? el.classList.add(cls) : el.classList.remove(cls)
+    }
+
     function onLevelsUpdate(event, data) {
         const levels = data.levels
         console.log("levels:", levels)
@@ -136,6 +144,7 @@
         const header = qualities.querySelector("[slot=header]")
         while (header.nextSibling) header.nextSibling.remove()
         for (const opt of opts) qualities.appendChild(opt)
+        haveClass(qualityButton, "no-choice", opts.length < 2)
     }
 
     function onAudioTracksUpdate() {
@@ -145,6 +154,7 @@
         ))
         while (header.nextSibling) header.nextSibling.remove()
         for (const opt of opts) audioTracks.appendChild(opt)
+        haveClass(audioButton, "no-choice", opts.length < 2)
     }
 
     function setQuality() {
@@ -161,8 +171,7 @@
         const opt = document.querySelector("#audio-tracks [aria-checked=true]")
         if (! opt) return
         hls.audioTrack = opt.value
-        const button = document.querySelector("#audio-button")
-        button.mediaAudioTrackEnabled = opt.value
+        audioButton.mediaAudioTrackEnabled = opt.value
     }
 
     function observeChecked(menu, onChange) {
