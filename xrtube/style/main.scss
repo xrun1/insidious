@@ -179,7 +179,7 @@ media-controller {
         --media-primary-color: cyan;
     }
 
-    & .no-choice {
+    & .no-choice, media-captions-menu-button:not([mediasubtitleslist]) {
         --media-control-display: none;
     }
 }
