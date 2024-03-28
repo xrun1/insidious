@@ -247,6 +247,7 @@ class Video(VideoEntry):
     height: int
     aspect_ratio: float
     fps: float
+    channel_followers: int = Field(alias="channel_follower_count")
     formats: list[Format]
     chapters: list[Chapter] | None = None
 

@@ -6,6 +6,25 @@
 
 {% if video %}
     <h1>{{youtube_format(video.title, allow_markup=False)}}</h1>
+
+    {% set channel_url = local_url(video.shortest_channel_url) %}
+    <a class=video-author href="{{channel_url}}">
+        <div
+            class=avatar-info
+            hx-get="{{channel_url}}"
+            hx-trigger=load
+            hx-select=".avatar-info"
+            hx-target=this
+            hx-swap="innerHTML ignoreTitle:true"
+            hx-push-url=false
+        >
+            <div class=avatar></div>
+            <div class=info>
+                <h1>{{video.channel_name}}</h1>
+                <p>&nbsp;<br>&nbsp;</p>
+            </div>
+        </div>
+    </a>
 {% endif %}
 
 {% if video.description %}
