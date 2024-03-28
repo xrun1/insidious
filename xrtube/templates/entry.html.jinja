@@ -1,18 +1,18 @@
-{%- macro link_attrs(url=None) %}
-    {% set url = url or entry.shortest_url or entry.url %}
-    {% set target = "#explore-column" %}
-    {% if entry.entry_type in ("VideoEntry", "ShortEntry") %}
-        {% set target = "#video-column" %}
-    {% endif %}
-    href="{{local_url(url)}}"
-    hx-get="{{local_url(url)}}"
-    hx-select={{target}}
-    hx-target={{target}}
-    hx-push-url=true
-{%- endmacro %} 
+{% set url = local_url(entry.shortest_url or entry.url) %}
+{% set target = "#explore-column" %}
+{% if entry.entry_type in ("VideoEntry", "ShortEntry") %}
+    {% set target = "#video-column" %}
+{% endif %}
 
 <div class=entry>
-    <a {{link_attrs()}} class=thumbnail>
+    <a
+        class=thumbnail
+        href="{{url}}"
+        hx-get="{{url}}"
+        hx-select="{{target}}"
+        hx-target="{{target}}"
+        hx-push-url=true
+    >
         <div>
             <img sizes=10rem srcset="{{entry.thumbnails_srcset}}">
 
@@ -27,7 +27,7 @@
     </a>
 
     <div class=info>
-        <a class="title elide" title="{{entry.title}}" {{link_attrs()}}>
+        <a class="title elide" title="{{entry.title}}" href={{url}}>
             {{entry.title}}
         </a>
 
@@ -35,8 +35,8 @@
             <div class="channel elide">
                 <span class=icon>👤{{no_emoji}}</span>
                 <a
-                    {{link_attrs(entry.shortest_channel_url)}}"
                     title="{{entry.channel_name}}"
+                    href="{{local_url(entry.shortest_channel_url)}}"
                 >{{entry.channel_name}}</a>
             </div>
         {% endif %}
