@@ -107,6 +107,8 @@ img {
         display: flex;
         flex-flow: row wrap;
         gap: var(--gap-small);
+        width: 100%;
+        justify-content: center;
     }
 }
 
