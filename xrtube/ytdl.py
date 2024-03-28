@@ -414,6 +414,7 @@ class YoutubeClient:
     def _extend_entries(data: dict[str, Any]) -> dict[str, Any]:
         def extend(entry: dict[str, Any]) -> dict[str, Any]:
             data = {}
+            tabs = [f"/{name}?" for name in Channel.tabs]
             if "/shorts/" in entry["url"]:
                 etype = ShortEntry.__name__
             elif "/channel/" in entry["url"]:
@@ -422,7 +423,7 @@ class YoutubeClient:
                 etype = PlaylistEntry.__name__
                 data["id"] = entry.get("id") or \
                     parse_qs(URL(entry["url"]).query)["list"][-1]
-            elif "/videos?" in entry["url"]:
+            elif any(name in entry["url"] for name in tabs):
                 etype = SearchLink.__name__
             elif "concurrent_view_count" in entry:
                 etype = PartialEntry.__name__
