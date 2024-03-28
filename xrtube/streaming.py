@@ -88,13 +88,15 @@ def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
     if not format.vcodec:
         yield "#EXT-X-MEDIA:"
         yield "TYPE=AUDIO,"
-        yield 'NAME="%s",' % (format.name or "default").capitalize()
+        yield 'NAME="%s",' % (format.name or "default").capitalize().replace(
+            ", drc", ", compressed dynamics",
+        )
         yield 'GROUP-ID="%s",' % format.id.removesuffix("-drc")
         if format.audio_channels:
             yield 'CHANNELS="%d",' % format.audio_channels
         if format.language:
             yield 'LANGUAGE="%s",' % format.language
-        if not format.id.endswith("-drc"):  # Dynamic Range Compression
+        if not format.id.endswith("-drc"):
             yield "DEFAULT=YES,"
             yield "AUTOSELECT=YES,"
         yield 'URI="%s"\n' % (api % quote(format.json(by_alias=True)))
