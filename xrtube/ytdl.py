@@ -140,6 +140,11 @@ class Format(BaseModel):
         return self.audio_codec or None
 
 
+class Chapter(BaseModel):
+    start_sec: float = Field(alias="start_time")
+    end_sec: float = Field(alias="end_time")
+    title: str
+
 
 class Entry(HasThumbnails):
     id: str
@@ -243,6 +248,7 @@ class Video(VideoEntry):
     aspect_ratio: float
     fps: float
     formats: list[Format]
+    chapters: list[Chapter] | None = None
 
     @property
     def manifest_url(self) -> str:
@@ -256,8 +262,34 @@ class Video(VideoEntry):
         return "/storyboard?video_url=%s" % quote(self.url)
 
     @property
+    def chapters_url(self) -> str:
+        return "/chapters?video_url=%s" % quote(self.url)
+
+    @property
     def webvtt_storyboard(self) -> str:
         return "\n".join(self._webvtt_storyboard())
+
+    @property
+    def webvtt_chapters(self) -> str:
+        return "\n".join(self._webvtt_chapters())
+
+    @staticmethod
+    def _vtt_time(s: float) -> str:
+        h = s // 3600
+        s -= h * 3600
+        m = s // 60
+        s -= m * 60
+        return f"{h:02.0f}:{m:02.0f}:{s:06.3f}"  # e.g. 00:03:22.067
+
+    def _webvtt_chapters(self) -> Iterator[str]:
+        yield "WEBVTT"
+
+        for i, chapter in enumerate(self.chapters or [], 1):
+            end = self._vtt_time(chapter.end_sec)
+            yield ""
+            yield str(i)
+            yield self._vtt_time(chapter.start_sec) + " --> " + end
+            yield chapter.title
 
     def _webvtt_storyboard(self) -> Iterator[str]:
         yield "WEBVTT"
@@ -270,20 +302,13 @@ class Video(VideoEntry):
         frag_duration = sb.fragments[0].duration or 0
         sec_per_thumb = frag_duration / (sb.columns or 1) / (sb.rows or 1)
         max_sec = sum(f.duration or 0 for f in sb.fragments)
-        now_sec = 0
-
-        def format_time(s: float) -> str:
-            h = s // 3600
-            s -= h * 3600
-            m = s // 60
-            s -= m * 60
-            return f"{h:02.0f}:{m:02.0f}:{s:06.3f}"  # e.g. 00:03:22.067
+        now = 0
 
         for frag in sb.fragments:
             for row in range(sb.rows or 0):
                 for col in range(sb.columns or 0):
-                    end = now_sec + sec_per_thumb
-                    yield format_time(now_sec) + " --> " + format_time(end)
+                    end = now + sec_per_thumb
+                    yield self._vtt_time(now) + " --> " + self._vtt_time(end)
 
                     xywh = ",".join(map(str, (
                         (sb.width or 0) * col,
@@ -293,7 +318,7 @@ class Video(VideoEntry):
                     )))
                     yield f"/proxy/get?url={quote(frag.url or '')}#xywh={xywh}"
 
-                    if (now_sec := end) >= max_sec:
+                    if (now := end) >= max_sec:
                         return
 
 

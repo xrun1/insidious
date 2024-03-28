@@ -223,6 +223,13 @@ async def storyboard(video_url: str) -> Response:
     return Response(text, media_type="text/vtt")
 
 
+@app.get("/chapters")
+async def chapters(video_url: str) -> Response:
+    # WARN: relying on the implicit caching mechanism here
+    text = (await YoutubeClient().video(video_url)).webvtt_chapters
+    return Response(text, media_type="text/vtt")
+
+
 @app.get("/related")
 async def related(request: Request) -> Response:
     if (pg := RelatedPagination.get(request).advance()).needs_more_data:

@@ -14,6 +14,7 @@
     {% endif %}
 >
     <hls-video id=hls slot=media src="{{video.manifest_url}}" type=hls>
+        <track default kind=chapters src="{{video.chapters_url}}">
         <track label=thumbnails default kind=metadata
             src="{{video.storyboard_url}}"
         >
