@@ -175,7 +175,9 @@ media-controller {
 
     & media-airplay-button[mediaisairplaying],
     & media-pip-button[mediaispip],
-    & media-cast-button[mediaiscasting] {
+    & media-cast-button[mediaiscasting],
+    & media-captions-menu-button[mediasubtitlesshowing]
+    {
         --media-primary-color: cyan;
     }
 
