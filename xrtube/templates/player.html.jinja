@@ -204,4 +204,22 @@
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, onAudioTracksUpdate)
     observeChecked(qualities, setQuality)
     observeChecked(audioTracks, setAudioTrack)
+
+    // HACK: workaround for Vieb's follow mode algorithm landing on 
+    //  uninteractive shadow root elements like <svg> and not being able to
+    //  associate them to the clickable parent elements
+    document.querySelectorAll(
+        "media-controller > media-play-button, " +
+        "media-control-bar > " +
+        ":not(:is(media-time-range, media-volume-range)):not(:has([slot]))"
+    ).forEach(control => { 
+        const el = document.createElement("button")
+        el.style.position = "absolute"
+        el.style.width = "100%"
+        el.style.height = "100%"
+        el.style.cursor = "pointer"
+        el.style.opacity = 0
+        control.style.position = "relative"
+        control.shadowRoot.appendChild(el)
+    })
 </script>
