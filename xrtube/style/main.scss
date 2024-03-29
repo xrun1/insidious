@@ -378,7 +378,7 @@ media-controller {
         display: flex;
         flex-flow: row wrap;
         justify-content: space-evenly;
-        gap: calc(var(--gap) / 2);
+        gap: var(--gap-small);
     }
 }
 @media all and (max-width: 20rem) {  // var(--side)
