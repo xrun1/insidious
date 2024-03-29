@@ -49,8 +49,10 @@ from .utils import httpx_to_fastapi_errors, report
 from .ytdl import (
     Channel,
     Format,
+    HasThumbnails,
     LiveStatus,
     Playlist,
+    PlaylistEntry,
     Search,
     Video,
     YoutubeClient,
@@ -237,6 +239,18 @@ async def load_playlist_entry(request: Request, url: str) -> Response:
 async def load_search_link(request: Request, url: str, title: str) -> Response:
     search = await YoutubeClient().search(url)
     search.title = title
+    no_thumb = [
+        e for e in search
+        if not isinstance(e, HasThumbnails) or not e.thumbnails
+    ]
+    search.entries = [e for e in search.entries if e not in no_thumb]
+
+    if no_thumb and not search:
+        with report(StopIteration):
+            plentry = next(e for e in no_thumb if isinstance(e, PlaylistEntry))
+            pl = await YoutubeClient().playlist(plentry.url)
+            search.entries = [pl]
+
     return SearchLinkLoad(request, None, search).response
 
 
