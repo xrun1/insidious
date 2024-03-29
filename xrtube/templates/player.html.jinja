@@ -200,6 +200,17 @@
         })
     }
 
+    function seekVideo(time) {
+        // Accept strings like "1h03m12s", "4m22s" or just second numbers.
+        // NOTE: also called when clicking on comment/description timestamps
+        if (isNaN(time)) {
+            const [h, m, s] = [0, 0, ...time.split(/[a-z]+/i).filter(x => x)]
+                .slice(-3).map(x => parseInt(x, 10))
+            time = h * 3600 + m * 60 + s
+        }
+        media.currentTime = time
+    }
+
     hls.on(Hls.Events.MANIFEST_LOADED, onLevelsUpdate)
     hls.on(Hls.Events.LEVELS_UPDATED, onLevelsUpdate)
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, onAudioTracksUpdate)
@@ -209,13 +220,20 @@
     media.addEventListener("loadedmetadata", () => {
         const params = new URL(window.location.href).searchParams
         let start = params.get("start") || params.get("t")
-        if (! start) return
-        if (isNaN(start)) {
-            const [h, m, s] = [0, 0, ...start.split(/[a-z]+/i).filter(x => x)]
-                .slice(-3).map(x => parseInt(x, 10))
-            start = h * 3600 + m * 60 + s
+        if (start) seekVideo(start)
+    })
+
+    document.querySelectorAll("a[hms-time]").forEach(a => {
+        const url = new URL(window.location.href)
+        const hms = a.getAttribute("hms-time")
+        url.searchParams.set("t", hms)
+        a.href = url.href
+        a.onclick = () => {
+            media.pause()
+            seekVideo(hms)
+            media.play()
+            return false  // prevent browser from following href
         }
-        media.currentTime = start
     })
 
     // HACK: workaround for Vieb's follow mode algorithm landing on 

@@ -18,6 +18,7 @@ URL_RE = re.compile(
     r"\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))",
 )
 HASHTAG_RE = re.compile(r"(?:^|(?<=\W))#([\w-]+)")
+TIME_RE = re.compile(r"(?:^|(?<=\W))((?:(\d+):)?(\d{1,2}):(\d{2}))(?=\W|$)")
 MARKUP_RE = {
     "strong": build_youtube_markup_regex("*"),
     "em": build_youtube_markup_regex("_"),
@@ -49,10 +50,18 @@ def yt_to_html(text: str, allow_markup: bool = True) -> str:
         >#{match[1]}</a>"""
         return str(id)
 
+    def prepare_timestamp(match: re.Match[str]) -> str:
+        colon_time, h, m, s = match.groups()
+        hms_time = f"{h or ''}h{m}m{s}s".lstrip("h")
+        # Will be further processed on the JS-side
+        parts[(id := uuid4())] = f"<a hms-time='{hms_time}'>{colon_time}</a>"
+        return str(id)
+
     # The URLs/etc can contain characters like & which html.escape would break,
     # which is why do their replacements in two steps
     text = URL_RE.sub(prepare_url, text)
     text = HASHTAG_RE.sub(prepare_hashtag, text)
+    text = TIME_RE.sub(prepare_timestamp, text)
     text = html.escape(text, quote=False)
 
     # Only after escaping normal text, we can inject our custom HTML
