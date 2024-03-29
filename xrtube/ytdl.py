@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime  # noqa: TCH003
+from datetime import datetime
 from enum import auto
 from functools import partial
 from typing import (
@@ -20,7 +20,12 @@ from urllib.parse import parse_qs, quote
 
 import backoff
 from fastapi.datastructures import URL
-from pydantic import BaseModel, Field
+from pydantic import (
+    AliasChoices,  # type: ignore
+    BaseModel,
+    Field,
+    field_validator,  # type: ignore
+)
 from typing_extensions import override
 from yt_dlp import YoutubeDL
 
@@ -163,7 +168,8 @@ class VideoEntry(Entry):
     views: int | None = Field(None, alias="view_count")
     description: str | None = None
     duration: int | None = None
-    upload_date: datetime | None = Field(None, alias="timestamp")
+    upload_date: datetime | None = \
+        Field(None, alias=AliasChoices("timestamp", "upload_date"))
     channel_id: str | None = None
     channel_name: str | None = Field(None, alias="channel")
     channel_url: str | None = None
@@ -172,6 +178,13 @@ class VideoEntry(Entry):
     uploader_url: str | None = None
     live_status: LiveStatus | None = None
     live_release_date: datetime | None = Field(None, alias="release_timestamp")
+
+    @field_validator("upload_date", mode="before")  # type: ignore
+    @classmethod
+    def parse_upload_date(cls, value: Any) -> datetime:
+        if isinstance(value, int):
+            return datetime.fromtimestamp(value)
+        return datetime.strptime(value, "%Y%m%d")
 
     @property
     def release_date(self) -> datetime | None:
