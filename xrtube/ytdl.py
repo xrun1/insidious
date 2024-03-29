@@ -218,7 +218,7 @@ class PlaylistEntry(Entry):
     entry_type: Literal["PlaylistEntry"]
 
     @property
-    def load_url(self) -> str:
+    def load_url(self) -> str | None:
         return "/load_playlist_entry?url=%s" % quote(self.url)
 
 
@@ -374,6 +374,11 @@ class Playlist(
     @classmethod
     def parse_last_change(cls, value: Any) -> datetime:
         return datetime.strptime(value, "%Y%m%d")
+
+    @property
+    @override
+    def load_url(self) -> str | None:
+        return None
 
 
 class Channel(Search, HasThumbnails):
