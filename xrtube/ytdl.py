@@ -362,8 +362,8 @@ class Playlist(
     entry_type: Literal["Playlist"] = "Playlist"  # type: ignore
     url: str = Field(alias="original_url")
     description: str
-    last_change: datetime = Field(alias="modified_date")
-    views: int = Field(alias="view_count")
+    last_change: datetime | None = Field(None, alias="modified_date")
+    views: int | None = Field(None, alias="view_count")
     total_entries: int = Field(alias="playlist_count")
     entries: list[Annotated[
         ShortEntry | VideoEntry | PartialEntry,
