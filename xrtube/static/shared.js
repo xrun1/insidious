@@ -1,5 +1,6 @@
 const lang = navigator.language
-const numberFormatter = new Intl.NumberFormat(lang , {notation: "compact"})
+const thinNumberFormatter = new Intl.NumberFormat(lang , {notation: "compact"})
+const numberFormatter = new Intl.NumberFormat(lang)
 const yearsAgoFormatter = new Intl.DateTimeFormat(lang, {year: "numeric"})
 const thisYearFormatter = new Intl.DateTimeFormat(lang, {
     month: "short", year: "numeric",
@@ -16,6 +17,7 @@ const futureFormatter = new Intl.DateTimeFormat(lang, {
 const relativeFormatter = new Intl.RelativeTimeFormat(lang, {
     numeric: "auto", style: "short",
 })
+const normalDateFormatter = thisMonthFormatter
 
 function formatYoutubeDate(timestamp) {
     const date = new Date(timestamp * 1000)
@@ -43,6 +45,10 @@ function formatYoutubeDate(timestamp) {
     return futureFormatter.format(date)
 }
 
+function formatYoutubeDayDate(timestamp) {
+    return normalDateFormatter.format(new Date(timestamp * 1000))
+}
+
 function processText(selector, func) {
     document.querySelectorAll(selector).forEach(e => {
         e.innerText = func(parseInt(e.attributes.raw.value, 10))
@@ -50,8 +56,10 @@ function processText(selector, func) {
 }
 
 function processAllText() {
-    processText(".compact-number", numberFormatter.format)
+    processText(".compact-number", thinNumberFormatter.format)
+    processText(".number", numberFormatter.format)
     processText(".youtube-date", formatYoutubeDate)
+    processText(".youtube-day-date", formatYoutubeDayDate)
 }
 
 function setCookie(name, obj, secondsAlive=0) {  // 0 = die on browser close

@@ -7,24 +7,49 @@
 {% if video %}
     <h1>{{youtube_format(video.title, allow_markup=False)}}</h1>
 
-    {% set channel_url = local_url(video.shortest_channel_url) %}
-    <a class=video-author href="{{channel_url}}">
-        <div
-            class=avatar-info
-            hx-get="{{channel_url}}"
-            hx-trigger=load
-            hx-select=".avatar-info"
-            hx-target=this
-            hx-swap="innerHTML ignoreTitle:true"
-            hx-push-url=false
-        >
-            <div class=avatar></div>
-            <div class=info>
-                <h1>{{video.channel_name}}</h1>
-                <p>&nbsp;<br>&nbsp;</p>
+    <div class=video-details>
+        {% set channel_url = local_url(video.shortest_channel_url) %}
+        <a class=video-author href="{{channel_url}}">
+            <div
+                class=avatar-info
+                hx-get="{{channel_url}}"
+                hx-trigger=load
+                hx-select=".avatar-info"
+                hx-target=this
+                hx-swap="innerHTML ignoreTitle:true"
+                hx-push-url=false
+            >
+                <div class=avatar></div>
+                <div class=info>
+                    <h1>{{video.channel_name}}</h1>
+                    <p>&nbsp;<br>&nbsp;</p>
+                </div>
+            </div>
+        </a>
+
+        <div class=video-little-details>
+            <div class=date title="Release date">
+                <span class=icon>🕒{{no_emoji}}</span>
+                <span class=youtube-day-date
+                      raw="{{video.release_date.timestamp()}}"></span>
+            </div>
+            <div class=views title=Views>
+                <span class=icon>👁{{no_emoji}}</span>
+                <span class=number raw="{{video.views}}"></span>
+            </div>
+            {% if video.likes is not none %}
+                <div class=likes title="Likes">
+                    <span class=icon>👍{{no_emoji}}</span>
+                    <span class=number raw="{{video.likes}}"></span>
+                </div>
+            {% endif %}
+            <div class=dislikes title="Dislikes">
+                <span class=icon>👎{{no_emoji}}</span>
+                <span class=number raw=0></span>  <!-- TODO -->
             </div>
         </div>
-    </a>
+        <script>processAllText()</script>
+    </div>
 {% endif %}
 
 {% if video.description %}
