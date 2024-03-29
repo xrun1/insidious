@@ -100,6 +100,25 @@ class HasThumbnails(BaseModel):
         return thumbs
 
 
+class HasChannel(BaseModel):
+    channel_id: str | None = None
+    channel_name: str | None = Field(None, alias="channel")
+    channel_url: str | None = None
+    channel_followers: int | None = \
+        Field(default=None, alias="channel_follower_count")
+    uploader_id: str | None = None
+    uploader_name: str | None = Field(None, alias="uploader")
+    uploader_url: str | None = None
+
+    @property
+    def shortest_channel_url(self) -> str | None:
+        if not self.uploader_url:
+            return self.channel_url
+        if not self.channel_url:
+            return None
+        return min((self.channel_url, self.uploader_url), key=len)
+
+
 class Fragments(BaseModel):
     url: str | None = None
     path: str | None = None
@@ -163,19 +182,13 @@ class ShortEntry(Entry):
     views: int = Field(alias="view_count")
 
 
-class VideoEntry(Entry):
+class VideoEntry(Entry, HasChannel):
     entry_type: Literal["VideoEntry"]
     views: int | None = Field(None, alias="view_count")
     description: str | None = None
     duration: int | None = None
     upload_date: datetime | None = \
         Field(None, alias=AliasChoices("timestamp", "upload_date"))
-    channel_id: str | None = None
-    channel_name: str | None = Field(None, alias="channel")
-    channel_url: str | None = None
-    uploader_id: str | None = None
-    uploader_name: str | None = Field(None, alias="uploader")
-    uploader_url: str | None = None
     live_status: LiveStatus | None = None
     live_release_date: datetime | None = Field(None, alias="release_timestamp")
 
@@ -191,14 +204,6 @@ class VideoEntry(Entry):
         return self.live_release_date or self.upload_date
 
     @property
-    def shortest_channel_url(self) -> str | None:
-        if not self.uploader_url:
-            return self.channel_url
-        if not self.channel_url:
-            return None
-        return min((self.channel_url, self.uploader_url), key=len)
-
-    @property
     def dislikes_url(self) -> str:
         return "/dislikes?video_id=%s" % self.id
 
@@ -211,6 +216,10 @@ class PartialEntry(VideoEntry):
 
 class PlaylistEntry(Entry):
     entry_type: Literal["PlaylistEntry"]
+
+    @property
+    def load_url(self) -> str:
+        return "/load_playlist_entry?url=%s" % quote(self.url)
 
 
 class ChannelEntry(Entry):
@@ -266,7 +275,6 @@ class Video(VideoEntry):
     aspect_ratio: float
     fps: float
     likes: int | None = Field(alias="like_count")
-    channel_followers: int = Field(alias="channel_follower_count")
     formats: list[Format]
     chapters: list[Chapter] | None = None
 
@@ -342,12 +350,24 @@ class Video(VideoEntry):
                         return
 
 
-class Playlist(Entries[ShortEntry | VideoEntry | PartialEntry]):
-    id: str
+class Playlist(
+    PlaylistEntry, HasChannel, Entries[ShortEntry | VideoEntry | PartialEntry],
+):
+    entry_type: Literal["Playlist"] = "Playlist"  # type: ignore
+    url: str = Field(alias="original_url")
+    description: str
+    last_change: datetime = Field(alias="modified_date")
+    views: int = Field(alias="view_count")
+    total_entries: int = Field(alias="playlist_count")
     entries: list[Annotated[
         ShortEntry | VideoEntry | PartialEntry,
         Field(discriminator="entry_type"),
     ]] = Field(default_factory=list)
+
+    @field_validator("last_change", mode="before")  # type: ignore
+    @classmethod
+    def parse_last_change(cls, value: Any) -> datetime:
+        return datetime.strptime(value, "%Y%m%d")
 
 
 class Channel(Search, HasThumbnails):

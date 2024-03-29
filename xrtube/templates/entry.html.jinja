@@ -4,7 +4,13 @@
     {% set target = "#video-column" %}
 {% endif %}
 
-<div class=entry>
+<div
+    class=entry
+    {% if entry.entry_type == "PlaylistEntry" %}
+        hx-get="{{entry.load_url}}"
+        hx-trigger="intersect once"
+    {% endif %}
+>
     <a
         class=thumbnail
         href="{{url}}"
@@ -20,6 +26,14 @@
                 <span class=duration>live</span>
             {% elif entry.live_status == LiveStatus.is_upcoming %}
                 <span class=duration>soon</span>
+            {% elif entry.total_entries %}
+                <span
+                    class="duration number" 
+                    prefix="☰{{no_emoji}} "
+                    raw="{{entry.total_entries}}"
+                    title="Playlist video count"
+                ></span>
+                <script>processAllText()</script>
             {% elif entry.duration %}
                 <span class=duration>{{format_duration(entry.duration)}}</span>
             {% endif %}
@@ -41,7 +55,13 @@
             </div>
         {% endif %}
 
-        {% if entry.release_date %}
+        {% if entry.last_change %}
+            <span class=date title="Last modification date">
+                <span class=icon>↻{{no_emoji}}</span>
+                <span class=youtube-date
+                      raw="{{entry.last_change.timestamp()}}"></span>
+            </span>
+        {% elif entry.release_date %}
             <span class=date title="Release date">
                 <span class=icon>🕒{{no_emoji}}</span>
                 <span class=youtube-date

@@ -13,7 +13,6 @@ from datetime import timedelta
 from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeAlias
-from typing_extensions import override
 from urllib.parse import quote
 
 import appdirs
@@ -96,7 +95,7 @@ class Page:
     template: ClassVar[str]
 
     request: Request
-    title: str | None = None
+    title: str | None
 
     @property
     def full_title(self) -> str:
@@ -144,6 +143,12 @@ class Index(Page, Generic[T]):
 
 
 @dataclass(slots=True)
+class PlaylistLoad(Page):
+    template = "entry.html.jinja"
+    entry: Playlist
+
+
+@dataclass(slots=True)
 class Dislikes(Page):
     template = "dislikes.html.jinja"
     dislike_count: int | None = None
@@ -162,7 +167,7 @@ async def fix_esm_mime(request: Request, call_next: CallNext) -> Response:
 
 @app.get("/")
 async def home(request: Request) -> Response:
-    return Index(request).response
+    return Index(request, None).response
 
 
 @app.get("/style.css")
@@ -215,6 +220,12 @@ async def channel(request: Request, tab: str = "featured") -> Response:
     return Index(request, group.title if group else "", pg, group).response
 
 
+@app.get("/load_playlist_entry")
+async def load_playlist_entry(request: Request, url: str) -> Response:
+    pl = await YoutubeClient(per_page=0).playlist(url)
+    return PlaylistLoad(request, None, pl).response
+
+
 @app.get("/watch")
 @app.get("/v/{v}")
 @app.get("/shorts/{v}")
@@ -248,7 +259,7 @@ async def chapters(video_url: str) -> Response:
 async def related(request: Request) -> Response:
     if (pg := RelatedPagination.get(request).advance()).needs_more_data:
         await pg.find()
-    return Index(request, pagination=pg).response
+    return Index(request, None, pagination=pg).response
 
 
 @app.get("/dislikes")

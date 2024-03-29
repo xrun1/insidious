@@ -51,7 +51,9 @@ function formatYoutubeDayDate(timestamp) {
 
 function processText(selector, func) {
     document.querySelectorAll(selector).forEach(e => {
-        e.innerText = func(parseInt(e.attributes.raw.value, 10))
+        e.innerText = (e.attributes.prefix?.value || "") +
+            func(parseInt(e.attributes.raw.value, 10)) +
+            (e.attributes.suffix?.value || "")
     })
 }
 
