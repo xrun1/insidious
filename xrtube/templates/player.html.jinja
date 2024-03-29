@@ -223,6 +223,12 @@
         if (start) seekVideo(start)
     })
 
+    media.addEventListener("dblclick", () => {
+        document.fullscreenElement ?
+        document.exitFullscreen() :
+        media.requestFullscreen()
+    })
+
     document.querySelectorAll("a[hms-time]").forEach(a => {
         const url = new URL(window.location.href)
         const hms = a.getAttribute("hms-time")
