@@ -89,6 +89,7 @@
 <script type=module>
     import { Hls } from "/npm/hls-video-element@1.1.3/+esm"
 
+    const media = document.getElementById("hls")
     const hls = document.getElementById("hls").api
     const qualities = document.getElementById("qualities")
     const qualityButton = document.getElementById("quality-button")
@@ -204,6 +205,18 @@
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, onAudioTracksUpdate)
     observeChecked(qualities, setQuality)
     observeChecked(audioTracks, setAudioTrack)
+
+    media.addEventListener("loadedmetadata", () => {
+        const params = new URL(window.location.href).searchParams
+        let start = params.get("start") || params.get("t")
+        if (! start) return
+        if (isNaN(start)) {
+            const [h, m, s] = [0, 0, ...start.split(/[a-z]+/i).filter(x => x)]
+                .slice(-3).map(x => parseInt(x, 10))
+            start = h * 3600 + m * 60 + s
+        }
+        media.currentTime = start
+    })
 
     // HACK: workaround for Vieb's follow mode algorithm landing on 
     //  uninteractive shadow root elements like <svg> and not being able to
