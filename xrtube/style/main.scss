@@ -73,6 +73,12 @@ img {
     display: none; 
 }
 
+.icon {
+    display: inline-block;
+    text-align: center;
+    width: 0.9rem;
+}
+
 .elide {
     display: -webkit-box;
     -webkit-line-clamp: 1;
