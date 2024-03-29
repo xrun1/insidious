@@ -3,10 +3,14 @@
 {% if entry.entry_type in ("VideoEntry", "ShortEntry") %}
     {% set target = "#video-column" %}
 {% endif %}
+{% set thumbnails = entry.thumbnails_srcset %}
+{% if not thumbnails and entry.entries %}
+    {% set thumbnails = (entry.entries | random).thumbnails_srcset %}
+{% endif %}
 
 <div
     class=entry
-    {% if entry.entry_type == "PlaylistEntry" %}
+    {% if entry.load_url %}
         hx-get="{{entry.load_url}}"
         hx-trigger="intersect once"
     {% endif %}
@@ -20,7 +24,7 @@
         hx-push-url=true
     >
         <div>
-            <img sizes=10rem srcset="{{entry.thumbnails_srcset}}">
+            <img sizes=10rem srcset="{{thumbnails}}">
 
             {% if entry.live_status == LiveStatus.is_live %}
                 <span class=duration>live</span>

@@ -257,12 +257,18 @@ class SearchLink(BaseModel):
     url: str
     title: str
 
+    @property
+    def load_url(self) -> str:
+        params = (quote(self.url), quote(self.title))
+        return "/load_search_link?url=%s&title=%s" % params
+
 
 SearchEntry: TypeAlias = (
     ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry |
     SearchLink
 )
 class Search(Entries[SearchEntry]):
+    url: str = Field(alias="original_url")
     entries: list[Annotated[SearchEntry, Field(discriminator="entry_type")]] =\
         Field(default_factory=list)
 

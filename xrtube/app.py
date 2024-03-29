@@ -51,6 +51,7 @@ from .ytdl import (
     Format,
     LiveStatus,
     Playlist,
+    Search,
     Video,
     YoutubeClient,
 )
@@ -149,6 +150,12 @@ class PlaylistLoad(Page):
 
 
 @dataclass(slots=True)
+class SearchLinkLoad(Page):
+    template = "entry.html.jinja"
+    entry: Search
+
+
+@dataclass(slots=True)
 class Dislikes(Page):
     template = "dislikes.html.jinja"
     dislike_count: int | None = None
@@ -224,6 +231,13 @@ async def channel(request: Request, tab: str = "featured") -> Response:
 async def load_playlist_entry(request: Request, url: str) -> Response:
     pl = await YoutubeClient(per_page=0).playlist(url)
     return PlaylistLoad(request, None, pl).response
+
+
+@app.get("/load_search_link")
+async def load_search_link(request: Request, url: str, title: str) -> Response:
+    search = await YoutubeClient().search(url)
+    search.title = title
+    return SearchLinkLoad(request, None, search).response
 
 
 @app.get("/watch")
