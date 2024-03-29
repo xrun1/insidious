@@ -67,6 +67,10 @@ input, button {
 img {
     border-radius: var(--radius);
     object-fit: cover;
+
+    &[srcset=""] {
+        opacity: 0;
+    }
 }
 
 :not(#explore-column).empty {
