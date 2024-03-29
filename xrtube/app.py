@@ -12,7 +12,8 @@ from dataclasses import dataclass
 from datetime import timedelta
 from importlib import resources
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, TypeAlias
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeAlias
+from typing_extensions import override
 from urllib.parse import quote
 
 import appdirs
@@ -91,13 +92,11 @@ os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
 
 
 @dataclass(slots=True)
-class Index(Generic[T]):
+class Page:
+    template: ClassVar[str]
+
     request: Request
     title: str | None = None
-    pagination: Pagination[T] | None = None
-    group: Channel | Playlist | None = None
-    video: Video | None = None
-    get_related: URL | None = None
 
     @property
     def full_title(self) -> str:
@@ -106,7 +105,7 @@ class Index(Generic[T]):
     @property
     def response(self) -> Response:
         enums = {LiveStatus}
-        return TEMPLATES.TemplateResponse("index.html.jinja", {
+        return TEMPLATES.TemplateResponse(self.template, {
             a: getattr(self, a) for a in dir(self)
             if not a.startswith("_") and a != "response"
         } | {
@@ -133,6 +132,21 @@ class Index(Generic[T]):
         wild = "" if seconds < 60 else "*"  # noqa: PLR2004
         text = re.sub(rf"^0:0{wild}", "", str(timedelta(seconds=seconds)))
         return re.sub(r", 0:00:00", "", text)  # e.g. 1 day, 0:00:00
+
+
+@dataclass(slots=True)
+class Index(Page, Generic[T]):
+    template = "index.html.jinja"
+    pagination: Pagination[T] | None = None
+    group: Channel | Playlist | None = None
+    video: Video | None = None
+    get_related: URL | None = None
+
+
+@dataclass(slots=True)
+class Dislikes(Page):
+    template = "dislikes.html.jinja"
+    dislike_count: int | None = None
 
 
 @app.middleware("http")
@@ -235,6 +249,16 @@ async def related(request: Request) -> Response:
     if (pg := RelatedPagination.get(request).advance()).needs_more_data:
         await pg.find()
     return Index(request, pagination=pg).response
+
+
+@app.get("/dislikes")
+async def dislikes(request: Request, video_id: str):
+    with httpx_to_fastapi_errors():
+        api = "https://returnyoutubedislikeapi.com/votes"
+        reply = await HTTPX.get(api, params={"videoId": video_id})
+        reply.raise_for_status()
+        count = reply.json().get("dislikes") or 0
+        return Dislikes(request, None, count).response
 
 
 @app.get("/generate_hls/master")

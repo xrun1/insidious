@@ -43,9 +43,12 @@
                     <span class=number raw="{{video.likes}}"></span>
                 </div>
             {% endif %}
-            <div class=dislikes title="Dislikes">
-                <span class=icon>👎{{no_emoji}}</span>
-                <span class=number raw=0></span>  <!-- TODO -->
+            <div 
+               hx-get="{{video.dislikes_url}}"
+               hx-trigger=load
+               hx-swap="ignoreTitle:true"
+            >
+                {% include "dislikes.html.jinja" %}
             </div>
         </div>
         <script>processAllText()</script>

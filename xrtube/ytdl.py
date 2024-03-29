@@ -198,6 +198,10 @@ class VideoEntry(Entry):
             return None
         return min((self.channel_url, self.uploader_url), key=len)
 
+    @property
+    def dislikes_url(self) -> str:
+        return "/dislikes?video_id=%s" % self.id
+
 
 class PartialEntry(VideoEntry):
     entry_type: Literal["PartialEntry"]  # type: ignore
