@@ -211,6 +211,30 @@
         media.currentTime = time
     }
 
+    let fastForwardStartTimerId = null
+    let fastForwarding = false
+    let pausedBeforeFastForward = false
+    let speedBeforeFastForward = 1
+
+    function startFastForwardSoon() {
+        fastForwardStartTimerId = setTimeout(() => {
+            pausedBeforeFastForward = media.paused
+            speedBeforeFastForward = media.playbackRate
+            media.playbackRate *= 2
+            media.play()
+            fastForwarding = true
+            console.log("ff")
+        }, 500)
+    }
+
+    function stopFastForward() {
+        clearTimeout(fastForwardStartTimerId)
+        if (! fastForwarding) return
+        media.playbackRate = speedBeforeFastForward
+        pausedBeforeFastForward ? media.pause() : media.play()
+        fastForwarding = false
+    }
+
     hls.on(Hls.Events.MANIFEST_LOADED, onLevelsUpdate)
     hls.on(Hls.Events.LEVELS_UPDATED, onLevelsUpdate)
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, onAudioTracksUpdate)
@@ -221,6 +245,17 @@
         const params = new URL(window.location.href).searchParams
         let start = params.get("start") || params.get("t")
         if (start) seekVideo(start)
+    })
+
+    media.addEventListener("mousedown", () => {
+        startFastForwardSoon()
+    })
+    media.addEventListener("mouseleave", () => {
+        stopFastForward()
+    })
+    media.addEventListener("click", event => {
+        if (fastForwarding) event.stopPropagation()
+        stopFastForward()
     })
 
     media.addEventListener("dblclick", () => {
