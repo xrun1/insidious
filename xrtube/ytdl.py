@@ -103,25 +103,26 @@ class Fragments(BaseModel):
 
 class Format(BaseModel):
     id: str = Field(alias="format_id")
-    name: str | None = Field(alias="format_note")
+    name: str | None = Field(None, alias="format_note")
     protocol: str
     url: str
-    manifest_url: str | None
-    dash_fragments_base_url: str | None = Field(alias="fragment_base_url")
+    manifest_url: str | None = None
+    dash_fragments_base_url: str | None = \
+        Field(None, alias="fragment_base_url")
     fragments: list[Fragments] = Field(alias="fragments", default_factory=list)
     rows: int | None = None
     columns: int | None = None
-    filesize: int | None
-    container: str | None
-    video_codec: str | None = Field(alias="vcodec")
-    audio_codec: str | None = Field(alias="acodec")
-    average_bitrate: float | None = Field(alias="tbr")  # in KB/s
-    width: int | None
-    height: int | None
-    fps: float | None
-    dynamic_range: str | None
-    audio_channels: int | None
-    language: str | None
+    filesize: int | None = None
+    container: str | None = None
+    video_codec: str | None = Field(None, alias="vcodec")
+    audio_codec: str | None = Field(None, alias="acodec")
+    average_bitrate: float | None = Field(None, alias="tbr")  # in KB/s
+    width: int | None = None
+    height: int | None = None
+    fps: float | None = None
+    dynamic_range: str | None = None
+    audio_channels: int | None = None
+    language: str | None = None
 
     @property
     def has_dash(self) -> bool:
@@ -159,18 +160,18 @@ class ShortEntry(Entry):
 
 class VideoEntry(Entry):
     entry_type: Literal["VideoEntry"]
-    views: int | None = Field(alias="view_count")
-    description: str | None
-    duration: int | None
-    upload_date: datetime | None = Field(alias="timestamp")
-    channel_id: str | None
-    channel_name: str | None = Field(alias="channel")
-    channel_url: str | None
-    uploader_id: str | None
-    uploader_name: str | None = Field(alias="uploader")
-    uploader_url: str | None
-    live_status: LiveStatus | None
-    live_release_date: datetime | None = Field(alias="release_timestamp")
+    views: int | None = Field(None, alias="view_count")
+    description: str | None = None
+    duration: int | None = None
+    upload_date: datetime | None = Field(None, alias="timestamp")
+    channel_id: str | None = None
+    channel_name: str | None = Field(None, alias="channel")
+    channel_url: str | None = None
+    uploader_id: str | None = None
+    uploader_name: str | None = Field(None, alias="uploader")
+    uploader_url: str | None = None
+    live_status: LiveStatus | None = None
+    live_release_date: datetime | None = Field(None, alias="release_timestamp")
 
     @property
     def release_date(self) -> datetime | None:
@@ -187,8 +188,8 @@ class VideoEntry(Entry):
 
 class PartialEntry(VideoEntry):
     entry_type: Literal["PartialEntry"]  # type: ignore
-    duration: int | None
-    views: int | None = Field(alias="concurrent_view_count")
+    duration: int | None = None
+    views: int | None = Field(None, alias="concurrent_view_count")
 
 
 class PlaylistEntry(Entry):
@@ -200,7 +201,7 @@ class ChannelEntry(Entry):
     uploader: str
     uploader_id: str
     uploader_url: str
-    followers: int | None = Field(alias="channel_follower_count")
+    followers: int | None = Field(None, alias="channel_follower_count")
 
     @property
     def shortest_url(self) -> str | None:
@@ -338,7 +339,7 @@ class Channel(Search, HasThumbnails):
     title: str = Field(alias="channel")
     description: str
     tab: str = Field(alias="webpage_url_basename", default="featured")
-    followers: int | None = Field(alias="channel_follower_count")
+    followers: int | None = Field(None, alias="channel_follower_count")
 
     def tab_url(self, from_url: URL, to_tab: str) -> URL:
         path = from_url.path.rstrip("/")

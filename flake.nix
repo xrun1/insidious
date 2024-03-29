@@ -1,7 +1,7 @@
 {
     inputs = {
         nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-        pymp4.url = "github:devine-dl/pymp4/construct-2.10-patch";
+        pymp4.url = "github:xrun1/pymp4/construct-2.10-patch";
         pymp4.flake = false;
     };
     outputs = inputs @ { self, nixpkgs, ...}: let
