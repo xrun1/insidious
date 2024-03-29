@@ -28,6 +28,8 @@
         backoff = "^2.2.1"
         appdirs = "^1.4.4"
         websockets = "^12.0"
+        pymp4 = { git = "https://github.com/xrun1/pymp4.git" }
+        construct = "^2.10.70"
 
     [tool.poetry.group.dev.dependencies]
         ruff = "0.1.8"
