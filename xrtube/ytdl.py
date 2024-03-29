@@ -194,7 +194,9 @@ class VideoEntry(Entry, HasChannel):
 
     @field_validator("upload_date", mode="before")  # type: ignore
     @classmethod
-    def parse_upload_date(cls, value: Any) -> datetime:
+    def parse_upload_date(cls, value: Any) -> datetime | None:
+        if value is None:
+            return None
         if isinstance(value, int):
             return datetime.fromtimestamp(value)
         return datetime.strptime(value, "%Y%m%d")
@@ -374,6 +376,11 @@ class Playlist(
     @classmethod
     def parse_last_change(cls, value: Any) -> datetime:
         return datetime.strptime(value, "%Y%m%d")
+
+    @property
+    @override
+    def banners_srcset(self) -> str:
+        return ""  # this is just gonna be the upscaled first vid's thumbnail
 
     @property
     @override

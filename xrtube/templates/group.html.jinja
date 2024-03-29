@@ -17,8 +17,43 @@
                 <span class=compact-number raw="{{group.followers}}">
                 </span>
             </span>
-            <script>processAllText()</script>
         {% endif %}
+
+        <div class=playlist-details>
+            {% if group.channel_name %}
+                <div class="channel elide">
+                    <span class=icon>👤{{no_emoji}}</span>
+                    <a
+                        title="{{group.channel_name}}"
+                        href="{{local_url(group.shortest_channel_url)}}"
+                    >{{group.channel_name}}</a>
+                </div>
+            {% endif %}
+
+            {% if group.total_entries %}
+                <span class=total-entries title="Playlist video count">
+                    <span class=icon>☰{{no_emoji}}</span>
+                    <span class=number raw="{{group.total_entries}}"></span>
+                </span>
+            {% endif %}
+
+            {% if group.last_change %}
+                <span class=date title="Last modification date">
+                    <span class=icon>↻{{no_emoji}}</span>
+                    <span class=youtube-date
+                          raw="{{group.last_change.timestamp()}}"></span>
+                </span>
+            {% endif %}
+
+            {% if group.views %}
+                <span class=views title=Views>
+                    <span class=icon>👁{{no_emoji}}</span>
+                    <span class=compact-number raw="{{group.views}}"></span>
+                </span>
+            {% endif %}
+
+            <script>processAllText()</script>
+        </div>
 
         <p class=yt-markup>{{youtube_format(group.description)}}</p>
     </div>

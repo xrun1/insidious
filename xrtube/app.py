@@ -229,6 +229,17 @@ async def channel(request: Request, tab: str = "featured") -> Response:
     return Index(request, group.title if group else "", pg, group).response
 
 
+@app.get("/playlist")
+async def playlist(request: Request) -> Response:
+    pl = None
+
+    if (pg := Pagination.get(request).advance()).needs_more_data:
+        url = pg.extender.convert_url(request.url)
+        pg.add(pl := await pg.extender.playlist(url))
+
+    return Index(request, pl.title if pl else "", pg, pl).response
+
+
 @app.get("/load_playlist_entry")
 async def load_playlist_entry(request: Request, url: str) -> Response:
     pl = await YoutubeClient(per_page=0).playlist(url)

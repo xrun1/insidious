@@ -120,6 +120,17 @@ img {
         width: 100%;
         justify-content: center;
     }
+
+    & .playlist-details {
+        display: flex;
+        flex-flow: row wrap;
+        gap: var(--gap-small);
+        margin: calc(var(--gap-small) / 2) 0;
+
+        & + p {
+            margin-block-start: 0;
+        }
+    }
 }
 
 .avatar-info {
