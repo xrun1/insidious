@@ -254,6 +254,13 @@
     observeChecked(qualities, setQuality)
     observeChecked(audioTracks, setAudioTrack)
 
+    const maxBandwidthRemembered = 2048 * 8192  // 2MiB/s in bits
+    hls.bandwidthEstimate = getCookie("bandwidth", 50 * 8192)
+    hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
+        const max = maxBandwidthRemembered
+        setCookie("bandwidth", Math.min(max, hls.bandwidthEstimate), 60 * 120)
+    })
+
     media.addEventListener("loadedmetadata", () => {
         const params = new URL(window.location.href).searchParams
         let start = params.get("start") || params.get("t")
