@@ -167,25 +167,11 @@
     function setQuality() {
         const opt = document.querySelector("#qualities [aria-checked=true]")
         if (! opt) return
-
-        const minBitrate = intAttr(opt, "min-bitrate")
-        const minLevel = hls.levels.findIndex(l => l.bitrate === minBitrate)
-        const maxLevel = intAttr(opt, "max-level")
-        const allowedLevels = hls.levels.slice(minLevel, maxLevel + 1)
-        const currentCodec = hls.levels[hls.currentLevel]?.codecSet
-
-        hls.config.minAutoBitrate = minBitrate - 1
-        hls.autoLevelCapping = maxLevel
-
-        // Force switch, see https://github.com/video-dev/hls.js/issues/5708
-        if (
-            opt.value !== "Auto" &&
-            currentCodec &&
-            ! allowedLevels.some(l => l.codecSet === currentCodec)
-        ) hls.nextAutoLevel = minLevel
-
+        hls.config.minAutoBitrate = intAttr(opt, "min-bitrate") - 1
+        hls.autoLevelCapping = intAttr(opt, "max-level")
         hls.streamController.nextLevelSwitch()
         document.querySelector("#quality-indicator").textContent = opt.value
+        //console.log(hls.config.minAutoBitrate, hls.autoLevelCapping)
     }
 
     function setAudioTrack() {
