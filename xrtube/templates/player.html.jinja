@@ -63,7 +63,10 @@
         <media-time-display showduration></media-time-display>
         <media-playback-rate-menu-button></media-playback-rate-menu-button>
         <media-rendition-menu-button id=quality-button invoketarget=qualities>
-            <span slot=icon id=quality-indicator>Auto</span>
+            <span slot=icon>
+                <div id=quality-indicator>Auto</div>
+                <div id=auto-current-level></div>
+            </span>
         </media-rendition-menu-button>
         <media-audio-track-menu-button
             id=audio-button invoketarget=audio-tracks class=no-choice
@@ -154,6 +157,13 @@
         haveClass(qualityButton, "no-choice", opts.length < 2)
     }
 
+    function onLevelSwitched(event, data) {
+        const opt = document.querySelector("#qualities [aria-checked=true]")
+        if (opt.value !== "Auto") return
+        const name = levelName(hls.levels[hls.currentLevel])
+        document.querySelector("#auto-current-level").textContent = name
+    }
+
     function onAudioTracksUpdate() {
         const header = audioTracks.querySelector("[slot=header]")
         const opts = hls.audioTracks.map(at => createOption(
@@ -170,6 +180,8 @@
         hls.config.minAutoBitrate = intAttr(opt, "min-bitrate") - 1
         hls.autoLevelCapping = intAttr(opt, "max-level")
         hls.streamController.nextLevelSwitch()
+        const button = document.querySelector("#quality-button")
+        haveClass(button, "auto", opt.value === "Auto")
         document.querySelector("#quality-indicator").textContent = opt.value
         //console.log(hls.config.minAutoBitrate, hls.autoLevelCapping)
     }
@@ -238,6 +250,7 @@
     hls.on(Hls.Events.MANIFEST_LOADED, onLevelsUpdate)
     hls.on(Hls.Events.LEVELS_UPDATED, onLevelsUpdate)
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, onAudioTracksUpdate)
+    hls.on(Hls.Events.LEVEL_SWITCHED, onLevelSwitched)
     observeChecked(qualities, setQuality)
     observeChecked(audioTracks, setAudioTrack)
 

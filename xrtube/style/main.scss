@@ -3,6 +3,7 @@
     --thumb-height: calc(10rem / (16 / 9));
     --text-big: 1.25rem;
     --text-small: 0.875rem;
+    --text-smaller: 0.7rem;
     --side: min(90svw, 20rem);
     --gap: 1rem;
     --gap-small: 0.6rem;
@@ -250,6 +251,23 @@ media-controller {
 
     & .no-choice, media-captions-menu-button:not([mediasubtitleslist]) {
         --media-control-display: none;
+    }
+
+    & #quality-button {
+        &:not(.auto) #auto-current-level {
+            display: none;
+        }
+        &.auto #quality-indicator {
+            font-size: var(--text-smaller);
+            line-height: 110%;
+            text-align: center;
+        }
+        &.auto #auto-current-level {
+            font-size: var(--text-smaller);
+            line-height: 100%;
+            text-align: center;
+            opacity: 0.8;
+        }
     }
 }
 
