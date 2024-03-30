@@ -104,9 +104,22 @@
     }
 
     function levelName(level) {
-        const height = level.height
+        function getBreakpoint(larger, smaller) {
+            return smaller + ((larger - smaller) / 4)
+        }
+        const definition =
+            level.height >= getBreakpoint(4320, 2160) ? level.height :
+            level.height >= getBreakpoint(2160, 1440) ? 2160 :
+            level.height >= getBreakpoint(1440, 1080) ? 1440 :
+            level.height >= getBreakpoint(1080, 720) ? 1080 :
+            level.height >= getBreakpoint(720, 480) ? 720 :
+            level.height >= getBreakpoint(480, 360) ? 480 :
+            level.height >= getBreakpoint(360, 240) ? 360 :
+            level.height >= getBreakpoint(240, 144) ? 240 :
+            144
+
         const fps = levelFps(level)
-        return `${height}p${fps > 23 && fps < 31 ? "" : Math.round(fps)}`
+        return `${definition}p${fps > 23 && fps < 31 ? "" : Math.round(fps)}`
     }
 
     function createOption(name, value, checked=false) {
