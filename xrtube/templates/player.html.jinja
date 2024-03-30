@@ -267,6 +267,13 @@
         if (start) seekVideo(start)
     })
 
+    media.volume = getCookie("volume", 1.0)
+    media.muted = getCookie("muted", false)
+    media.addEventListener("volumechange", () => {
+        setCookie("volume", media.volume)
+        setCookie("muted", media.muted)
+    })
+
     media.addEventListener("mousedown", () => {
         startFastForwardSoon()
     })
