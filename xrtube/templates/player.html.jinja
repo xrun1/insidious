@@ -98,6 +98,7 @@
     const qualityButton = document.getElementById("quality-button")
     const audioTracks = document.getElementById("audio-tracks")
     const audioButton = document.getElementById("audio-button")
+    let initialSetQuality = true
 
     function levelFps(level) {
         return parseFloat(level.attrs["FRAME-RATE"] || "30")
@@ -132,8 +133,8 @@
         return option
     }
 
-    function createQualityOption(name, minBitrate, maxLevel, checked=false) {
-        const option = createOption(name, name, checked)
+    function createQualityOption(name, minBitrate, maxLevel) {
+        const option = createOption(name, name)
         option.setAttribute("min-bitrate", minBitrate)
         option.setAttribute("max-level", maxLevel)
         return option
@@ -163,11 +164,23 @@
                 other.height === lv.height && levelFps(other) === levelFps(lv)
             ).slice(-1)[0]),
         ))
-        opts.push(createQualityOption("Auto", 0, -1, true))
+        const auto = createQualityOption("Auto", 0, -1,)
+        opts.push(auto)
         const header = qualities.querySelector("[slot=header]")
         while (header.nextSibling) header.nextSibling.remove()
         for (const opt of opts) qualities.appendChild(opt)
         haveClass(qualityButton, "no-choice", opts.length < 2)
+
+        const saved = getCookie("quality")
+        if (saved === null) {
+            auto.checked = true
+        } else {
+            let choice = opts.find(e => e.value === saved) ||
+                opts.find(e => e.value.startsWith(saved.split("p")[0])) ||
+                opts[0]
+            opts.forEach(e => e.checked = e === choice)
+        }
+        observeChecked(qualities, setQuality)
     }
 
     function onLevelSwitched(event, data) {
@@ -185,6 +198,7 @@
         while (header.nextSibling) header.nextSibling.remove()
         for (const opt of opts) audioTracks.appendChild(opt)
         haveClass(audioButton, "no-choice", opts.length < 2)
+        observeChecked(audioTracks, setAudioTrack)
     }
 
     function setQuality() {
@@ -196,6 +210,12 @@
         const button = document.querySelector("#quality-button")
         haveClass(button, "auto", opt.value === "Auto")
         document.querySelector("#quality-indicator").textContent = opt.value
+
+        if (initialSetQuality) {
+            initialSetQuality = false
+        } else {
+            setCookie("quality", opt.value)
+        }
         //console.log(hls.config.minAutoBitrate, hls.autoLevelCapping)
     }
 
@@ -263,8 +283,6 @@
     hls.on(Hls.Events.LEVELS_UPDATED, onLevelsUpdate)
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, onAudioTracksUpdate)
     hls.on(Hls.Events.LEVEL_SWITCHED, onLevelSwitched)
-    observeChecked(qualities, setQuality)
-    observeChecked(audioTracks, setAudioTrack)
 
     const maxBandwidthRemembered = 2048 * 8192  // 2MiB/s in bits
     hls.bandwidthEstimate = getCookie("bandwidth", 50 * 8192)
