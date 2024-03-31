@@ -271,12 +271,14 @@ async def load_search_link(request: Request, url: str, title: str) -> Response:
 async def watch(request: Request) -> Response:
     client = YoutubeClient()
     video = await client.video(client.convert_url(request.url))
-    rel = request.url_for("related").include_query_params(
-        video_id = video.id,
-        video_name = video.title,
-        channel_name = video.channel_name,
-        channel_url = video.channel_url,
-    )
+    rel_params = {k: v for k, v in {
+        "video_id": video.id,
+        "video_name": video.title,
+        "uploader_id": video.uploader_id,
+        "channel_name": video.channel_name,
+        "channel_url": video.channel_url,
+    }.items() if v is not None}
+    rel = request.url_for("related").include_query_params(**rel_params)
     return Index(request, video.title, video=video, get_related=rel).response
 
 

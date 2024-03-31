@@ -3,8 +3,9 @@ from __future__ import annotations
 import asyncio
 import logging as log
 import math
+import random
 import re
-from collections import deque
+from collections import Counter, deque
 from dataclasses import dataclass, field
 from itertools import islice
 from typing import TYPE_CHECKING, ClassVar, Generic, Self, TypeVar
@@ -118,17 +119,24 @@ class Related:
     entry: ShortEntry | VideoEntry
     found_times: int = 1
     weight: float = 1
+    earliest_playlist_position: float = 0  # 0-1 percentage
 
-    @property
-    def score(self) -> float:
-        return self.found_times * self.weight
+    def _cmp_key(self, found_times: int) -> tuple[float, int, float]:
+        return (self.weight, found_times, random.random())  # noqa: S311
+
+    def __lt__(self, b: Related) -> bool:
+        vid_or_channel_somewhere_in_playlist = 3
+        if max(self.weight, b.weight) < vid_or_channel_somewhere_in_playlist:
+            return self._cmp_key(0) < b._cmp_key(0)
+        return self._cmp_key(self.found_times) < b._cmp_key(b.found_times)
 
 
 @dataclass(slots=True)
 class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
-    vaguer_search: bool = False
     returned_videos_id: set[str] = field(default_factory=set)
     current_batch: dict[str, Related] = field(default_factory=dict)
+    batch_playlists: dict[str, tuple[PlaylistEntry, float]] = \
+        field(default_factory=dict)
 
     @property
     def video_id(self) -> str:
@@ -139,18 +147,25 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
         return self.request.query_params["video_name"]
 
     @property
-    def channel_name(self) -> str:
-        return self.request.query_params["channel_name"]
+    def uploader_id(self) -> str | None:
+        return self.request.query_params.get("uploader_id")
 
     @property
-    def channel_url(self) -> str:
-        return self.request.query_params["channel_url"]
+    def channel_name(self) -> str | None:
+        return self.request.query_params.get("channel_name")
+
+    @property
+    def channel_url(self) -> str | None:
+        return self.request.query_params.get("channel_url")
 
     def on_videos(self, entries: Playlist | Search, weight: float = 1) -> None:
         """Process the videos in a playlist or search results."""
         exclude = bump = add = ignore = 0
+        # Playlists that got their weight slashed for having most of their vids
+        # from same uploader are often parts of a series, promote only the 1st
+        weight += 1
 
-        for entry in entries.entries:
+        for i, entry in enumerate(entries.entries):
             if isinstance(entry, SearchLink):
                 ignore += 1
             elif entry.id == self.video_id or \
@@ -159,46 +174,88 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
             elif entry.id in self.current_batch:
                 bump += 1
                 result = self.current_batch[entry.id]
+                pos = result.earliest_playlist_position
+
                 result.found_times += 1
                 result.weight = max(result.weight, weight)
+                result.earliest_playlist_position = min(pos, i / len(entries))
             elif isinstance(entry, ShortEntry | VideoEntry):
                 add += 1
-                self.current_batch[entry.id] = Related(entry)
+                self.current_batch[entry.id] = Related(
+                    entry,
+                    weight = weight,
+                    earliest_playlist_position = i / len(entries),
+                )
             else:
                 ignore += 1
 
+            if i == 0:
+                weight -= 1
+
         log.info("Related: exclude %d, bump %d, add %d, ignore %d from %r",
                  exclude, bump, add, ignore, entries.title)
+        # for r in self.current_batch.values():
+            # print("Related:", r.entry.title, r.weight, r.found_times)
 
     async def on_list_entry(self, e: PlaylistEntry, weight: float = 1) -> None:
         """Load details and videos of a playlist found in search results."""
         with report(DownloadError):
             playlist = await self.extender_with(per_page=100).playlist(e.url)
+            common_channels = Counter(
+                e.channel_url for e in playlist
+                if not isinstance(e, ShortEntry)
+            ).most_common()
+
+            if common_channels and common_channels[0][1] > len(playlist) * 0.7:
+                msg = "Related: playlist %r has >70%% of its content from %r"
+                log.info(msg, playlist.title, common_channels[0][0])
+                weight /= 2
+            # These 2 elifs are not 100% accurate because the playlist could
+            # contain self.video_name, but past the first 100 entries we load
+            elif any(e.id == self.video_id for e in playlist):
+                msg = "Related: playlist %r has %r"
+                log.info(msg, playlist.title, self.video_name)
+                weight = 4
+            elif any(isinstance(e, VideoEntry) and self.channel_url and
+                     e.channel_url == self.channel_url for e in playlist):
+                msg = "Related: playlist %r has a video from %r's channel"
+                log.info(msg, playlist.title, self.video_name)
+                weight = 3
+
             self.on_videos(playlist, weight)
 
-    async def find_playlists(self, explicit_channel: bool) -> None:
+    async def find_playlists(self, addition: str = "") -> None:
         """Search site-wide for playlists related to the watched video."""
         query = NON_WORD_CHARS.sub(" ", self.video_name).strip()
         query = query or self.video_name
         weight = 1
-        if explicit_channel:
-            query += " " + self.channel_name
-            weight *= 2
+        if addition:
+            query += " " + addition
+            weight = 2
 
         url = "https://www.youtube.com/results?search_query={}&sp=EgIQAw%3D%3D"
         url = url.format(quote(query))
 
         with report(DownloadError):
-            got = await self.extender_with(per_page=5).search(url)
+            got = await self.extender_with(per_page=3).search(url)
             log.info("Related: found %d playlists for %r", len(got), url)
 
-            async with asyncio.TaskGroup() as tg:
-                for entry in got.entries:
-                    if isinstance(entry, PlaylistEntry):
-                        tg.create_task(self.on_list_entry(entry, weight))
+            for entry in got.entries:
+                if isinstance(entry, PlaylistEntry):
+                    self.batch_playlists[entry.url] = (entry, weight)  # dedup
+
+    async def process_playlists(self) -> None:
+        """Register deduplicated by dictionary playlists previously found."""
+        async with asyncio.TaskGroup() as tg:
+            for entry, weight in self.batch_playlists.values():
+                tg.create_task(self.on_list_entry(entry, weight))
 
     async def find_channel_videos(self) -> None:
         """Search the watched video's source channel for similar videos."""
+        if not self.channel_url:
+            log.info("Related: no channel URL for %r", self.video_name)
+            return
+
         words = self.video_name.split()  # TODO: handle spaceless languages
         query = " ".join(words[:math.ceil(len(words) / 2)])
         url = self.channel_url + "/search?query=" + quote(query)
@@ -207,42 +264,51 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
         with report(DownloadError):
             got = await self.extender.search(url)
             log.info("Related: found %d channel videos for %r", len(got), url)
-            self.on_videos(got, weight=2)
+            self.on_videos(got, weight=3)
 
     def finish_batch(self) -> Self:
         """Commit all fetched results to data, will remove previous page."""
         log.info("Related: got %d results for %r, page %d",
                  len(self.current_batch), self.video_name, self.page)
 
-        by_score = sorted(self.current_batch.values(), key=lambda r: r.score)
+        by_score = sorted(self.current_batch.values())
         self.add([related.entry for related in reversed(by_score)])
         self.current_batch.clear()
+        self.batch_playlists.clear()
         return self
 
     async def find(self) -> Self:
-        """Try finding videos related to another video X.
+        """Try finding videos related to another video V.
 
-        First try to get a combination of similar videos from the uploader +
-        videos from any playlist on the site that *probably* contains X.
-        If there are no results or we run out, try to find playlists with a
-        less explicit search, which is more likely to return unrelated stuff.
+        Four requests are combined:
+        - Fuzzy search with half of V's title on the uploader's channel
+        - Site-wide search for playlists that *probably* contain V:
+          V's title + channel name
+        - Same, but V's title + author's user ID
+        - Same, but just V's title (fuzzier and less promoted)
+
+        If a playlists's first 100 loaded entries contain a video from V's
+        uploader, it gets heavier promotion; and even more if it has V itself.
+        Playlists where most of the content is from the same uploader get
+        demoted for being lacking variety and often being parts of one series
+        with all of the same thubnails.
         """
         if not self.needs_more_data:
             return self
         log.info("Related: getting page %d for %r", self.page, self.video_name)
 
-        if self.vaguer_search:
-            await self.find_playlists(explicit_channel=False)
-            return self.finish_batch()
-
         async with asyncio.TaskGroup() as tg:
-            tg.create_task(self.find_playlists(explicit_channel=True))
             tg.create_task(self.find_channel_videos())
 
-        if not self.current_batch and not self.vaguer_search:
-            log.info("Related: now using vague search for %r", self.video_name)
-            self.reset()
-            self.vaguer_search = True
-            return await self.find()
+            channel = (self.channel_name or "").strip()
+            uploader = (self.uploader_id or "").removeprefix("@").strip()
+            if channel.lower() == uploader.lower():
+                uploader = channel
+
+            async with asyncio.TaskGroup() as tg2:
+                for addition in tuple({channel, uploader, ""}):
+                    tg2.create_task(self.find_playlists(addition))
+
+            tg.create_task(self.process_playlists())
 
         return self.finish_batch()
