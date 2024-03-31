@@ -18,7 +18,6 @@ from typing import (
 )
 from urllib.parse import parse_qs, quote
 
-import backoff
 from fastapi.datastructures import URL
 from pydantic import (
     AliasChoices,  # type: ignore
@@ -269,6 +268,8 @@ SearchEntry: TypeAlias = (
     ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry |
     SearchLink
 )
+
+
 class Search(Entries[SearchEntry]):
     url: str = Field(alias="original_url")
     entries: list[Annotated[SearchEntry, Field(discriminator="entry_type")]] =\
@@ -407,10 +408,6 @@ class Channel(Search, HasThumbnails):
         return from_url.replace(path=path)
 
 
-class NoDataReceived(Exception):
-    """ytdlp failed to return any data after retrying"""
-
-
 class YoutubeClient:
     _ytdl_instances: ClassVar[dict[tuple[int, int], YoutubeDL]] = {}
     _executor = ThreadPoolExecutor(max_workers=16)
@@ -418,6 +415,10 @@ class YoutubeClient:
     def __init__(self, page: int = 1, per_page: int = 12) -> None:
         super().__init__()
         offset = per_page * (page - 1)
+
+        def retry_sleep(n: int) -> float:
+            return min(1, 2 ** (n - 1) / 20)
+
         self._ytdl = self._ytdl_instances.get((page, per_page)) or YoutubeDL({
             "quiet": True,
             "write_pages": True,
@@ -426,9 +427,19 @@ class YoutubeClient:
             "playlistend": offset + per_page,
             "extract_flat": "in_playlist",
             "compat_opts": ["no-youtube-unavailable-videos"],
+            "extractor_retries": 10,
+            "retry_sleep_functions": {
+                "http": retry_sleep,
+                "fragment": retry_sleep,
+                "file_access": retry_sleep,
+                "extractor": retry_sleep,
+            },
             "extractor_args": {
-                # This client has the HLS manifests, no need for others
-                "youtube": {"player_client": ["ios"]},
+                "youtube": {
+                    "raise_incomplete_data": ["true"],
+                    # This client has the HLS manifests, no need for others
+                    "player_client": ["ios"],
+                },
                 # Retrieve upload dates in flat playlists
                 "youtubetab": {"approximate_date": ["timestamp"]},
             },
@@ -450,11 +461,10 @@ class YoutubeClient:
     async def video(self, url: URL | str) -> Video:
         return Video.parse_obj(await self._get(url))
 
-    @backoff.on_exception(backoff.expo, NoDataReceived, max_tries=10)
     async def _get(self, url: URL | str) -> dict[str, Any]:
         func = partial(self._ytdl.extract_info, str(url), download=False)
-        if (data := await self._thread(func)) is None:
-            raise NoDataReceived
+        data = await self._thread(func)
+        assert data
         return self._extend_entries(data)
 
     @classmethod

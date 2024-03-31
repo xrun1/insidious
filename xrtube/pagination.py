@@ -12,10 +12,10 @@ from urllib.parse import quote
 from uuid import UUID, uuid4
 
 from typing_extensions import override
+from yt_dlp.utils import DownloadError
 
 from .utils import report
 from .ytdl import (
-    NoDataReceived,
     Playlist,
     PlaylistEntry,
     Search,
@@ -172,7 +172,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
 
     async def on_list_entry(self, e: PlaylistEntry, weight: float = 1) -> None:
         """Load details and videos of a playlist found in search results."""
-        with report(NoDataReceived):
+        with report(DownloadError):
             playlist = await self.extender_with(per_page=100).playlist(e.url)
             self.on_videos(playlist, weight)
 
@@ -188,7 +188,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
         url = "https://www.youtube.com/results?search_query={}&sp=EgIQAw%3D%3D"
         url = url.format(quote(query))
 
-        with report(NoDataReceived):
+        with report(DownloadError):
             got = await self.extender_with(per_page=5).search(url)
             log.info("Related: found %d playlists for %r", len(got), url)
 
@@ -204,7 +204,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
         url = self.channel_url + "/search?query=" + quote(query)
 
         # NOTE: Failure on "- Topic" auto-generated channels is expected
-        with report(NoDataReceived):
+        with report(DownloadError):
             got = await self.extender.search(url)
             log.info("Related: found %d channel videos for %r", len(got), url)
             self.on_videos(got, weight=2)
