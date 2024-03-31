@@ -364,19 +364,19 @@ class Playlist(
 ):
     entry_type: Literal["Playlist"] = "Playlist"  # type: ignore
     url: str = Field(alias="original_url")
-    description: str
+    description: str | None = Field(None)
     last_change: datetime | None = Field(None, alias="modified_date")
     views: int | None = Field(None, alias="view_count")
-    total_entries: int = Field(alias="playlist_count")
+    total_entries: int | None = Field(None, alias="playlist_count")
     entries: list[Annotated[
         ShortEntry | VideoEntry | PartialEntry,
         Field(discriminator="entry_type"),
     ]] = Field(default_factory=list)
 
-    @field_validator("last_change", mode="before")  # type: ignore
+    @field_validator("last_change", mode="before")
     @classmethod
-    def parse_last_change(cls, value: Any) -> datetime:
-        return datetime.strptime(value, "%Y%m%d")
+    def parse_last_change(cls, value: Any) -> datetime | None:
+        return None if value is None else datetime.strptime(value, "%Y%m%d")
 
     @property
     @override
