@@ -183,11 +183,27 @@
         observeChecked(qualities, setQuality)
     }
 
-    function onLevelSwitched(event, data) {
+    function onLevelSwitch(event, data) {
         const opt = document.querySelector("#qualities [aria-checked=true]")
         if (opt.value !== "Auto") return
         const name = levelName(hls.levels[hls.currentLevel])
         document.querySelector("#auto-current-level").textContent = name
+    }
+
+    function onSubsUpdate(event, data) {
+        const want = getCookie("subtitles")
+        if (! want) return
+        const baseLang = want.lang.split("-")[0]
+        const track = hls.allSubtitleTracks.find(t => t.name === want.name) ||
+            hls.allSubtitleTracks.find(t => t.lang === want.lang) ||
+            hls.allSubtitleTracks.find(t => t.lang.split("-")[0] === baseLang)
+
+        hls.setSubtitleOption({name: track.name})
+    }
+
+    function onSubsSwitch(event, data) {
+        const sub = hls.subtitleTracks[data.id]
+        setCookie("subtitles", sub ? {name: sub.name, lang: sub.lang} : null)
     }
 
     function onAudioTracksUpdate() {
@@ -282,7 +298,9 @@
     hls.on(Hls.Events.MANIFEST_LOADED, onLevelsUpdate)
     hls.on(Hls.Events.LEVELS_UPDATED, onLevelsUpdate)
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, onAudioTracksUpdate)
-    hls.on(Hls.Events.LEVEL_SWITCHED, onLevelSwitched)
+    hls.on(Hls.Events.LEVEL_SWITCHED, onLevelSwitch)
+    hls.on(Hls.Events.SUBTITLE_TRACK_SWITCH, onSubsSwitch)
+    hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, onSubsUpdate)
 
     const maxBandwidthRemembered = 2048 * 8192  // 2MiB/s in bits
     hls.bandwidthEstimate = getCookie("bandwidth", 50 * 8192)
