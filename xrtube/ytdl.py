@@ -106,6 +106,27 @@ class HasThumbnails(BaseModel):
         return thumbs
 
 
+class HasHoverThumbnails(BaseModel):
+    id: str
+
+    @property
+    def hover_srcsets(self) -> list[str]:
+        return [
+            ", ".join(quality.srcset for quality in nth)
+            for nth in reversed(self._hover_thumbnails())
+        ]
+
+    def _hover_thumbnails(self) -> list[list[Thumbnail]]:
+        def url(q: str, id: int) -> str:
+            return f"https://i.ytimg.com/vi/{self.id}/{q}{id}.jpg"
+
+        return [[
+            Thumbnail(url=url("hq", id), width=480, height=360),
+            Thumbnail(url=url("mq", id), width=320, height=180),
+            Thumbnail(url=url("", id), width=120, height=90),
+        ] for id in (1, 2, 3)]
+
+
 class HasChannel(BaseModel):
     channel_id: str | None = None
     channel_name: str | None = Field(None, alias="channel")
@@ -183,12 +204,12 @@ class Entry(HasThumbnails):
     title: str
 
 
-class ShortEntry(Entry):
+class ShortEntry(Entry, HasHoverThumbnails):
     entry_type: Literal["ShortEntry"]
     views: int = Field(alias="view_count")
 
 
-class VideoEntry(Entry, HasChannel):
+class VideoEntry(Entry, HasHoverThumbnails, HasChannel):
     entry_type: Literal["VideoEntry"]
     views: int | None = Field(None, alias="view_count")
     description: str | None = None
@@ -367,7 +388,8 @@ class Video(VideoEntry):
 
 
 class Playlist(
-    PlaylistEntry, HasChannel, Entries[ShortEntry | VideoEntry | PartialEntry],
+    PlaylistEntry, HasHoverThumbnails, HasChannel,
+    Entries[ShortEntry | VideoEntry | PartialEntry],
 ):
     entry_type: Literal["Playlist"] = "Playlist"  # type: ignore
     url: str = Field(alias="original_url")
@@ -394,6 +416,13 @@ class Playlist(
     @override
     def load_url(self) -> str | None:
         return None
+
+    @property
+    @override
+    def hover_srcsets(self) -> list[str]:
+        if len(self) < 3:  # noqa: PLR2004
+            return self[0].hover_srcsets
+        return [entry.thumbnails_srcset for entry in self[1:6]]
 
 
 class Channel(Search, HasThumbnails):

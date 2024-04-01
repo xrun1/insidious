@@ -10,6 +10,8 @@
 
 <div
     class=entry
+    onmouseenter="runHoverSlideshow(this)"
+    onmouseleave="stopHoverSlideshow(this)"
     {% if entry.load_url %}
         hx-get="{{entry.load_url}}"
         hx-trigger="intersect once"
@@ -25,6 +27,15 @@
     >
         <div>
             <img sizes=10rem srcset="{{thumbnails}}">
+
+            <div class=hover-thumbnails>
+                {% for srcset in entry.hover_srcsets or [] %}
+                    {# These are of the video's aspect ratio and will look #}
+                    {# blurry when upscaled by object-fit: cover, so get a #}
+                    {# bigger size with "15rem" #}
+                    <img sizes=15rem to-load="{{srcset}}">
+                {% endfor %}
+            </div>
 
             {% if entry.live_status == LiveStatus.is_live %}
                 <span class=duration>live</span>

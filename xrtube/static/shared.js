@@ -64,6 +64,39 @@ function processAllText() {
     processText(".youtube-day-date", formatYoutubeDayDate)
 }
 
+function runHoverSlideshow(entry) {
+    const thumbnails = entry.querySelector(".hover-thumbnails")
+    const imgs = thumbnails.querySelectorAll("img")
+    if (! imgs) return
+    const current = thumbnails.querySelector("img.current")
+    const next = thumbnails.querySelector("img.current + img") || imgs[0]
+
+    function change() {
+        current?.classList.remove("current")
+        next.classList.add("current")
+        if (! entry.matches(":hover")) {
+            stopHoverSlideshow(entry)
+            return
+        }
+        thumbnails.setAttribute("timer-id", 
+            setTimeout(() => { runHoverSlideshow(entry) }, 1000) 
+        )
+    }
+
+    if (next.hasAttribute("to-load")) {
+        next.srcset = next.getAttribute("to-load")
+        next.removeAttribute("to-load")
+    }
+    next.complete ? change() : next.addEventListener("load", change)
+}
+
+function stopHoverSlideshow(entry) {
+    const thumbnails = entry.querySelector(".hover-thumbnails")
+    clearTimeout(thumbnails.getAttribute("timer-id"))
+    thumbnails.removeAttribute("timer-id")
+    thumbnails.querySelector(".current")?.classList.remove("current")
+}
+
 function setCookie(name, obj, secondsAlive=0) {  // 0 = die on browser close
     const body = encodeURIComponent(JSON.stringify(obj))
     const age = secondsAlive ? `; max-age=${secondsAlive}` : ""

@@ -242,7 +242,8 @@ async def playlist(request: Request) -> Response:
 
 @app.get("/load_playlist_entry")
 async def load_playlist_entry(request: Request, url: str) -> Response:
-    pl = await YoutubeClient(per_page=0).playlist(url)
+    # We want at least some entries for hover thumbnails preview
+    pl = await YoutubeClient(per_page=6).playlist(url)
     return PlaylistLoad(request, None, pl).response
 
 
