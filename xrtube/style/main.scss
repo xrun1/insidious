@@ -11,9 +11,6 @@
     --vpad: 0.375rem;
     --radius: 0.6rem;
     --accent: #2a32a9;
-
-    // media-chrome variables
-    --media-object-fit: cover;
 }
 
 html {
@@ -222,6 +219,10 @@ img {
 media-controller {
     display: block;
     user-select: none;
+
+    media-poster-image {
+        --media-object-fit: cover;
+    }
 
     &:not([mediahasplayed]), &[mediaended] {
         > media-loading-indicator {
