@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "construct": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1645484404,
+        "narHash": "sha256-bp/YyRFP0rrBHPyhiqnn6o1iC5l61oedShZ2phGeqaw=",
+        "owner": "construct",
+        "repo": "construct",
+        "rev": "a6603d7821480fb5a4e6665c6fd8028ce574c4bd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "construct",
+        "repo": "construct",
+        "rev": "a6603d7821480fb5a4e6665c6fd8028ce574c4bd",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1711523803,
@@ -19,15 +36,15 @@
     "pymp4": {
       "flake": false,
       "locked": {
-        "lastModified": 1711675863,
-        "narHash": "sha256-3QHq4jOWKnmsrt547kX1oBgsfRy0Co+B0Ape2OiTcz0=",
-        "owner": "xrun1",
+        "lastModified": 1691392581,
+        "narHash": "sha256-tPIbehjYHg5+S62sorsWow+u/eBkqJYf6xMI8q4vEgY=",
+        "owner": "devine-dl",
         "repo": "pymp4",
-        "rev": "3045508aa811447ab4f09f04221dbbc082f19bd3",
+        "rev": "33dc5d620f361cb49d713b60dcb2686ab8696f91",
         "type": "github"
       },
       "original": {
-        "owner": "xrun1",
+        "owner": "devine-dl",
         "ref": "construct-2.10-patch",
         "repo": "pymp4",
         "type": "github"
@@ -35,6 +52,7 @@
     },
     "root": {
       "inputs": {
+        "construct": "construct",
         "nixpkgs": "nixpkgs",
         "pymp4": "pymp4"
       }

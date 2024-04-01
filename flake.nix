@@ -1,19 +1,25 @@
 {
     inputs = {
         nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-        pymp4.url = "github:xrun1/pymp4/construct-2.10-patch";
+        construct.url = "github:construct/construct/a6603d7821480fb5a4e6665c6fd8028ce574c4bd";
+        construct.flake = false;
+        pymp4.url = "github:devine-dl/pymp4/construct-2.10-patch";
         pymp4.flake = false;
     };
     outputs = inputs @ { self, nixpkgs, ...}: let
         sys = "x86_64-linux";
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
         pyPkgs = pkgs.python311Packages;
-        pymp4 = pyPkgs.buildPythonPackage rec {
+        construct21068 = pyPkgs.construct.overrideAttrs {
+            verson = "2.10.68";
+            src = inputs.construct;
+        };
+        pymp4 = pyPkgs.buildPythonPackage {
             name = "pymp4";
             src = inputs.pymp4;
             pyproject = true;
             nativeBuildInputs = with pyPkgs; [poetry-core];
-            propagatedBuildInputs = with pyPkgs; [construct];
+            propagatedBuildInputs = [construct21068];
         };
     in rec {
         packages.${sys}.default = pyPkgs.buildPythonPackage rec {
@@ -38,7 +44,7 @@
                 backoff
                 appdirs
                 websockets
-                pymp4 construct
+                pymp4 construct21068
             ];
         };
         devShells.${sys}.default = pkgs.mkShell {
