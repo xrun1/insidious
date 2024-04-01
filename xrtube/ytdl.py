@@ -18,6 +18,8 @@ from typing import (
 )
 from urllib.parse import parse_qs, quote
 
+import backoff
+import yt_dlp
 from fastapi.datastructures import URL
 from pydantic import (
     AliasChoices,  # type: ignore
@@ -32,6 +34,11 @@ from .utils import AutoStrEnum
 
 T = TypeVar("T")
 P = ParamSpec("P")
+
+
+class NoDataReceived(yt_dlp.utils.ExtractorError):
+    def __init__(self) -> None:
+        super().__init__("Failed to gather any data from origin site")
 
 
 class LiveStatus(AutoStrEnum):
@@ -416,9 +423,6 @@ class YoutubeClient:
         super().__init__()
         offset = per_page * (page - 1)
 
-        def retry_sleep(n: int) -> float:
-            return min(1, 2 ** (n - 1) / 20)
-
         self._ytdl = self._ytdl_instances.get((page, per_page)) or YoutubeDL({
             "quiet": True,
             "write_pages": True,
@@ -427,19 +431,9 @@ class YoutubeClient:
             "playlistend": offset + per_page,
             "extract_flat": "in_playlist",
             "compat_opts": ["no-youtube-unavailable-videos"],
-            "extractor_retries": 10,
-            "retry_sleep_functions": {
-                "http": retry_sleep,
-                "fragment": retry_sleep,
-                "file_access": retry_sleep,
-                "extractor": retry_sleep,
-            },
             "extractor_args": {
-                "youtube": {
-                    "raise_incomplete_data": ["true"],
-                    # This client has the HLS manifests, no need for others
-                    "player_client": ["ios"],
-                },
+                # This client has the HLS manifests, no need for others
+                "youtube": {"player_client": ["ios"]},
                 # Retrieve upload dates in flat playlists
                 "youtubetab": {"approximate_date": ["timestamp"]},
             },
@@ -461,10 +455,11 @@ class YoutubeClient:
     async def video(self, url: URL | str) -> Video:
         return Video.parse_obj(await self._get(url))
 
+    @backoff.on_exception(backoff.expo, NoDataReceived, max_tries=10)
     async def _get(self, url: URL | str) -> dict[str, Any]:
         func = partial(self._ytdl.extract_info, str(url), download=False)
-        data = await self._thread(func)
-        assert data
+        if (data := await self._thread(func)) is None:
+            raise NoDataReceived
         return self._extend_entries(data)
 
     @classmethod
