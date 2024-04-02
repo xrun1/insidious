@@ -170,16 +170,15 @@
         while (header.nextSibling) header.nextSibling.remove()
         for (const opt of opts) qualities.appendChild(opt)
         haveClass(qualityButton, "no-choice", opts.length < 2)
+        opts.forEach(o => console.log(o.value, o.ariaChecked, o.checked))
 
         const saved = getCookie("quality")
-        if (saved === null) {
-            auto.checked = true
-        } else {
-            let choice = opts.find(e => e.value === saved) ||
-                opts.find(e => e.value.startsWith(saved.split("p")[0])) ||
-                opts[0]
-            opts.forEach(e => e.checked = e === choice)
-        }
+        const choice = saved === null ? auto : (
+            opts.find(e => e.value === saved) ||
+            opts.find(e => e.value.startsWith(saved.split("p")[0])) ||
+            opts[0]
+        )
+        opts.forEach(e => e.checked = e === choice)
         observeChecked(qualities, setQuality)
     }
 
