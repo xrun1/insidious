@@ -482,6 +482,7 @@ class YoutubeClient:
         return Playlist.parse_obj(await self._get(url))
 
     async def video(self, url: URL | str) -> Video:
+        url = URL(str(url)).remove_query_params("list")
         return Video.parse_obj(await self._get(url))
 
     @backoff.on_exception(backoff.expo, NoDataReceived, max_tries=10)
