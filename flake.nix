@@ -44,6 +44,7 @@
                 backoff
                 appdirs
                 websockets
+                pillow
                 pymp4 construct21068
             ];
         };

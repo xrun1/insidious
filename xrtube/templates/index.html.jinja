@@ -6,6 +6,10 @@
         <meta name=viewport content="width=device-width">
         <meta name=referrer content=strict-origin>
 
+        {% for px, url in favicons %}
+            <link rel=icon type=image/png sizes={{px}}x{{px}} href="{{url}}">
+        {% endfor %}
+
         <link rel=stylesheet href="/npm/modern-normalize@^2.0.0/modern-normalize.min.css" >
         <link rel=stylesheet href=/style.css>
 

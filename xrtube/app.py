@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import logging as log
 import os
 import re
 import shutil
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterable
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import timedelta
@@ -30,6 +31,7 @@ from fastapi.responses import (
 )
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from PIL import Image
 from watchfiles import awatch
 
 from xrtube.streaming import (
@@ -99,6 +101,7 @@ class Page:
 
     request: Request
     title: str | None
+    favicons: Iterable[tuple[int, str]]  # (dimension, url)
 
     @property
     def full_title(self) -> str:
@@ -176,7 +179,7 @@ async def fix_esm_mime(request: Request, call_next: CallNext) -> Response:
 
 @app.get("/")
 async def home(request: Request) -> Response:
-    return Index(request, None).response
+    return Index(request, None, []).response
 
 
 @app.get("/style.css")
@@ -184,12 +187,32 @@ async def style() -> Response:
     return Response(content=css, media_type="text/css")
 
 
+@app.get("/favicon")
+async def favicon(request: Request, path: str) -> Response:
+    with httpx_to_fastapi_errors():
+        reply = await HTTPX.get(str(request.base_url).rstrip("/") + path)
+        reply.raise_for_status()
+        data = await reply.aread()
+
+    image = Image.open(io.BytesIO(data))
+    width, height = image.size
+    new_width = new_height = min(width, height)
+    left = (width - new_width) // 2
+    top = (height - new_height) // 2
+    right = (width + new_width) // 2
+    bottom = (height + new_height) // 2
+    image = image.crop((left, top, right, bottom))
+    out = io.BytesIO()
+    image.save(out, format="PNG")
+    return Response(out.getvalue(), media_type="image/png")
+
+
 @app.get("/results")
 async def results(request: Request, search_query: str = "") -> Response:
     if (pg := Pagination.get(request).advance()).needs_more_data:
         pg.add(await pg.extender.search(pg.extender.convert_url(request.url)))
 
-    return Index(request, search_query, pg).response
+    return Index(request, search_query, [], pg).response
 
 
 @app.get("/hashtag/{tag}")
@@ -198,7 +221,7 @@ async def hashtag(request: Request, tag: str) -> Response:
         url = pg.extender.convert_url(request.url)
         pg.add(await pg.extender.playlist(url))
 
-    return Index(request, f"#{tag}", pg).response
+    return Index(request, f"#{tag}", [], pg).response
 
 
 @app.get("/@{id}")
@@ -226,7 +249,9 @@ async def channel(request: Request, tab: str = "featured") -> Response:
             group = await pg.extender_with(0).channel(url.replace(path=path))
             pg.done = True
 
-    return Index(request, group.title if group else "", pg, group).response
+    title = group.title if group else ""
+    icons = group.favicons if group else ()
+    return Index(request, title, icons, pg, group).response
 
 
 @app.get("/playlist")
@@ -237,14 +262,16 @@ async def playlist(request: Request) -> Response:
         url = pg.extender.convert_url(request.url)
         pg.add(pl := await pg.extender.playlist(url))
 
-    return Index(request, pl.title if pl else "", pg, pl).response
+    title = pl.title if pl else ""
+    icons = pl.favicons if pl else ()
+    return Index(request, title, icons, pg, pl).response
 
 
 @app.get("/load_playlist_entry")
 async def load_playlist_entry(request: Request, url: str) -> Response:
     # We want at least some entries for hover thumbnails preview
     pl = await YoutubeClient(per_page=6).playlist(url)
-    return PlaylistLoad(request, None, pl).response
+    return PlaylistLoad(request, None, [], pl).response
 
 
 @app.get("/load_search_link")
@@ -263,7 +290,7 @@ async def load_search_link(request: Request, url: str, title: str) -> Response:
             pl = await YoutubeClient().playlist(plentry.url)
             search.entries = [pl]
 
-    return SearchLinkLoad(request, None, search).response
+    return SearchLinkLoad(request, None, [], search).response
 
 
 @app.get("/watch")
@@ -280,7 +307,9 @@ async def watch(request: Request) -> Response:
         "channel_url": video.channel_url,
     }.items() if v is not None}
     rel = request.url_for("related").include_query_params(**rel_params)
-    return Index(request, video.title, video=video, get_related=rel).response
+    return Index(
+        request, video.title, video.favicons, video=video, get_related=rel,
+    ).response
 
 
 @app.get("/storyboard")
@@ -301,7 +330,7 @@ async def chapters(video_url: str) -> Response:
 async def related(request: Request) -> Response:
     if (pg := RelatedPagination.get(request).advance()).needs_more_data:
         await pg.find()
-    return Index(request, None, pagination=pg).response
+    return Index(request, None, [], pagination=pg).response
 
 
 @app.get("/dislikes")
@@ -311,7 +340,7 @@ async def dislikes(request: Request, video_id: str):
         reply = await HTTPX.get(api, params={"videoId": video_id})
         reply.raise_for_status()
         count = reply.json().get("dislikes") or 0
-        return Dislikes(request, None, count).response
+        return Dislikes(request, None, [], count).response
 
 
 @app.get("/generate_hls/master")
