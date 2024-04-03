@@ -11,6 +11,9 @@
     --vpad: 0.375rem;
     --radius: 0.4rem;
     --accent: #2a32a9;
+    --max-search-width: #{"calc(min(100svw - var(--gap) * 2, var(--side) * 3 + var(--gap-small) * 2))"};
+    --video-width: #{"calc(min(100svh, max(50rem, 40svw), 100svw - var(--side) - var(--gap) * 3))"};
+    --narrow-video-width: #{"calc(min(100svh, 100svw - var(--gap) * 2))"};
     --player-control-bar-height: 2.690rem;
 }
 
@@ -22,20 +25,15 @@ html {
 body {
     background: #fafafa;
     min-height: 100%;
+    padding: var(--gap);
     display: grid;
-    grid-template-rows: 1.75rem auto 1fr;
-    grid-template-columns: auto var(--side);
+    grid-auto-columns: max-content;
+    grid-auto-rows: max-content;
     justify-content: center;
     gap: var(--gap);
-    padding: var(--gap);
-
-    &:has(#group.empty) {
-        grid-template-rows: 1.75rem 1fr;
-    }
-    &:has(#video-column.empty) {
-        grid-template-columns: 
-            minmax(0, calc(var(--side) * 3 + var(--gap) * 2));
-    }
+    // Prevent layout shift due to scrollbars appearing when content is 
+    // initially lazy-loaded
+    overflow-y: scroll;
 }
 
 p { 
@@ -90,29 +88,26 @@ img {
 }
 
 #search {
-    grid-column: 1 / -1;
-
     > input[type=search] {
         width: 100%;
         height: 100%;
     }
 }
 
-#group {
-    grid-row: 2;
-    grid-column: -2 / -1;
+#channel-page, #playlist-page {
     display: flex;
-    flex-flow: row wrap;
+    width: var(--max-search-width);
+    flex-flow: column wrap;
     align-items: center;
     justify-content: center;
     gap: var(--gap);
 
-    > .banner {
+    & .banner {
         width: 100%;
         height: 12rem;
     }
 
-    > nav {
+    & nav {
         display: flex;
         flex-flow: row wrap;
         gap: var(--gap-small);
@@ -130,6 +125,10 @@ img {
             margin-block-start: 0;
         }
     }
+}
+
+#playlist-page .avatar-info, #channel-page nav {
+    margin: var(--gap-small) 0;
 }
 
 .avatar-info {
@@ -156,6 +155,23 @@ img {
         > p, > .followers {
             color: black;
         }
+    }
+}
+
+#watch-page {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    gap: var(--gap);
+
+    > #video-column {
+        min-width: var(--video-width);
+        max-width: var(--video-width);
+    }
+
+    > #related {
+        min-width: var(--side);
+        max-width: var(--side);
     }
 }
 
@@ -189,6 +205,7 @@ img {
             }
             & p {
                 margin-block-start: 0;
+                white-space: normal
             }
         }
     }
@@ -196,13 +213,6 @@ img {
 
 .video-little-details {
     flex-shrink: 0;
-}
-
-#video-column {
-    grid-row: 2 / -1;
-    grid-column: 1;
-    min-width: #{"min(120svh, 40svw)"};
-    max-width: #{"min(120svh, max(50rem, 40svw))"};
 }
 
 .yt-markup {
@@ -287,16 +297,13 @@ media-controller {
     }
 }
 
-#explore-column {
-    grid-row: -2 / -1;
-    grid-column: -2 / -1;
-}
-
 .page {
     display: grid;
     grid-template-columns: repeat(auto-fit, var(--side));
     justify-content: center;
     gap: var(--gap-small);
+    max-width: var(--max-search-width);
+    margin: 0 auto;
 
     &:not(:first-child) {
         margin-top: var(--gap-small)
@@ -400,26 +407,6 @@ media-controller {
     }
 }
 
-@media all and (max-width: 48rem) {  // 768px at 16px font size
-    body {
-        grid-template-columns: 1fr;
-        grid-template-rows: 1.75rem auto auto;
-
-        // TODO: there has to be a better way
-        &:has(#video-column.empty) {
-            grid-template-rows: 1.75rem auto;
-        }
-        &:has(#group.empty) {
-            grid-template-rows: 1.75rem auto;
-            &:has(#video-column.empty) {
-                grid-template-rows: auto;
-            }
-        }
-    }
-    #explore-column {
-        grid-row: -1;
-    }
-}
 // calc(var(--side) + var(--gap) * 2) * 2
 @media all and (max-width: calc((20rem + 1rem * 2) * 2)) {
     .page {
@@ -446,5 +433,21 @@ media-controller {
         -webkit-line-clamp: 2;
         &:has(+ :not(.channel)) { -webkit-line-clamp: 3; }
         &:last-child { -webkit-line-clamp: 4; }
+    }
+}
+
+@media all and (max-width: 48rem) {  // 768px at 16px font size
+    #watch-page {
+        flex-flow: column nowrap;
+        align-items: center;
+
+        > #video-column {
+            min-width: var(--narrow-video-width);
+            max-width: var(--narrow-video-width);
+        }
+
+        > #related {
+            max-width: unset;
+        }
     }
 }

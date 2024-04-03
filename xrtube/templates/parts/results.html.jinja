@@ -1,6 +1,6 @@
 <div class=page>
     {% for entry in pagination.items %}
-        {% include "entry.html.jinja" %}
+        {% include "parts/entry.html.jinja" %}
     {% endfor %}
 </div>
 <script>processAllText()</script>
@@ -10,8 +10,8 @@
         class="lazy-loader {{'large' if pagination.running_short else ''}}"
         hx-get="{{pagination.next_url}}"
         hx-trigger="intersect once"
-        hx-select="#explore-column > *"
-        hx-target=#explore-column
+        hx-select="#pages > *"
+        hx-target="#pages"
         hx-swap="beforeend ignoreTitle:true"
     ></div>
 {% endif %}

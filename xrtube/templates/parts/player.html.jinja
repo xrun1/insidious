@@ -2,26 +2,26 @@
     keyboardforwardseekoffset=5
     keyboardbackwardseekoffset=5
     noautoseektolive
-    style="aspect-ratio: {{video.aspect_ratio}}"
+    style="aspect-ratio: {{info.aspect_ratio}}"
 
-    {% if video.duration %}
-        defaultduration={{video.duration}}
+    {% if info.duration %}
+        defaultduration={{info.duration}}
     {% endif %}
 
-    {% if video.live_status == LiveStatus.is_live %}
+    {% if info.live_status == LiveStatus.is_live %}
         defaultstreamtype=live
     {% else %}
         defaultstreamtype=on-demand
     {% endif %}
 >
-    <hls-video id=hls slot=media src="{{video.manifest_url}}" type=hls>
-        <track default kind=chapters src="{{video.chapters_url}}">
+    <hls-video id=hls slot=media src="{{info.manifest_url}}" type=hls>
+        <track default kind=chapters src="{{info.chapters_url}}">
         <track label=thumbnails default kind=metadata
-            src="{{video.storyboard_url}}"
+            src="{{info.storyboard_url}}"
         >
     </hls-video>
 
-    <media-poster-image slot=poster src="{{video.best_thumbnail.fixed_url}}">
+    <media-poster-image slot=poster src="{{info.best_thumbnail.fixed_url}}">
     </media-poster-image>
 
     <media-loading-indicator slot=centered-chrome noautohide>
@@ -30,7 +30,8 @@
     <media-play-button slot=centered-chrome></media-play-button>
 
     <media-playback-rate-menu
-        rates="0.5 0.75 1 1.25 1.5 1.75 2 2.5 3" hidden anchor=auto>
+        rates="0.5 0.75 1 1.25 1.5 1.75 2 2.5 3" hidden anchor=auto
+    >
         <div slot=header>Speed</div>
     </media-playback-rate-menu>
     <media-chrome-menu hidden anchor=quality-button id=qualities>
@@ -53,7 +54,7 @@
 
     <media-control-bar>
         <media-play-button></media-play-button>
-        {% if video.live_status == LiveStatus.is_live %}
+        {% if info.live_status == LiveStatus.is_live %}
             <media-live-button></media-live-button>
         {% endif %}
         <media-mute-button></media-mute-button>
@@ -79,15 +80,6 @@
         </media-fullscreen-button>
     </media-control-bar>
 </media-controller>
-
-{# Putting these attrs on the video itself causes duplicate triggering #}
-<div
-    hx-get="{{get_related}}"
-    hx-trigger=load
-    hx-select=#explore-column
-    hx-target=#explore-column
-    hx-swap="ignoreTitle:true"
-></div>
 
 <script type=module>
     import { Hls } from "/npm/hls-video-element@1.1.3/+esm"

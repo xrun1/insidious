@@ -1,8 +1,4 @@
 {% set url = local_url(entry.shortest_url or entry.url) %}
-{% set target = "#explore-column" %}
-{% if entry.entry_type in ("VideoEntry", "ShortEntry") %}
-    {% set target = "#video-column" %}
-{% endif %}
 {% set thumbnails = entry.thumbnails_srcset %}
 {% if not thumbnails and entry.entries %}
     {% set thumbnails = (entry.entries | random).thumbnails_srcset %}
@@ -21,8 +17,8 @@
         class=thumbnail
         href="{{url}}"
         hx-get="{{url}}"
-        hx-select="{{target}}"
-        hx-target="{{target}}"
+        hx-select=".page-content"
+        hx-target=".page-content"
         hx-push-url=true
     >
         <div>

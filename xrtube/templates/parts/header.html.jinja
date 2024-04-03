@@ -1,0 +1,16 @@
+<div id=header>
+    <form
+        id=search
+        hx-get=/results
+        hx-select=.page-content
+        hx-target=.page-content
+        hx-push-url=true
+    >
+        <input
+            type=search
+            placeholder=Search
+            autocomplete=true
+            name=search_query
+        >
+    </form>
+</div>

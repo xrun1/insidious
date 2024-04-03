@@ -1,0 +1,81 @@
+<!DOCTYPE html><html>
+<head>
+    {% include "parts/head.html.jinja" %}
+</head>
+
+<body>
+    {% include "parts/header.html.jinja" %}
+
+    <div id=watch-page class=page-content>
+        <div id=video-column>
+            <div
+                id=player-and-controls
+                style="background: url('{{info.best_thumbnail.fixed_url}}')"
+            >
+                <div id=player-holder style="aspect-ratio: {{info.aspect_ratio}}">
+                    {% include "parts/player.html.jinja" %}
+                </div>
+            </div>
+
+            <h1>{{youtube_format(info.title, allow_markup=False)}}</h1>
+
+            <div class=video-details>
+                {% set channel_url = local_url(info.shortest_channel_url) %}
+                <a class=video-author href="{{channel_url}}">
+                    <div
+                        class=avatar-info
+                        hx-get="{{channel_url}}"
+                        hx-trigger=load
+                        hx-select=".avatar-info"
+                        hx-target=this
+                        hx-swap="innerHTML ignoreTitle:true"
+                    >
+                        <div class=avatar></div>
+                        <div class=info>
+                            <h1>{{info.channel_name}}</h1>
+                            <p>&nbsp;<br>&nbsp;</p>
+                        </div>
+                    </div>
+                </a>
+
+                <div class=video-little-details>
+                    <div class=date title="Release date">
+                        <span class=icon>🕒{{no_emoji}}</span>
+                        <span
+                            class=youtube-day-date
+                            raw="{{info.release_date.timestamp()}}"
+                        ></span>
+                    </div>
+                    <div class=views title=Views>
+                        <span class=icon>👁{{no_emoji}}</span>
+                        <span class=number raw="{{info.views}}"></span>
+                    </div>
+                    {% if info.likes is not none %}
+                        <div class=likes title="Likes">
+                            <span class=icon>👍{{no_emoji}}</span>
+                            <span class=number raw="{{info.likes}}"></span>
+                        </div>
+                    {% endif %}
+                    <div hx-get="{{info.dislikes_url}}" hx-trigger=load>
+                        {% include "parts/dislikes.html.jinja" %}
+                    </div>
+                </div>
+                <script>processAllText()</script>
+            </div>
+
+            {% if info.description %}
+                <p
+                    class="video-description yt-markup"
+                >{{youtube_format(info.description)}}</p>
+            {% endif %}
+        </div>
+
+        <div
+            id=related
+            hx-get="{{get_related}}"
+            hx-trigger=load
+            hx-select=.page-content
+            hx-swap="innerHTML ignoreTitle:true"
+        ></div>
+    </div>
+</body></html>

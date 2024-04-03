@@ -1,0 +1,49 @@
+<!DOCTYPE html><html>
+<head>
+    {% include "parts/head.html.jinja" %}
+</head>
+
+<body>
+    {% include "parts/header.html.jinja" %}
+
+    <div id=channel-page class=page-content>
+        {% if info.banners_srcset %}
+            <img class=banner srcset="{{info.banners_srcset}}">
+        {% endif %}
+
+        <div class=avatar-info>
+            <img class=avatar sizes=10rem srcset="{{info.thumbnails_srcset}}">
+
+            <div class=info>
+                <h1>{{youtube_format(info.title, allow_markup=False)}}</h1>
+
+                {% if info.followers %}
+                    <span class=followers title=Suscribers>
+                        <span class=icon>👥{{no_emoji}}</span>
+                        <span class=compact-number raw="{{info.followers}}">
+                        </span>
+                    </span>
+                {% endif %}
+
+                <p class=yt-markup>{{youtube_format(info.description)}}</p>
+            </div>
+        </div>
+
+        <nav>
+            {% for tab in info.tabs %}
+                {% set url = info.tab_url(request.url, tab) %}
+                <a
+                    href="{{url}}"
+                    hx-get="{{url}}"
+                    hx-select=.page-content
+                    hx-target=.page-content
+                    hx-push-url=true
+                >{{tab.capitalize()}}</a>
+            {% endfor %}
+        </nav>
+
+        <div id=pages>
+            {% include "parts/results.html.jinja" %}
+        </div>
+    </div>
+</body></html>

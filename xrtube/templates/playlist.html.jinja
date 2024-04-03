@@ -1,0 +1,63 @@
+<!DOCTYPE html><html>
+<head>
+    {% include "parts/head.html.jinja" %}
+</head>
+
+<body>
+    {% include "parts/header.html.jinja" %}
+
+    <div id=playlist-page class=page-content>
+        <div class=avatar-info>
+            <img class=avatar sizes=10rem srcset="{{info.thumbnails_srcset}}">
+
+            <div class=info>
+                <h1>{{youtube_format(info.title, allow_markup=False)}}</h1>
+
+                <div class=playlist-details>
+                    {% if info.channel_name %}
+                        <div class="channel elide">
+                            <span class=icon>👤{{no_emoji}}</span>
+                            <a
+                                title="{{info.channel_name}}"
+                                href="{{local_url(info.shortest_channel_url)}}"
+                            >{{info.channel_name}}</a>
+                        </div>
+                    {% endif %}
+
+                    {% if info.total_entries %}
+                        <span class=total-entries title="Playlist video count">
+                            <span class=icon>☰{{no_emoji}}</span>
+                            <span class=number raw="{{info.total_entries}}">
+                            </span>
+                        </span>
+                    {% endif %}
+
+                    {% if info.last_change %}
+                        <span class=date title="Last modification date">
+                            <span class=icon>↻{{no_emoji}}</span>
+                            <span class=youtube-date
+                                  raw="{{info.last_change.timestamp()}}">
+                            </span>
+                        </span>
+                    {% endif %}
+
+                    {% if info.views %}
+                        <span class=views title=Views>
+                            <span class=icon>👁{{no_emoji}}</span>
+                            <span class=compact-number raw="{{info.views}}">
+                            </span>
+                        </span>
+                    {% endif %}
+
+                    <script>processAllText()</script>
+                </div>
+
+                <p class=yt-markup>{{youtube_format(info.description)}}</p>
+            </div>
+        </div>
+
+        <div id=pages>
+            {% include "parts/results.html.jinja" %}
+        </div>
+    </div>
+</body></html>

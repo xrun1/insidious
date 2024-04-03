@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from importlib import resources
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Generic, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeAlias
 from urllib.parse import quote
 
 import appdirs
@@ -50,11 +50,15 @@ from .ytdl import (
     Channel,
     Format,
     HasThumbnails,
+    InPlaylist,
     LiveStatus,
     Playlist,
     PlaylistEntry,
     Search,
+    InSearch,
+    ShortEntry,
     Video,
+    VideoEntry,
     YoutubeClient,
 )
 
@@ -137,29 +141,64 @@ class Page:
 
 
 @dataclass(slots=True)
-class Index(Page, Generic[T]):
+class HomePage(Page, Generic[T]):
     template = "index.html.jinja"
-    pagination: Pagination[T] | None = None
-    group: Channel | Playlist | None = None
-    video: Video | None = None
-    get_related: URL | None = None
 
 
 @dataclass(slots=True)
-class PlaylistLoad(Page):
-    template = "entry.html.jinja"
+class ChannelPage(Page):
+    template = "channel.html.jinja"
+    info: Channel
+    pagination: Pagination[InSearch]
+
+
+@dataclass(slots=True)
+class PlaylistPage(Page):
+    template = "playlist.html.jinja"
+    info: Playlist
+    pagination: Pagination[InPlaylist]
+
+
+@dataclass(slots=True)
+class SearchPage(Page):
+    template = "search.html.jinja"
+    pagination: Pagination[InSearch]
+
+
+@dataclass(slots=True)
+class RelatedPage(Page):
+    template = "search.html.jinja"
+    pagination: Pagination[ShortEntry | VideoEntry]
+
+
+@dataclass(slots=True)
+class OutOfBoundsPage(Page):
+    template = "search.html.jinja"
+    pagination: Pagination[Any]
+
+
+@dataclass(slots=True)
+class WatchPage(Page):
+    template = "watch.html.jinja"
+    info: Video
+    get_related: URL
+
+
+@dataclass(slots=True)
+class LoadedPlaylistEntry(Page):
+    template = "parts/entry.html.jinja"
     entry: Playlist
 
 
 @dataclass(slots=True)
-class SearchLinkLoad(Page):
-    template = "entry.html.jinja"
+class LoadedSearchLinkEntry(Page):
+    template = "parts/entry.html.jinja"
     entry: Search
 
 
 @dataclass(slots=True)
 class Dislikes(Page):
-    template = "dislikes.html.jinja"
+    template = "parts/dislikes.html.jinja"
     dislike_count: int | None = None
 
 
@@ -176,7 +215,7 @@ async def fix_esm_mime(request: Request, call_next: CallNext) -> Response:
 
 @app.get("/")
 async def home(request: Request) -> Response:
-    return Index(request, None).response
+    return HomePage(request, None).response
 
 
 @app.get("/style.css")
@@ -186,19 +225,19 @@ async def style() -> Response:
 
 @app.get("/results")
 async def results(request: Request, search_query: str = "") -> Response:
-    if (pg := Pagination.get(request).advance()).needs_more_data:
+    if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         pg.add(await pg.extender.search(pg.extender.convert_url(request.url)))
 
-    return Index(request, search_query, pg).response
+    return SearchPage(request, search_query, pg).response
 
 
 @app.get("/hashtag/{tag}")
 async def hashtag(request: Request, tag: str) -> Response:
-    if (pg := Pagination.get(request).advance()).needs_more_data:
+    if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         url = pg.extender.convert_url(request.url)
         pg.add(await pg.extender.playlist(url))
 
-    return Index(request, f"#{tag}", pg).response
+    return SearchPage(request, f"#{tag}", pg).response
 
 
 @app.get("/@{id}")
@@ -210,41 +249,42 @@ async def hashtag(request: Request, tag: str) -> Response:
 @app.get("/user/{id}")
 @app.get("/user/{id}/{tab}")
 async def channel(request: Request, tab: str = "featured") -> Response:
-    group = None
+    channel = None
 
-    if (pg := Pagination.get(request).advance()).needs_more_data:
+    if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         url = pg.extender.convert_url(request.url)
 
         if tab == "featured" and not request.url.path.endswith("/featured"):
             url = url.replace(path=url.path + "/featured")
 
         try:
-            pg.add(group := await pg.extender.channel(url))
+            pg.add(channel := await pg.extender.channel(url))
         except yt_dlp.DownloadError as e:
             log.warning("%s", e)
             path = url.path.removesuffix(f"/{tab}") + "/featured"
-            group = await pg.extender_with(0).channel(url.replace(path=path))
+            channel = await pg.extender_with(0).channel(url.replace(path=path))
             pg.done = True
 
-    return Index(request, group.title if group else "", pg, group).response
+        return ChannelPage(request, channel.title, channel, pg).response
+
+    return OutOfBoundsPage(request, None, pg).response
 
 
 @app.get("/playlist")
 async def playlist(request: Request) -> Response:
-    pl = None
-
     if (pg := Pagination.get(request).advance()).needs_more_data:
         url = pg.extender.convert_url(request.url)
         pg.add(pl := await pg.extender.playlist(url))
+        return PlaylistPage(request, pl.title, pl, pg).response
 
-    return Index(request, pl.title if pl else "", pg, pl).response
+    return OutOfBoundsPage(request, None, pg).response
 
 
 @app.get("/load_playlist_entry")
 async def load_playlist_entry(request: Request, url: str) -> Response:
     # We want at least some entries for hover thumbnails preview
     pl = await YoutubeClient(per_page=6).playlist(url)
-    return PlaylistLoad(request, None, pl).response
+    return LoadedPlaylistEntry(request, None, pl).response
 
 
 @app.get("/load_search_link")
@@ -263,7 +303,7 @@ async def load_search_link(request: Request, url: str, title: str) -> Response:
             pl = await YoutubeClient().playlist(plentry.url)
             search.entries = [pl]
 
-    return SearchLinkLoad(request, None, search).response
+    return LoadedSearchLinkEntry(request, None, search).response
 
 
 @app.get("/watch")
@@ -279,8 +319,8 @@ async def watch(request: Request) -> Response:
         "channel_name": video.channel_name,
         "channel_url": video.channel_url,
     }.items() if v is not None}
-    rel = request.url_for("related").include_query_params(**rel_params)
-    return Index(request, video.title, video=video, get_related=rel).response
+    get_rel = request.url_for("related").include_query_params(**rel_params)
+    return WatchPage(request, video.title, video, get_rel).response
 
 
 @app.get("/storyboard")
@@ -301,7 +341,7 @@ async def chapters(video_url: str) -> Response:
 async def related(request: Request) -> Response:
     if (pg := RelatedPagination.get(request).advance()).needs_more_data:
         await pg.find()
-    return Index(request, None, pagination=pg).response
+    return RelatedPage(request, None, pg).response
 
 
 @app.get("/dislikes")

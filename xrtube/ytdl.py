@@ -22,10 +22,10 @@ import backoff
 import yt_dlp
 from fastapi.datastructures import URL
 from pydantic import (
-    AliasChoices,  # type: ignore
+    AliasChoices,
     BaseModel,
     Field,
-    field_validator,  # type: ignore
+    field_validator,
 )
 from typing_extensions import override
 from yt_dlp import YoutubeDL
@@ -219,7 +219,7 @@ class VideoEntry(Entry, HasHoverThumbnails, HasChannel):
     live_status: LiveStatus | None = None
     live_release_date: datetime | None = Field(None, alias="release_timestamp")
 
-    @field_validator("upload_date", mode="before")  # type: ignore
+    @field_validator("upload_date", mode="before")
     @classmethod
     def parse_upload_date(cls, value: Any) -> datetime | None:
         if value is None:
@@ -292,15 +292,15 @@ class SearchLink(BaseModel):
         return "/load_search_link?url=%s&title=%s" % params
 
 
-SearchEntry: TypeAlias = (
+InSearch: TypeAlias = (
     ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry |
     SearchLink
 )
 
 
-class Search(Entries[SearchEntry]):
+class Search(Entries[InSearch]):
     url: str = Field(alias="original_url")
-    entries: list[Annotated[SearchEntry, Field(discriminator="entry_type")]] =\
+    entries: list[Annotated[InSearch, Field(discriminator="entry_type")]] = \
         Field(default_factory=list)
 
 
@@ -387,9 +387,11 @@ class Video(VideoEntry):
                         return
 
 
+InPlaylist: TypeAlias = ShortEntry | VideoEntry | PartialEntry
+
+
 class Playlist(
-    PlaylistEntry, HasHoverThumbnails, HasChannel,
-    Entries[ShortEntry | VideoEntry | PartialEntry],
+    PlaylistEntry, HasHoverThumbnails, HasChannel, Entries[InPlaylist],
 ):
     entry_type: Literal["Playlist"] = "Playlist"  # type: ignore
     url: str = Field(alias="original_url")
@@ -397,10 +399,8 @@ class Playlist(
     last_change: datetime | None = Field(None, alias="modified_date")
     views: int | None = Field(None, alias="view_count")
     total_entries: int | None = Field(None, alias="playlist_count")
-    entries: list[Annotated[
-        ShortEntry | VideoEntry | PartialEntry,
-        Field(discriminator="entry_type"),
-    ]] = Field(default_factory=list)
+    entries: list[Annotated[InPlaylist, Field(discriminator="entry_type")]] = \
+        Field(default_factory=list)
 
     @field_validator("last_change", mode="before")
     @classmethod
@@ -423,6 +423,9 @@ class Playlist(
         if len(self) < 3:  # noqa: PLR2004
             return self[0].hover_srcsets
         return [entry.thumbnails_srcset for entry in self[1:6]]
+
+
+InChannel: TypeAlias = InSearch
 
 
 class Channel(Search, HasThumbnails):

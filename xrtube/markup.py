@@ -44,8 +44,8 @@ def yt_to_html(text: str, allow_markup: bool = True) -> str:
         parts[(id := uuid4())] = f"""<a
             href="/hashtag/{match[1]}"
             hx-get="/hashtag/{match[1]}"
-            hx-select="#explore-column"
-            hx-target="#explore-column"
+            hx-select=".page-content"
+            hx-target=".page-content"
             hx-push-url=true
         >#{match[1]}</a>"""
         return str(id)
