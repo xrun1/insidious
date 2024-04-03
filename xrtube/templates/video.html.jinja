@@ -1,8 +1,13 @@
-<div id=player-holder style="aspect-ratio: {{video.aspect_ratio}}">
-    {% if video %}
-        {% include "player.html.jinja" %}
-    {% endif %}
-</div>
+{% if video %}
+    <div
+        id=player-and-controls
+        style="background: url('{{video.best_thumbnail.fixed_url}}')"
+    >
+        <div id=player-holder style="aspect-ratio: {{video.aspect_ratio}}">
+            {% include "player.html.jinja" %}
+        </div>
+    </div>
+{% endif %}
 
 {% if video %}
     <h1>{{youtube_format(video.title, allow_markup=False)}}</h1>

@@ -11,6 +11,7 @@
     --vpad: 0.375rem;
     --radius: 0.4rem;
     --accent: #2a32a9;
+    --player-control-bar-height: 2.690rem;
 }
 
 html {
@@ -208,12 +209,16 @@ img {
     white-space: pre-wrap;
 }
 
-#player-holder {
+#player-and-controls {
     border-radius: var(--radius);
     overflow: hidden;
     // Apprently this makes the transform above render on the GPU or something
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
+
+    &:has(media-controller:not([mediaisfullscreen])) {
+        padding-bottom: var(--player-control-bar-height);
+    }
 }
 
 media-controller {
@@ -222,6 +227,16 @@ media-controller {
 
     media-poster-image {
         --media-object-fit: cover;
+    }
+
+    &:not([mediaisfullscreen]) media-control-bar {
+        opacity: 1;
+        translate: 0 var(--player-control-bar-height);
+        backdrop-filter: blur(20px);
+    }
+
+    media-control-bar {
+        backdrop-filter: none;
     }
 
     &:not([mediahasplayed]), &[mediaended] {
