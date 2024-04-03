@@ -300,6 +300,7 @@
     hls.on(Hls.Events.LEVEL_SWITCHED, onLevelSwitch)
     hls.on(Hls.Events.SUBTITLE_TRACK_SWITCH, onSubsSwitch)
     hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, onSubsUpdate)
+    hls.on(Hls.Events.ERROR, console.error)
 
     const maxBandwidthRemembered = 2048 * 8192  // 2MiB/s in bits
     hls.bandwidthEstimate = getCookie("bandwidth", 50 * 8192)
