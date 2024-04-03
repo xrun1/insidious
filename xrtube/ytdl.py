@@ -90,13 +90,6 @@ class HasThumbnails(BaseModel):
     def banners_srcset(self) -> str:
         return ", ".join([t.srcset for t in self._best_thumbnails(True)][::-1])
 
-    @property
-    def favicons(self) -> Iterator[tuple[int, str]]:
-        for thumb in reversed(self._best_thumbnails()):
-            size = min(thumb.width or 32, thumb.height or 32)
-            yield (size, "/favicon?path=%s" % quote(thumb.fixed_url))
-            return  # XXX: browser wants to load the largest no matter what
-
     def _best_thumbnails(self, banners: bool = False) -> list[Thumbnail]:
         thumbs = self.thumbnails
 
