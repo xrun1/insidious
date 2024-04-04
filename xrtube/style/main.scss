@@ -179,9 +179,51 @@ img {
             border: 1px solid black;
             overflow-y: scroll;
             margin-bottom: var(--gap);
+            border-radius: var(--radius);
+            /* FIXME: need to implement our own scrollbar */
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
 
-            & .entry {
-                scale: 0.95;
+            & .avatar-info {
+                cursor: pointer;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                background: #fafafa;
+                padding: var(--hpad) var(--vpad);
+                border-bottom: 1px solid black;
+
+                & h1 {
+                    margin: 0;
+                }
+                &:not(:hover) {
+                    & .info {
+                        display: flex;
+                        flex-flow: row nowrap;
+                        gap: var(--gap-small);
+                        align-items: baseline;
+                        justify-content: space-between;
+                    }
+                    & .total-entries {
+                        display: flex;
+                        flex-flow: row wrap;
+                        justify-content: right;
+                        gap: calc(var(--gap-small) / 4);
+                    }
+                    & .channel, .date, .views {
+                        display: none;
+                    }
+                }
+
+                & p, a:has(> .avatar), .avatar {
+                    display: none;
+                }
+            }
+            & .page {
+                gap: 0;
+                & .entry {
+                    scale: 0.9;
+                }
             }
         }
     }

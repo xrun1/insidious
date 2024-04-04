@@ -7,7 +7,17 @@
     {% include "parts/header.html.jinja" %}
 
     <div id=playlist-page class=page-content>
-        <div class=avatar-info>
+        {% set url = local_url(info.url) %}
+
+        {% if embedded %}<a href="{{url}}">{% endif %}<div
+            class=avatar-info
+            {% if embedded %}
+                hx-get="{{url}}"
+                hx-select=".page-content"
+                hx-target=".page-content"
+                hx-push-url=true
+            {% endif %}
+        >
             <img class=avatar sizes=10rem srcset="{{info.thumbnails_srcset}}">
 
             <div class=info>
@@ -54,7 +64,7 @@
 
                 <p class=yt-markup>{{youtube_format(info.description)}}</p>
             </div>
-        </div>
+        </div>{% if embedded %}</a>{% endif %}
 
         <div id=pages>
             {% include "parts/results.html.jinja" %}

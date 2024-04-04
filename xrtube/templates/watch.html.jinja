@@ -81,8 +81,8 @@
                     id=playlist
                     hx-get="{{get_playlist}}"
                     hx-trigger=load
-                    hx-select=#pages
-                    hx-swap="beforeend ignoreTitle:true"
+                    hx-select=".page-content > *"
+                    hx-swap="innerHTML ignoreTitle:true"
                 ></div>
             {% endif %}
             <div

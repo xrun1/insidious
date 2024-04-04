@@ -40,7 +40,7 @@ class Extender(YoutubeClient):
     @override
     @staticmethod
     def convert_url(url: URL) -> URL:
-        params = ("page", "pagination_id")
+        params = ("page", "pagination_id", "per_page", "find_attr", "embedded")
         return YoutubeClient.convert_url(url).remove_query_params(params)
 
 

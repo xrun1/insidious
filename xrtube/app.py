@@ -157,6 +157,7 @@ class PlaylistPage(Page):
     template = "playlist.html.jinja"
     info: Playlist
     pagination: Pagination[InPlaylist]
+    embedded: bool = False
 
 
 @dataclass(slots=True)
@@ -270,11 +271,11 @@ async def channel(request: Request, tab: str = "featured") -> Response:
 
 
 @app.get("/playlist")
-async def playlist(request: Request) -> Response:
+async def playlist(request: Request, embedded: bool = False) -> Response:
     if (pg := Pagination[InPlaylist].get(request).advance()).needs_more_data:
         url = pg.extender.convert_url(request.url)
         pg.add(pl := await pg.extender.playlist(url))
-        return PlaylistPage(request, pl.title, pl, pg).response
+        return PlaylistPage(request, pl.title, pl, pg, embedded).response
 
     return ContinuationPage(request, None, pg).response
 
@@ -323,8 +324,12 @@ async def watch(request: Request, v: str, list: str | None = None) -> Response:
 
     get_pl = None
     if list:
-        get_pl = request.url_for("playlist").include_query_params(per_page=100)
-        get_pl = get_pl.include_query_params(list=list, find_attr=f"id:{v}")
+        get_pl = request.url_for("playlist").include_query_params(
+            list = list,
+            find_attr = f"id:{v}",
+            per_page = 100,
+            embedded = True,
+        )
 
     return WatchPage(request, video.title, video, get_rel, get_pl).response
 
