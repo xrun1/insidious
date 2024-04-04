@@ -172,7 +172,7 @@ class RelatedPage(Page):
 
 
 @dataclass(slots=True)
-class OutOfBoundsPage(Page):
+class ContinuationPage(Page):
     template = "search.html.jinja"
     pagination: Pagination[Any]
 
@@ -267,7 +267,7 @@ async def channel(request: Request, tab: str = "featured") -> Response:
 
         return ChannelPage(request, channel.title, channel, pg).response
 
-    return OutOfBoundsPage(request, None, pg).response
+    return ContinuationPage(request, None, pg).response
 
 
 @app.get("/playlist")
@@ -277,7 +277,7 @@ async def playlist(request: Request) -> Response:
         pg.add(pl := await pg.extender.playlist(url))
         return PlaylistPage(request, pl.title, pl, pg).response
 
-    return OutOfBoundsPage(request, None, pg).response
+    return ContinuationPage(request, None, pg).response
 
 
 @app.get("/load_playlist_entry")
