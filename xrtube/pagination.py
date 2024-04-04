@@ -8,7 +8,7 @@ import re
 from collections import Counter, deque
 from dataclasses import dataclass, field
 from itertools import islice
-from typing import TYPE_CHECKING, ClassVar, Generic, Self, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Self, TypeVar
 from urllib.parse import quote
 from uuid import UUID, uuid4
 
@@ -52,7 +52,10 @@ class Pagination(Generic[T]):
     id: UUID
     page: int = 0
     per_page: int = 12
+    find_attr: tuple[str, Any] | None = None
+
     done: bool = False
+    found_item: T | None = None
 
     _data: deque[T] = field(default_factory=deque)
 
@@ -70,6 +73,10 @@ class Pagination(Generic[T]):
     @property
     def running_short(self) -> bool:
         return len(self._data) <= self.per_page and not self.done
+
+    @property
+    def finding(self) -> bool:
+        return bool(self.find_attr and not self.found_item)
 
     @property
     def next_url(self) -> URL | None:
@@ -96,6 +103,14 @@ class Pagination(Generic[T]):
             self._instances.pop(self.id, None)
             return self
 
+        if self.finding:
+            assert self.find_attr
+            attr, value = self.find_attr
+            for item in items:
+                if getattr(item, attr, None) == value:
+                    self.found_item = item
+                    break
+
         self._data += items
         self.page += 1
         return self
@@ -109,9 +124,20 @@ class Pagination(Generic[T]):
     def get(cls, request: Request) -> Self:
         id = UUID(request.query_params.get("pagination_id") or str(uuid4()))
         page = max(1, int(request.query_params.get("page") or 1))
+        kws = {}
+
+        if (per_page := request.query_params.get("per_page")):
+            kws["per_page"] = max(1, int(per_page))
+
+        find = request.query_params.get("find_attr") or None
+        if isinstance(find, str):
+            attr, value = find.split(":", 1)
+            find = (attr, value)
+
         if id in cls._instances:
             return cls._instances[id]
-        return cls(request, id, page)
+
+        return cls(request, id, page, **kws, find_attr=find)
 
 
 @dataclass(slots=True)

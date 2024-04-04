@@ -70,12 +70,28 @@
             {% endif %}
         </div>
 
-        <div
-            id=related
-            hx-get="{{get_related}}"
-            hx-trigger=load
-            hx-select=.page-content
-            hx-swap="innerHTML ignoreTitle:true"
-        ></div>
+        <div id=other-videos>
+            {% if get_playlist %}
+                <script>
+                    document.addEventListener("highlightedEntry", ev => {
+                        ev.detail.scrollIntoView({block: "center"})
+                    })
+                </script>
+                <div 
+                    id=playlist
+                    hx-get="{{get_playlist}}"
+                    hx-trigger=load
+                    hx-select=#pages
+                    hx-swap="beforeend ignoreTitle:true"
+                ></div>
+            {% endif %}
+            <div
+                id=related
+                hx-get="{{get_related}}"
+                hx-trigger=load
+                hx-select=#pages
+                hx-swap="innerHTML ignoreTitle:true"
+            ></div>
+        </div>
     </div>
 </body></html>

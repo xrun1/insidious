@@ -1,3 +1,4 @@
+{% set highlight = pagination and pagination.found_item == entry %}
 {% set url = local_url(entry.shortest_url or entry.url) %}
 {% set thumbnails = entry.thumbnails_srcset %}
 {% if not thumbnails and entry.entries %}
@@ -5,7 +6,7 @@
 {% endif %}
 
 <div
-    class=entry
+    class="entry {{'highlight' if highlight else ''}}"
     onmouseenter="runHoverSlideshow(this)"
     onmouseleave="stopHoverSlideshow(this)"
     {% if entry.load_url %}
@@ -93,6 +94,13 @@
                 <span class=compact-number raw="{{entry.followers}}"></span>
             </span>
         {% endif %}
-
     </div>
+
+    {% if highlight %}
+        <script>
+            document.dispatchEvent(new CustomEvent("highlightedEntry", {
+                detail: document.currentScript.parentNode,
+            }))
+        </script>
+    {% endif %}
 </div>

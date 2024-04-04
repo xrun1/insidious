@@ -169,9 +169,21 @@ img {
         max-width: var(--video-width);
     }
 
-    > #related {
+    > #other-videos {
         min-width: var(--side);
         max-width: var(--side);
+
+        > #playlist {
+            position: relative;  /* confine lazy loaders inside to that div */
+            max-height: 66svh;
+            border: 1px solid black;
+            overflow-y: scroll;
+            margin-bottom: var(--gap);
+
+            & .entry {
+                scale: 0.95;
+            }
+        }
     }
 }
 
@@ -316,6 +328,10 @@ media-controller {
     grid-template-rows: var(--thumb-height);
     gap: var(--gap-small);
 
+    &.highlight {
+        background: #d6d6d6
+    }
+
     .thumbnail {
         grid-row: 1 / 1;
 
@@ -446,7 +462,7 @@ media-controller {
             max-width: var(--narrow-video-width);
         }
 
-        > #related {
+        > #other-videos {
             max-width: unset;
         }
     }

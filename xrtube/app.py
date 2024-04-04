@@ -182,6 +182,7 @@ class WatchPage(Page):
     template = "watch.html.jinja"
     info: Video
     get_related: URL
+    get_playlist: URL | None = None
 
 
 @dataclass(slots=True)
@@ -249,8 +250,6 @@ async def hashtag(request: Request, tag: str) -> Response:
 @app.get("/user/{id}")
 @app.get("/user/{id}/{tab}")
 async def channel(request: Request, tab: str = "featured") -> Response:
-    channel = None
-
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         url = pg.extender.convert_url(request.url)
 
@@ -272,7 +271,7 @@ async def channel(request: Request, tab: str = "featured") -> Response:
 
 @app.get("/playlist")
 async def playlist(request: Request) -> Response:
-    if (pg := Pagination.get(request).advance()).needs_more_data:
+    if (pg := Pagination[InPlaylist].get(request).advance()).needs_more_data:
         url = pg.extender.convert_url(request.url)
         pg.add(pl := await pg.extender.playlist(url))
         return PlaylistPage(request, pl.title, pl, pg).response
@@ -309,9 +308,10 @@ async def load_search_link(request: Request, url: str, title: str) -> Response:
 @app.get("/watch")
 @app.get("/v/{v}")
 @app.get("/shorts/{v}")
-async def watch(request: Request) -> Response:
+async def watch(request: Request, v: str, list: str | None = None) -> Response:
     client = YoutubeClient()
     video = await client.video(client.convert_url(request.url))
+
     rel_params = {k: v for k, v in {
         "video_id": video.id,
         "video_name": video.title,
@@ -320,7 +320,13 @@ async def watch(request: Request) -> Response:
         "channel_url": video.channel_url,
     }.items() if v is not None}
     get_rel = request.url_for("related").include_query_params(**rel_params)
-    return WatchPage(request, video.title, video, get_rel).response
+
+    get_pl = None
+    if list:
+        get_pl = request.url_for("playlist").include_query_params(per_page=100)
+        get_pl = get_pl.include_query_params(list=list, find_attr=f"id:{v}")
+
+    return WatchPage(request, video.title, video, get_rel, get_pl).response
 
 
 @app.get("/storyboard")
