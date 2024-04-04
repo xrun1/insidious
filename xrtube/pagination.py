@@ -252,7 +252,8 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
 
     async def find_playlists(self, addition: str = "") -> None:
         """Search site-wide for playlists related to the watched video."""
-        query = NON_WORD_CHARS.sub(" ", self.video_name).strip()
+        query = NON_WORD_CHARS.sub(" ", self.video_name)
+        query = query.strip() or self.video_name
         query = query or self.video_name
         weight = 1
         if addition:
@@ -283,7 +284,8 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
             return
 
         # TODO: better handle spaceless languages
-        words = NON_WORD_CHARS.sub(" ", self.video_name).strip().split()
+        name = NON_WORD_CHARS.sub(" ", self.video_name) or self.video_name
+        words = name.strip().split()
         query = " ".join(words[:math.ceil(len(words) / 2)])
         url = self.channel_url + "/search?query=" + quote(query)
 
