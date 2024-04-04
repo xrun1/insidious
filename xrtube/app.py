@@ -184,6 +184,7 @@ class WatchPage(Page):
     info: Video
     get_related: URL
     get_playlist: URL | None = None
+    autoplay: bool = False
 
 
 @dataclass(slots=True)
@@ -309,9 +310,12 @@ async def load_search_link(request: Request, url: str, title: str) -> Response:
 @app.get("/watch")
 @app.get("/v/{v}")
 @app.get("/shorts/{v}")
-async def watch(request: Request, v: str, list: str | None = None) -> Response:
+async def watch(
+    request: Request, v: str, list: str | None = None, autoplay: bool = False,
+) -> Response:
     client = YoutubeClient()
-    video = await client.video(client.convert_url(request.url))
+    yt_url = request.url.remove_query_params(["autoplay"])
+    video = await client.video(client.convert_url(yt_url))
 
     rel_params = {k: v for k, v in {
         "video_id": video.id,
@@ -331,7 +335,8 @@ async def watch(request: Request, v: str, list: str | None = None) -> Response:
             embedded = True,
         )
 
-    return WatchPage(request, video.title, video, get_rel, get_pl).response
+    p = WatchPage(request, video.title, video, get_rel, get_pl, autoplay)
+    return p.response
 
 
 @app.get("/storyboard")
