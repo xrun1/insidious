@@ -277,6 +277,7 @@ img {
 }
 
 #player-and-controls {
+    background-size: 100% 100% !important;
     border-radius: var(--radius);
     overflow: hidden;
     // Apprently this makes the transform above render on the GPU or something
@@ -299,7 +300,7 @@ media-controller {
     &:not([mediaisfullscreen]) media-control-bar {
         opacity: 1;
         translate: 0 var(--player-control-bar-height);
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(10px);
     }
 
     media-control-bar {
