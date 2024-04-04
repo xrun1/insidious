@@ -297,6 +297,16 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
             log.info("Related: found %d channel videos for %r", len(got), url)
             self.on_videos(got, weight=3)
 
+    async def find_videos_basic(self) -> None:
+        """Search the site for similar videos"""
+        query = self.cleaned_video_name
+        url = "https://www.youtube.com/results?search_query=%s" % quote(query)
+
+        with report(DownloadError):
+            got = await self.extender.search(url)
+            log.info("Related: found %d videos from %r", len(got), url)
+            self.on_videos(got, weight=0.5)
+
     def finish_batch(self) -> Self:
         """Commit all fetched results to data, will remove previous page."""
         log.info("Related: got %d results for %r, page %d",
@@ -311,12 +321,13 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
     async def find(self) -> Self:
         """Try finding videos related to another video V.
 
-        Four requests are combined:
+        Five requests are combined, from most to least promoted:
         - Fuzzy search with half of V's title on the uploader's channel
         - Site-wide search for playlists that *probably* contain V:
           V's title + channel name
         - Same, but V's title + author's user ID
         - Same, but just V's title (fuzzier and less promoted)
+        - Basic site-wide search with the video name
 
         If a playlists's first 100 loaded entries contain a video from V's
         uploader, it gets heavier promotion; and even more if it has V itself.
@@ -330,6 +341,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
 
         async with asyncio.TaskGroup() as tg:
             tg.create_task(self.find_channel_videos())
+            tg.create_task(self.find_videos_basic())
 
             channel = (self.channel_name or "").strip()
             uploader = (self.uploader_id or "").removeprefix("@").strip()
