@@ -219,10 +219,13 @@ img {
                     display: none;
                 }
             }
-            & .page {
-                gap: 0;
-                & .entry {
-                    scale: 0.9;
+            & #pages {
+                margin-top: calc(var(--gap-small) / 2);
+                & .page {
+                    gap: 0;
+                    & .entry {
+                        scale: 0.9;
+                    }
                 }
             }
         }
