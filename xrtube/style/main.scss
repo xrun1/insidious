@@ -376,7 +376,7 @@ media-controller {
         background: hsla(0, 0%, 0%, 0.7);
         font-variant: small-caps;  // for LIVE/SOON
         margin: 0.0625rem;
-        padding: var(--hpad) var(--vpad);
+        padding: var(--hpad);
         border-radius: var(--radius);
     }
     .info {
