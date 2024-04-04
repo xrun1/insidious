@@ -34,6 +34,10 @@
                 {% endfor %}
             </div>
 
+            {% if entry.index is not none %}
+                <span class=index>{{entry.index}}</span>
+            {% endif %}
+
             {% if entry.live_status == LiveStatus.is_live %}
                 <span class=duration>live</span>
             {% elif entry.live_status == LiveStatus.is_upcoming %}

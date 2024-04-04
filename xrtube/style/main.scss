@@ -355,6 +355,12 @@ media-controller {
                     opacity: 1;
                 }
             }
+            > .index {
+                position: absolute;
+                top: 0;
+                left: 0;
+                display: none;
+            }
             > .duration {
                 position: absolute;
                 bottom: 0;
@@ -362,7 +368,7 @@ media-controller {
             }
         }
     }
-    .duration {
+    .index, .duration {
         // scale as workaround to < 1.4rem font-size giving strange padding
         font-size: var(--text-small);
         transform: scale(80%);
@@ -398,6 +404,10 @@ media-controller {
             > :not(.icon) { font-weight: 300; }
         }
     }
+}
+
+#playlist .index, #playlist-page .index {
+    display: unset;
 }
 
 .nothing-found {
