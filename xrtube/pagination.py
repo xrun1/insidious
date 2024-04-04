@@ -282,7 +282,8 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
             log.info("Related: no channel URL for %r", self.video_name)
             return
 
-        words = self.video_name.split()  # TODO: handle spaceless languages
+        # TODO: better handle spaceless languages
+        words = NON_WORD_CHARS.sub(" ", self.video_name).strip().split()
         query = " ".join(words[:math.ceil(len(words) / 2)])
         url = self.channel_url + "/search?query=" + quote(query)
 
