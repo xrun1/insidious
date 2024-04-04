@@ -453,14 +453,14 @@ class YoutubeClient:
 
     def __init__(self, page: int = 1, per_page: int = 12) -> None:
         super().__init__()
-        offset = per_page * (page - 1)
+        self._offset = per_page * (page - 1)
 
         self._ytdl = self._ytdl_instances.get((page, per_page)) or YoutubeDL({
             "quiet": True,
             "write_pages": True,
             "load_pages": True,
-            "playliststart": offset + 1,
-            "playlistend": offset + per_page,
+            "playliststart": self._offset + 1,
+            "playlistend": self._offset + per_page,
             "extract_flat": "in_playlist",
             "compat_opts": ["no-youtube-unavailable-videos"],
             "extractor_args": {
@@ -482,7 +482,13 @@ class YoutubeClient:
         return Channel.parse_obj(await self._get(url))
 
     async def playlist(self, url: URL | str) -> Playlist:
-        return Playlist.parse_obj(await self._get(url))
+        pl = Playlist.parse_obj(await self._get(url))
+        for i, entry in enumerate(pl, 1):
+            entry.url = str(URL(entry.url).include_query_params(
+                list = pl.id,
+                index = self._offset + i,
+            ))
+        return pl
 
     async def video(self, url: URL | str) -> Video:
         url = URL(str(url)).remove_query_params("list")
