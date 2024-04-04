@@ -357,6 +357,10 @@ async def chapters(video_url: str) -> Response:
 async def related(request: Request) -> Response:
     if (pg := RelatedPagination.get(request).advance()).needs_more_data:
         await pg.find()
+
+    for entry in pg.items:
+        entry.url = str(URL(entry.url).remove_query_params(("list", "index")))
+
     return RelatedPage(request, None, pg).response
 
 
