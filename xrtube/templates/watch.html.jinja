@@ -76,6 +76,10 @@
                     document.addEventListener("highlightedEntry", ev => {
                         ev.detail.scrollIntoView({block: "center"})
                     })
+                    window.addEventListener("resize", () => {
+                        document.querySelector("#playlist .entry.highlight")
+                            .scrollIntoView({block: "center"})
+                    });
                 </script>
                 <div 
                     id=playlist
