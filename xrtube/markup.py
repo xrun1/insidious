@@ -10,7 +10,7 @@ from fastapi.datastructures import URL
 
 def build_youtube_markup_regex(symbol: str) -> re.Pattern[str]:
     sym = re.escape(symbol)
-    return re.compile(rf"(?:^|(?<=\s)){sym}(.*?){sym}(?=\s|$)")
+    return re.compile(rf"(?:^|(?<=\s)){sym}(?!\s)(.*?)[^\s]{sym}(?=\s|$)")
 
 
 URL_RE = re.compile(
