@@ -10,7 +10,6 @@ from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
 from datetime import timedelta
-from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeAlias
 from urllib.parse import quote
@@ -18,7 +17,6 @@ from urllib.parse import quote
 import appdirs
 import httpx
 import jinja2
-import sass
 import yt_dlp
 from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
@@ -98,7 +96,7 @@ async def watch_files() -> None:
         exts = {Path(p).suffix for _, p in changes}
         if ".jinja" in exts or ".js" in exts:
             RELOAD_PAGE.set()
-        elif ".scss" in exts or ".css" in exts:
+        elif ".css" in exts:
             RELOAD_STYLE.set()
 
 
@@ -118,13 +116,15 @@ CallNext: TypeAlias = Callable[[Request], Awaitable[Response]]
 LOADER = jinja2.PackageLoader(NAME, "templates")
 ENV = jinja2.Environment(loader=LOADER, autoescape=jinja2.select_autoescape())
 TEMPLATES = Jinja2Templates(env=ENV)
-scss = resources.read_text(f"{NAME}.style", "main.scss")
-css = sass.compile(string=scss, indented=False)
 lifespan_tasks = []
 app = FastAPI(default_response_class=HTMLResponse, lifespan=lifespan)
 
-app.mount("/static", StaticFiles(packages=[(NAME, "static")]), name="static")
-app.mount("/npm", StaticFiles(packages=[(NAME, "npm")]), name="npm")
+
+def mount(name: str) -> None:
+    app.mount(f"/{name}", StaticFiles(packages=[(NAME, name)]), name=name)
+
+
+list(map(mount, ("scripts", "style", "npm")))
 if os.getenv("UVICORN_RELOAD"):
     # Fix browser reusing cached files at reload despite disk modifications
     StaticFiles.is_not_modified = lambda *_, **_kws: False  # type: ignore
@@ -280,11 +280,6 @@ async def fix_esm_mime(request: Request, call_next: CallNext) -> Response:
 @app.get("/")
 async def home(request: Request) -> Response:
     return HomePage(request, None).response
-
-
-@app.get("/style.css")
-async def style() -> Response:
-    return Response(content=css, media_type="text/css")
 
 
 @app.get("/results")
@@ -555,13 +550,9 @@ async def wait_reload(ws: WebSocket) -> None:
             await ws.send_text("page")
 
     async def wait_style() -> None:
-        global scss  # noqa: PLW0603
-        global css  # noqa: PLW0603
         while True:
             await RELOAD_STYLE.wait()
             RELOAD_STYLE.clear()
-            scss = resources.read_text(f"{NAME}.style", "main.scss")
-            css = sass.compile(string=scss, indented=False)
             await ws.send_text("style")
 
     await ws.accept()

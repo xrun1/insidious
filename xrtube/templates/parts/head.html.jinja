@@ -4,15 +4,15 @@
 <meta name=referrer content=strict-origin>
 
 <link rel=stylesheet href="/npm/modern-normalize@^2.0.0/modern-normalize.min.css" >
-<link rel=stylesheet href=/style.css>
+<link rel=stylesheet href=/style/main.css>
 
 <script src="/npm/htmx.org@^1.9.9/dist/htmx.min.js"></script>
 <script>htmx.config.defaultSwapStyle = "outerHTML"</script>
-<script src=/static/shared.js></script>
+<script src=/scripts/shared.js></script>
 
 <script type=module src="/npm/hls-video-element@1.1.3/+esm"></script>
 <script type=module src="/npm/media-chrome@3.2.0/+esm"></script>
 
 {% if UVICORN_RELOAD %}
-    <script src="/static/autoreload.js"></script>
+    <script src="/scripts/autoreload.js"></script>
 {% endif %}

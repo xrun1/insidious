@@ -37,7 +37,6 @@
                 pydantic
                 uvicorn
                 watchfiles
-                libsass
                 yt-dlp
                 docopt
                 httpx
