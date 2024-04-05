@@ -64,10 +64,19 @@
             </div>
 
             {% if info.description %}
+                <hr>
                 <p
                     class="video-description yt-markup"
                 >{{youtube_format(info.description)}}</p>
             {% endif %}
+
+            <hr>
+            <div
+                id=comments
+                hx-get="{{get_comments}}"
+                hx-trigger=load
+                hx-swap=innerHTML
+            ></div>
         </div>
 
         <div id=other-videos>

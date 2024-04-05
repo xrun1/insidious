@@ -1,7 +1,8 @@
 :root {
     --thumb-width: min(33svw, 10rem);
     --thumb-height: calc(10rem / (16 / 9));
-    --text-big: 1.25rem;
+    --text-big: 1.125rem;
+    --text-bigger: 1.25rem;
     --text-small: 0.875rem;
     --text-smaller: 0.7rem;
     --side: min(90svw, 20rem);
@@ -40,14 +41,28 @@ p {
     margin: 0;
 }
 
+hr {
+    margin-block-start: var(--gap-small);
+    margin-block-end: var(--gap-small);
+}
+
 a {
     text-decoration-line: none;
     color: var(--accent);
 }
 
 h1 {
+    font-size: var(--text-bigger);
+    font-weight: 500;
+    margin-block-start: var(--gap-small);
+    margin-block-end: var(--gap-small);
+}
+
+h2 {
     font-size: var(--text-big);
     font-weight: 500;
+    margin-block-start: var(--gap-small);
+    margin-block-end: var(--gap-small);
 }
 
 input, button {
@@ -237,7 +252,8 @@ img {
     flex-flow: row nowrap;
     justify-content: space-between;
     align-items: center;
-    margin: var(--gap) 0;
+    margin: 0;
+    margin-bottom: var(--gap-small);
     gap: var(--gap);
 }
 
@@ -277,6 +293,7 @@ img {
 }
 
 #player-and-controls {
+    margin-bottom: var(--gap);
     background-size: 100% 100% !important;
     border-radius: var(--radius);
     overflow: hidden;
@@ -454,6 +471,59 @@ media-controller {
 
 #playlist .index, #playlist-page .index {
     display: unset;
+}
+
+.comment-page {
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: flex-start;
+    gap: var(--gap-small) 0;
+
+    &:not(:first-child) {
+        margin-top: var(--gap-small)
+    }
+
+    .comment {
+        display: flex;
+        flex-flow: row nowrap;
+        padding: var(--vpad) calc(var(--hpad) * 1.5);
+        gap: var(--gap-small);
+        background: #e2e2e2;
+        border-radius: var(--radius);
+
+        & .avatar {
+            min-width: 2.5rem;
+            min-height: 2.5rem;
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+
+        & .content {
+            display: flex;
+            flex-flow: column nowrap;
+            justify-content: center;
+
+            & .details {
+                display: flex;
+                flex-flow: row wrap;
+                gap: calc(var(--gap-small) * 0.75);
+                font-weight: 300;
+
+                .icon {
+                    font-weight: initial;
+                }
+
+                .by-uploader {
+                    font-weight: 500;
+                }
+
+                .edited {
+                    scale: 0.9;
+                    width: unset;
+                }
+            }
+        }
+    }
 }
 
 .nothing-found {

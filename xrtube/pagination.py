@@ -53,6 +53,7 @@ class Pagination(Generic[T]):
     page: int = 0
     per_page: int = 12
     find_attr: tuple[str, Any] | None = None
+    continuation_id: str | None = None
 
     done: bool = False
     found_item: T | None = None
@@ -82,8 +83,12 @@ class Pagination(Generic[T]):
     def next_url(self) -> URL | None:
         if self.done:
             return None
-        f = self.request.url.include_query_params
-        return f(page=self.page, pagination_id=self.id)
+        params = {k: v for k, v in {
+            "page": self.page,
+            "pagination_id": self.id, 
+            "continuation_id": self.continuation_id,
+        }.items() if v is not None}
+        return self.request.url.include_query_params(**params)
 
     @property
     def extender(self) -> Extender:
@@ -128,6 +133,9 @@ class Pagination(Generic[T]):
 
         if (per_page := request.query_params.get("per_page")):
             kws["per_page"] = max(1, int(per_page))
+
+        if (cid := request.query_params.get("continuation_id")):
+            kws["continuation_id"] = cid
 
         find = request.query_params.get("find_attr") or None
         if isinstance(find, str):

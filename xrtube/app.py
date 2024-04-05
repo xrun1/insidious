@@ -31,6 +31,7 @@ from fastapi.responses import (
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
+from xrtube.invidious import Comment, Comments, InvidiousClient
 
 from xrtube.streaming import (
     HLS_ALT_MIME,
@@ -87,6 +88,7 @@ HTTPX = httpx.AsyncClient(follow_redirects=True, headers={
     **YoutubeClient().headers,
     "Referer": "https://www.youtube.com/",
 })
+INVIDIOUS = InvidiousClient()
 MANIFEST_URL = re.compile(r'(^|")(https?://[^"]+?)($|")', re.MULTILINE)
 dying = False
 RELOAD_PAGE = asyncio.Event()
@@ -183,6 +185,7 @@ class WatchPage(Page):
     template = "watch.html.jinja"
     info: Video
     get_related: URL
+    get_comments: URL
     get_playlist: URL | None = None
     autoplay: bool = False
 
@@ -203,6 +206,19 @@ class LoadedSearchLinkEntry(Page):
 class Dislikes(Page):
     template = "parts/dislikes.html.jinja"
     dislike_count: int | None = None
+
+
+@dataclass(slots=True)
+class CommentsPart(Page):
+    template = "parts/comments.html.jinja"
+    info: Comments
+    pagination: Pagination[Comment]
+
+
+@dataclass(slots=True)
+class CommentContinuationPage(Page):
+    template = CommentsPart.template
+    pagination: Pagination[Comment]
 
 
 @app.middleware("http")
@@ -326,6 +342,11 @@ async def watch(
     }.items() if v is not None}
     get_rel = request.url_for("related").include_query_params(**rel_params)
 
+    get_coms = request.url_for("comments").include_query_params(
+        video_id = v,
+        by_date = True,
+    )
+
     get_pl = None
     if list:
         get_pl = request.url_for("playlist").include_query_params(
@@ -335,8 +356,9 @@ async def watch(
             embedded = True,
         )
 
-    p = WatchPage(request, video.title, video, get_rel, get_pl, autoplay)
-    return p.response
+    return WatchPage(
+        request, video.title, video, get_rel, get_coms, get_pl, autoplay,
+    ).response
 
 
 @app.get("/storyboard")
@@ -372,6 +394,24 @@ async def dislikes(request: Request, video_id: str):
         reply.raise_for_status()
         count = reply.json().get("dislikes") or 0
         return Dislikes(request, None, count).response
+
+
+@app.get("/comments")
+async def comments(
+    request: Request,
+    video_id: str,
+    by_date: bool = False,
+    continuation_id: str | None = None,
+) -> Response:
+    if (pg := Pagination[Comment].get(request).advance()).needs_more_data:
+        with httpx_to_fastapi_errors():
+            coms = await INVIDIOUS.comments(video_id, by_date, continuation_id)
+
+        pg.add(coms.data)
+        pg.continuation_id = coms.continuation_id
+        return CommentsPart(request, None, coms, pg).response
+
+    return CommentContinuationPage(request, None, pg).response
 
 
 @app.get("/generate_hls/master")
