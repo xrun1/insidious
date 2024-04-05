@@ -200,7 +200,7 @@ class Entry(HasThumbnails):
     id: str
     url: str
     title: str
-    index: int | None = None
+    nth: int | None = None
 
 
 class ShortEntry(Entry, HasHoverThumbnails):
@@ -483,10 +483,10 @@ class YoutubeClient:
     async def playlist(self, url: URL | str) -> Playlist:
         pl = Playlist.model_validate(await self._get(url))
         for i, entry in enumerate(pl, 1):
-            entry.index = self._offset + i
+            entry.nth = self._offset + i
             entry.url = str(URL(entry.url).include_query_params(
                 list = pl.id,
-                index = entry.index,
+                index = entry.nth,
             ))
         return pl
 

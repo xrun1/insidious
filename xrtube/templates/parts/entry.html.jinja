@@ -34,8 +34,8 @@
                 {% endfor %}
             </div>
 
-            {% if entry.index is not none %}
-                <span class=index>{{entry.index}}</span>
+            {% if entry.nth is not none %}
+                <span class=index>{{entry.nth}}</span>
             {% endif %}
 
             {% if entry.live_status == LiveStatus.is_live %}
