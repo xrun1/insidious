@@ -362,6 +362,13 @@ media-controller {
         --media-control-display: none;
     }
 
+    & media-live-button {
+        position: absolute;
+        top: var(--gap-small);
+        left: var(--gap-small);
+        padding: calc(var(--hpad) * 2) calc(var(--vpad) * 2);
+    }
+
     & #quality-button {
         &:not(.auto) #auto-current-level {
             display: none;

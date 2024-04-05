@@ -70,11 +70,12 @@
         </media-chrome-menu-item>
     </template>
 
+    {% if info.live_status == LiveStatus.is_live %}
+        <media-live-button></media-live-button>
+    {% endif %}
+
     <media-control-bar>
         <media-play-button></media-play-button>
-        {% if info.live_status == LiveStatus.is_live %}
-            <media-live-button></media-live-button>
-        {% endif %}
         <media-mute-button></media-mute-button>
         <media-volume-range></media-volume-range>
         <media-time-range></media-time-range>
