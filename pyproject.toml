@@ -38,13 +38,13 @@
 [tool.ruff]
     line-length = 79
     preview = true
-    show-source = true
     target-version = "py311"
-    select = ["ALL"]
-    ignore = [
+    lint.select = ["ALL"]
+    lint.ignore = [
         "A", "ANN", "C90", "CPY", "DTZ", "EM", "FBT", "T20", "TD", "FIX", "D1",
         "D415", "D417", "E221", "E241", "E251", "E731", "N818", "PGH003",
-        "PLW2901", "S101", "SIM102", "TRY003", "UP031", "UP032",
+        "PLW2901", "S101", "SIM102", "TRY003", "UP031", "UP032", "ERA001",
+        "E116",
     ]
 
     [tool.ruff.lint.flake8-pytest-style]

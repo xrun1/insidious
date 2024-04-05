@@ -85,7 +85,7 @@ class Pagination(Generic[T]):
             return None
         params = {k: v for k, v in {
             "page": self.page,
-            "pagination_id": self.id, 
+            "pagination_id": self.id,
             "continuation_id": self.continuation_id,
         }.items() if v is not None}
         return self.request.url.include_query_params(**params)

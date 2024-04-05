@@ -73,14 +73,13 @@ def sort_master_playlist(content: str) -> str:
 
 def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
     has_any_dash = any(f.has_dash for f in all)
+
     def can_use(fmt: Format) -> bool:
         if has_any_dash and not fmt.has_dash:
             return False
         if has_any_dash and not fmt.vcodec and "-dash" not in fmt.id:
             return False
-        if fmt.container not in {"mp4_dash", "m4a_dash"}:
-            return False
-        return True
+        return fmt.container in {"mp4_dash", "m4a_dash"}
 
     if not can_use(format):
         return
@@ -126,7 +125,6 @@ def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
 
         yield "BANDWIDTH=%d\n" % math.ceil(bitrate * 1000)
         yield (api % quote(format.json(by_alias=True))) + "\n"
-
 
     audio_groups: dict[str, list[Format]] = {}
     for f in all:

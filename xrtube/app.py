@@ -31,8 +31,8 @@ from fastapi.responses import (
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
-from xrtube.invidious import Comment, Comments, InvidiousClient
 
+from xrtube.invidious import Comment, Comments, InvidiousClient
 from xrtube.streaming import (
     HLS_ALT_MIME,
     HLS_MIME,
@@ -52,11 +52,11 @@ from .ytdl import (
     Format,
     HasThumbnails,
     InPlaylist,
+    InSearch,
     LiveStatus,
     Playlist,
     PlaylistEntry,
     Search,
-    InSearch,
     ShortEntry,
     Video,
     VideoEntry,
