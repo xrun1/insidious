@@ -258,12 +258,14 @@ class Dislikes(Page):
 class CommentsPart(Page):
     template = "parts/comments.html.jinja"
     info: Comments
+    video_id: str
     pagination: Pagination[Comment]
 
 
 @dataclass(slots=True)
 class CommentContinuationPage(Page):
     template = CommentsPart.template
+    video_id: str
     pagination: Pagination[Comment]
 
 
@@ -453,9 +455,9 @@ async def comments(
         if not pg.continuation_id:
             pg.done = True
 
-        return CommentsPart(request, None, coms, pg).response
+        return CommentsPart(request, None, coms, video_id, pg).response
 
-    return CommentContinuationPage(request, None, pg).response
+    return CommentContinuationPage(request, None, video_id, pg).response
 
 
 @app.get("/generate_hls/master")

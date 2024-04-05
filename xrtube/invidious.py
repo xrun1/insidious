@@ -5,6 +5,7 @@ import logging
 from collections import deque
 from datetime import datetime
 from typing import ClassVar
+from urllib.parse import quote
 
 import backoff
 import httpx
@@ -31,6 +32,12 @@ class Comment(HasThumbnails):
     continuation_id: str | None = \
         Field(None, validation_alias=AliasPath("replies", "continuation"))
 
+    def replies_url(self, video_id: str) -> str | None:
+        if not self.continuation_id:
+            return None
+        args = (video_id, quote(self.continuation_id))
+        return "/comments?video_id=%s&by_date=True&continuation_id=%s" % args
+
 
 class Comments(BaseModel):
     data: list[Comment] = Field(alias="comments")
@@ -48,7 +55,7 @@ class InvidiousClient:
     @backoff.on_exception(
         backoff.constant,
         (httpx.NetworkError, httpx.TimeoutException, httpx.HTTPStatusError),
-        max_tries = 10,
+        max_tries = 20,
         interval = 0,
         backoff_log_level = logging.WARNING,
     )

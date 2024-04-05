@@ -531,6 +531,20 @@ media-controller {
             }
         }
     }
+    .thread-replies {
+        min-width: 1px;
+        min-height: 1px;
+        padding-left: calc(var(--gap) * 2);
+
+        > div {
+            min-width: 1px;
+            min-height: 1px;
+        }
+
+        &.hidden {
+            display: none;
+        }
+    }
 }
 
 .nothing-found {
