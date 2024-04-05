@@ -211,6 +211,7 @@ class PlaylistPage(Page):
 class SearchPage(Page):
     template = "search.html.jinja"
     pagination: Pagination[InSearch]
+    field_query: str | None = None
 
 
 @dataclass(slots=True)
@@ -287,7 +288,7 @@ async def results(request: Request, search_query: str = "") -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         pg.add(await pg.extender.search(pg.extender.convert_url(request.url)))
 
-    return SearchPage(request, search_query, pg).response
+    return SearchPage(request, search_query, pg, search_query).response
 
 
 @app.get("/hashtag/{tag}")
