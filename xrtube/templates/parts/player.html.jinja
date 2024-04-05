@@ -323,13 +323,14 @@
         if (! fastForwarding) setCookie("speed", media.playbackRate)
     })
 
-    media.addEventListener("mousedown", () => {
-        startFastForwardSoon()
+    media.addEventListener("mousedown", event => {
+        if (event.button === 0) startFastForwardSoon()
     })
     media.addEventListener("mouseleave", () => {
         stopFastForward()
     })
     media.addEventListener("click", event => {
+        if (event.button !== 0) return
         if (fastForwarding) event.stopPropagation()
         stopFastForward()
     })
