@@ -55,13 +55,25 @@ class Pagination(Generic[T]):
     find_attr: tuple[str, Any] | None = None
     continuation_id: str | None = None
 
-    done: bool = False
     found_item: T | None = None
 
     _data: deque[T] = field(default_factory=deque)
+    _done: bool = False
 
     def __post_init__(self) -> None:
         self._instances[self.id] = self
+
+    @property
+    def done(self) -> bool:
+        return self._done
+
+    @done.setter
+    def done(self, value: bool) -> None:
+        self._done = value
+        if value:
+            self._instances.pop(self.id, None)
+        else:
+            self._instances[self.id] = self
 
     @property
     def items(self) -> list[T]:
@@ -105,7 +117,6 @@ class Pagination(Generic[T]):
     def add(self, items: Sequence[T]) -> Self:
         if not items:
             self.done = True
-            self._instances.pop(self.id, None)
             return self
 
         if self.finding:
