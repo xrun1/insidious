@@ -450,6 +450,9 @@ async def comments(
 
         pg.add(coms.data)
         pg.continuation_id = coms.continuation_id
+        if not pg.continuation_id:
+            pg.done = True
+
         return CommentsPart(request, None, coms, pg).response
 
     return CommentContinuationPage(request, None, pg).response
