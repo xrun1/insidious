@@ -15,7 +15,7 @@ def build_youtube_markup_regex(symbol: str) -> re.Pattern[str]:
 
 URL_RE = re.compile(
     r"(https?://(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}"
-    r"\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))",
+    r"\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=!]*))",
 )
 HASHTAG_RE = re.compile(r"(?:^|(?<=\W))#([\w-]+)")
 TIME_RE = re.compile(r"(?:^|(?<=\W))((?:(\d+):)?(\d{1,2}):(\d{2}))(?=\W|$)")
