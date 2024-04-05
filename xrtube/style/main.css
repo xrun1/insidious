@@ -285,7 +285,8 @@ img {
             }
             & p {
                 margin-block-start: 0;
-                white-space: normal
+                white-space: normal;
+                opacity: 0.85;
             }
         }
     }
