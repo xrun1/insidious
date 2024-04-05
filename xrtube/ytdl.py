@@ -11,7 +11,6 @@ from typing import (
     Any,
     ClassVar,
     Literal,
-    ParamSpec,
     TypeAlias,
     TypeVar,
     overload,
@@ -33,7 +32,6 @@ from yt_dlp import YoutubeDL
 from .utils import AutoStrEnum
 
 T = TypeVar("T")
-P = ParamSpec("P")
 
 
 class NoDataReceived(yt_dlp.utils.ExtractorError):
@@ -216,7 +214,7 @@ class VideoEntry(Entry, HasHoverThumbnails, HasChannel):
     description: str | None = None
     duration: int | None = None
     upload_date: datetime | None = \
-        Field(None, alias=AliasChoices("timestamp", "upload_date"))
+        Field(None, validation_alias=AliasChoices("timestamp", "upload_date"))
     live_status: LiveStatus | None = None
     live_release_date: datetime | None = Field(None, alias="release_timestamp")
 
@@ -477,13 +475,13 @@ class YoutubeClient:
         return self._ytdl.params["http_headers"]
 
     async def search(self, url: URL | str) -> Search:
-        return Search.parse_obj(await self._get(url))
+        return Search.model_validate(await self._get(url))
 
     async def channel(self, url: URL | str) -> Channel:
-        return Channel.parse_obj(await self._get(url))
+        return Channel.model_validate(await self._get(url))
 
     async def playlist(self, url: URL | str) -> Playlist:
-        pl = Playlist.parse_obj(await self._get(url))
+        pl = Playlist.model_validate(await self._get(url))
         for i, entry in enumerate(pl, 1):
             entry.index = self._offset + i
             entry.url = str(URL(entry.url).include_query_params(
@@ -494,7 +492,7 @@ class YoutubeClient:
 
     async def video(self, url: URL | str) -> Video:
         url = URL(str(url)).remove_query_params("list")
-        return Video.parse_obj(await self._get(url))
+        return Video.model_validate(await self._get(url))
 
     @backoff.on_exception(backoff.expo, NoDataReceived, max_tries=10)
     async def _get(self, url: URL | str) -> dict[str, Any]:
@@ -504,11 +502,8 @@ class YoutubeClient:
         return self._extend_entries(data)
 
     @classmethod
-    def _thread(
-        cls, fn: Callable[P, T], *args: P.args, **kwargs: P.kwargs,
-    ) -> asyncio.Future[T]:
-        e = cls._executor
-        return asyncio.get_event_loop().run_in_executor(e, fn, *args, **kwargs)
+    def _thread(cls, fn: Callable[[], T]) -> asyncio.Future[T]:
+        return asyncio.get_event_loop().run_in_executor(cls._executor, fn)
 
     @staticmethod
     def convert_url(url: URL) -> URL:

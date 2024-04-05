@@ -6,8 +6,8 @@ import os
 import re
 import shutil
 import time
-from collections.abc import Awaitable, Callable
-from contextlib import suppress
+from collections.abc import AsyncGenerator, Awaitable, Callable
+from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
 from datetime import timedelta
 from importlib import resources
@@ -66,6 +66,50 @@ from .ytdl import (
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
+
+def create_background_job(coro: Awaitable[None]) -> asyncio.Task[None]:
+    async def task() -> None:
+        with report(Exception), suppress(asyncio.CancelledError):
+            await coro
+    return asyncio.create_task(task())
+
+
+async def prune_cache() -> None:
+    while True:
+        freed = 0
+        for file in CACHE_DIR.glob("*.dump"):
+            stats = file.stat()
+            if stats.st_mtime < time.time() - 600:
+                file.unlink()
+                freed += stats.st_size
+
+        significant_size = 0.1
+        if (mib := freed / 1024 / 1024) >= significant_size:
+            log.info("Cache: freed %d MiB", round(mib, 1))
+
+        await asyncio.sleep(300)
+
+
+async def watch_files() -> None:
+    if not (dir := os.getenv("UVICORN_RELOAD")):
+        return
+
+    async for changes in awatch(dir):
+        exts = {Path(p).suffix for _, p in changes}
+        if ".jinja" in exts or ".js" in exts:
+            RELOAD_PAGE.set()
+        elif ".scss" in exts or ".css" in exts:
+            RELOAD_STYLE.set()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
+    lifespan_tasks.append(create_background_job(prune_cache()))
+    lifespan_tasks.append(create_background_job(watch_files()))
+    yield
+    print("─" * shutil.get_terminal_size()[0])
+
+
 log.basicConfig(level=log.INFO)
 log.getLogger("httpx").setLevel(log.WARNING)
 
@@ -76,7 +120,8 @@ ENV = jinja2.Environment(loader=LOADER, autoescape=jinja2.select_autoescape())
 TEMPLATES = Jinja2Templates(env=ENV)
 scss = resources.read_text(f"{NAME}.style", "main.scss")
 css = sass.compile(string=scss, indented=False)
-app = FastAPI(default_response_class=HTMLResponse)
+lifespan_tasks = []
+app = FastAPI(default_response_class=HTMLResponse, lifespan=lifespan)
 
 app.mount("/static", StaticFiles(packages=[(NAME, "static")]), name="static")
 app.mount("/npm", StaticFiles(packages=[(NAME, "npm")]), name="npm")
@@ -424,7 +469,7 @@ async def make_master_m3u8(request: Request, video_url: str) -> Response:
 
 @app.get("/generate_hls/variant")
 async def make_variant_m3u8(request: Request, format_json: str) -> Response:
-    format = Format.parse_raw(format_json)
+    format = Format.model_validate_json(format_json)
     api = f"{request.base_url}proxy/get?url=%s"
 
     if format.has_dash:
@@ -529,51 +574,3 @@ async def wait_reload(ws: WebSocket) -> None:
 async def wait_alive(ws: WebSocket) -> None:
     if not dying:
         await ws.accept()
-
-
-def create_background_job(coro: Awaitable[None]) -> asyncio.Task[None]:
-    async def task() -> None:
-        with report(Exception), suppress(asyncio.CancelledError):
-            await coro
-    return asyncio.create_task(task())
-
-
-@app.on_event("startup")
-async def prune_cache() -> None:
-    async def job() -> None:
-        while True:
-            freed = 0
-            for file in CACHE_DIR.glob("*.dump"):
-                stats = file.stat()
-                if stats.st_mtime < time.time() - 600:
-                    file.unlink()
-                    freed += stats.st_size
-
-            significant_size = 0.1
-            if (mib := freed / 1024 / 1024) >= significant_size:
-                log.info("Cache: freed %d MiB", round(mib, 1))
-
-            await asyncio.sleep(300)
-
-    create_background_job(job())
-
-
-@app.on_event("startup")
-async def watch_files() -> None:
-    async def job() -> None:
-        if not (dir := os.getenv("UVICORN_RELOAD")):
-            return
-
-        async for changes in awatch(dir):
-            exts = {Path(p).suffix for _, p in changes}
-            if ".jinja" in exts or ".js" in exts:
-                RELOAD_PAGE.set()
-            elif ".scss" in exts or ".css" in exts:
-                RELOAD_STYLE.set()
-
-    create_background_job(job())
-
-
-@app.on_event("shutdown")
-async def separate_log() -> None:
-    print("─" * shutil.get_terminal_size()[0])
