@@ -528,8 +528,16 @@ media-controller {
                     scale: 0.9;
                     width: unset;
                 }
+
+                & .replies .close {
+                    display: none;
+                }
             }
         }
+    }
+    & .comment:has(+ .thread-replies:not(.hidden)) .replies {
+        & .close { display: initial; }
+        & .open { display: none; }
     }
     .thread-replies {
         min-width: 1px;
