@@ -64,6 +64,32 @@ function processAllText() {
     processText(".youtube-day-date", formatYoutubeDayDate)
 }
 
+function seekVideo(video, time) {
+    // Accept strings like "1h03m12s", "4m22s" or just second numbers.
+    // NOTE: also called when clicking on comment/description timestamps
+    if (isNaN(time)) {
+        const [h, m, s] = [0, 0, ...time.split(/[a-z]+/i).filter(x => x)]
+            .slice(-3).map(x => parseInt(x, 10))
+        time = h * 3600 + m * 60 + s
+    }
+    video.currentTime = time
+}
+
+function processHmsTimeLinks(video) {
+    document.querySelectorAll("a[hms-time]").forEach(a => {
+        const url = new URL(window.location.href)
+        const hms = a.getAttribute("hms-time")
+        url.searchParams.set("t", hms)
+        a.href = url.href
+        a.onclick = () => {
+            video.pause()
+            seekVideo(video, hms)
+            video.play()
+            return false
+        }
+    })
+}
+
 function runHoverSlideshow(entry) {
     const thumbnails = entry.querySelector(".hover-thumbnails")
     const imgs = thumbnails.querySelectorAll("img")

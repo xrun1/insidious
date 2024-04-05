@@ -91,7 +91,10 @@
     {% endfor %}
 </div>
 
-<script>processAllText()</script>
+<script>
+    processAllText()
+    processHmsTimeLinks(document.querySelector("media-controller").media)
+</script>
 
 {% if pagination.next_url %}
     <div
