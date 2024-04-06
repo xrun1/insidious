@@ -12,25 +12,27 @@
     {% if entry.load_url %}
         hx-get="{{entry.load_url}}"
         hx-trigger="intersect once"
-    {% endif %}
->
-    <a
-        class=thumbnail
-        href="{{url}}"
-        hx-get="{{url}}"
+    {% else %}
+        hx-trigger=click
         hx-select=".page-content"
         hx-target=".page-content"
         hx-push-url=true
-    >
+    {% endif %}
+>
+    <div class=thumbnail>
         <div>
-            <img sizes=10rem srcset="{{thumbnails}}">
+            <a href="{{url}}" hx-get="{{url}}">
+                <img sizes=10rem srcset="{{thumbnails}}">
+            </a>
 
             <div class=hover-thumbnails>
                 {% for srcset in entry.hover_srcsets or [] %}
                     {# These are of the video's aspect ratio and will look #}
                     {# blurry when upscaled by object-fit: cover, so get a #}
                     {# bigger size with "15rem" #}
-                    <img sizes=15rem to-load="{{srcset}}">
+                    <a href="{{url}}" hx-get="{{url}}">
+                        <img sizes=15rem to-load="{{srcset}}">
+                    </a>
                 {% endfor %}
             </div>
 
@@ -54,12 +56,15 @@
                 <span class=duration>{{format_duration(entry.duration)}}</span>
             {% endif %}
         </div>
-    </a>
+    </div>
 
     <div class=info>
-        <a class="title elide" title="{{entry.title}}" href={{url}}>
-            {{entry.title}}
-        </a>
+        <a
+            class="title elide"
+            title="{{entry.title}}" 
+            href="{{url}}" 
+            hx-get="{{url}}"
+        >{{entry.title}}</a>
 
         {% if entry.channel_name %}
             <div class="channel elide">

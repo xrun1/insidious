@@ -92,10 +92,11 @@ function processHmsTimeLinks(video) {
 
 function runHoverSlideshow(entry) {
     const thumbnails = entry.querySelector(".hover-thumbnails")
-    const imgs = thumbnails.querySelectorAll("img")
-    if (! imgs) return
-    const current = thumbnails.querySelector("img.current")
-    const next = thumbnails.querySelector("img.current + img") || imgs[0]
+    if (! thumbnails.children) return
+    const current = thumbnails.querySelector(".current")
+    const next = thumbnails.querySelector(".current + *") ||
+        thumbnails.children[0]
+    const nextImg = next.querySelector("img")
 
     function change() {
         current?.classList.remove("current")
@@ -109,11 +110,11 @@ function runHoverSlideshow(entry) {
         )
     }
 
-    if (next.hasAttribute("to-load")) {
-        next.srcset = next.getAttribute("to-load")
-        next.removeAttribute("to-load")
+    if (nextImg.hasAttribute("to-load")) {
+        nextImg.srcset = nextImg.getAttribute("to-load")
+        nextImg.removeAttribute("to-load")
     }
-    next.complete ? change() : next.addEventListener("load", change)
+    nextImg.complete ? change() : nextImg.addEventListener("load", change)
 }
 
 function stopHoverSlideshow(entry) {
