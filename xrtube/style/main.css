@@ -306,7 +306,7 @@ img {
 
 #player-and-controls {
     margin-bottom: var(--gap);
-    background-size: 100% 100% !important;
+    background-size: cover !important;
     border-radius: var(--radius);
     overflow: hidden;
     /* Apprently this makes the transform above render on GPU or something */
