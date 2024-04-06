@@ -429,7 +429,9 @@ InChannel: TypeAlias = InSearch
 
 class Channel(Search, HasThumbnails):
     has_banner: ClassVar[bool] = True
-    tabs: ClassVar[list[str]] = ["featured", "videos", "shorts", "playlists"]
+    tabs: ClassVar[list[str]] = [
+        "featured", "videos", "shorts", "streams", "playlists",
+    ]
 
     title: str = Field(alias="channel")
     description: str
