@@ -21,22 +21,24 @@
 
             <div class=video-details>
                 {% set channel_url = local_url(info.shortest_channel_url) %}
-                <a class=video-author href="{{channel_url}}">
+                <div class=video-author>
                     <div
                         class=avatar-info
                         hx-get="{{channel_url}}"
                         hx-trigger=load
                         hx-select=".avatar-info"
                         hx-target=this
-                        hx-swap="innerHTML ignoreTitle:true"
+                        hx-swap="outerHTML ignoreTitle:true"
                     >
                         <div class=avatar></div>
                         <div class=info>
-                            <h1>{{info.channel_name}}</h1>
+                            <a href="{{channel_url}}" hx-get="{{channel_url}}">
+                                <h1>{{info.channel_name}}</h1>
+                            </a>
                             <p>&nbsp;<br>&nbsp;</p>
                         </div>
                     </div>
-                </a>
+                </div>
 
                 <div class=video-little-details>
                     <div class=date title="Release date">

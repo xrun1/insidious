@@ -7,15 +7,25 @@
     {% include "parts/header.html.jinja" %}
 
     <div id=channel-page class=page-content>
+        {% set url = local_url(info.url) %}
+
         {% if info.banners_srcset %}
             <img class=banner srcset="{{info.banners_srcset}}">
         {% endif %}
 
         <div class=avatar-info>
-            <img class=avatar sizes=10rem srcset="{{info.thumbnails_srcset}}">
+            <a href="{{url}}" hx-get="{{url}}">
+                <img
+                    class=avatar 
+                    sizes=10rem 
+                    srcset="{{info.thumbnails_srcset}}"
+                >
+            </a>
 
             <div class=info>
-                <h1>{{youtube_format(info.title, allow_markup=False)}}</h1>
+                <a href="{{url}}" hx-get="{{url}}">
+                    <h1>{{youtube_format(info.title, allow_markup=False)}}</h1>
+                </a>
 
                 {% if info.followers %}
                     <span class=followers title=Subscribers>

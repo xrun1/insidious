@@ -137,6 +137,15 @@ img {
         justify-content: center;
     }
 
+    /* These links are useful only when the channel/playlist page is embedded,
+       they point to the full page */
+    > .avatar-info > a, > .avatar-info > .info > a {
+          pointer-events: none;
+          cursor: default;
+          text-decoration: none;
+          color: black;
+    }
+
     & .playlist-details {
         display: flex;
         flex-flow: row wrap;
@@ -160,22 +169,19 @@ img {
     justify-content: center;
     gap: var(--gap);
 
-    & .avatar {
+    & a:has(> .avatar) {
         align-self: flex-start;
     }
 
     & .info {
         flex: 1;
         min-width: var(--thumb-width);
-        > h1 { 
+        & h1 { 
             display: inline;
             margin-right: var(--gap-small);
         }
-        > p {
+        & p {
             margin-top: var(--gap-small);
-        }
-        > p, > .followers {
-            color: black;
         }
     }
 }
@@ -207,7 +213,6 @@ img {
             border-bottom-right-radius: 0;
 
             & .avatar-info {
-                cursor: pointer;
                 position: sticky;
                 top: 0;
                 z-index: 100;
@@ -265,13 +270,12 @@ img {
 }
 
 .video-author {
-    display: block;
     height: 4rem;
 
     & .avatar-info {
         width: 100%;
 
-        & .avatar {
+        & a:has(> .avatar), .avatar {
             width: 4rem;
             height: 4rem;
         }
