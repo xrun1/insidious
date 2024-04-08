@@ -166,9 +166,8 @@ async def _mp4_boxes(
     buffer = io.BytesIO()
 
     async for chunk in mp4_data:
-        initial = buffer.tell()
         buffer.write(chunk)
-        buffer.seek(initial)
+        buffer.seek(0)
 
         try:
             while True:
@@ -184,7 +183,7 @@ async def _mp4_boxes(
                     log.info("Found boxes after %d bytes", buffer.tell())
                     return (filetype, movie, segments)
         except StreamError:
-            buffer.seek(initial)
+            pass
 
     raise ValueError(f"Missing boxes - {filetype=}, {movie=}, {segments=}")
 
