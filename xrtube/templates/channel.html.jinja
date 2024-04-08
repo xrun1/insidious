@@ -13,7 +13,12 @@
             <img class=banner srcset="{{info.banners_srcset}}">
         {% endif %}
 
-        <div class=avatar-info>
+        <div 
+            class=avatar-info
+            hx-select=.page-content
+            hx-target=.page-content
+            hx-push-url=true
+        >
             <a href="{{url}}" hx-get="{{url}}">
                 <img
                     class=avatar 
@@ -39,16 +44,14 @@
             </div>
         </div>
 
-        <nav>
+        <nav
+            hx-select=.page-content
+            hx-target=.page-content
+            hx-push-url=true
+        >
             {% for tab in info.tabs %}
                 {% set url = info.tab_url(request.url, tab) %}
-                <a
-                    href="{{url}}"
-                    hx-get="{{url}}"
-                    hx-select=.page-content
-                    hx-target=.page-content
-                    hx-push-url=true
-                >{{tab.capitalize()}}</a>
+                <a href="{{url}}" hx-get="{{url}}">{{tab.capitalize()}}</a>
             {% endfor %}
         </nav>
 
