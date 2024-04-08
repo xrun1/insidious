@@ -351,15 +351,19 @@
         // user may be currently dragging the time slider around
         if (controller.hasAttribute("mediapreviewtime")) return
 
+        let timer = null
         function nextVideo() {
-            const url = new URL(document.querySelector(
+            const nextEntry = document.querySelector(
                 "#playlist .entry.highlight + .entry [href^='/watch']"
-            ).href)
+            )
+            if (! nextEntry) return  // playlist not loaded or reached end
+            clearInterval(timer)
+            const url = new URL(nextEntry.href)
             url.searchParams.set("autoplay", "1")
             window.location.href = url.href
         }
-        nextVideo()  // may fail is playlist hasn't finished loading yet
-        setInterval(nextVideo, 1000)
+        timer = setInterval(nextVideo, 1000)
+        nextVideo()
     })
 
     document.querySelectorAll("[open-on-hover]").forEach(menu => {
