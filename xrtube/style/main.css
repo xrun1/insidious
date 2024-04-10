@@ -334,6 +334,7 @@ media-controller {
 
     & media-control-bar {
         backdrop-filter: none;
+        word-wrap: normal;
     }
 
     &:not([mediahasplayed]), &[mediaended] {
