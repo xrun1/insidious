@@ -22,7 +22,9 @@
         100svw - var(--side) - var(--gap) * 3
     );
     --narrow-video-width: min(100svh, 100svw - var(--gap) * 2);
-    --player-control-bar-height: 2.690rem;
+    --player-time-range-height: 0.3rem;
+    --player-control-bar-height:
+        calc(2.690rem + var(--player-time-range-height));
 }
 
 html {
@@ -332,11 +334,6 @@ media-controller {
         backdrop-filter: blur(10px);
     }
 
-    & media-control-bar {
-        backdrop-filter: none;
-        word-wrap: normal;
-    }
-
     &:not([mediahasplayed]), &[mediaended] {
         > media-loading-indicator {
             --media-control-display: none;
@@ -347,6 +344,33 @@ media-controller {
         > media-play-button[slot=centered-chrome] {
             --media-control-display: none;
         }
+    }
+
+    & media-control-bar {
+        backdrop-filter: none;
+        white-space: nowrap;
+        width: 100%;
+
+        &:has(> media-time-range) {
+            z-index: 10;
+        }
+
+        &:hover media-time-range {
+            --media-range-track-height: 0.5rem;
+        }
+    }
+
+    & #current-chapter {
+        flex-grow: 10;
+        min-width: 0;
+        pointer-events: none;
+        justify-content: flex-start;
+    }
+
+    & media-time-range {
+        height: var(--player-time-range-height);
+        --media-range-track-transition: height 0.1s;
+        --media-range-padding: 0;
     }
 
     & media-airplay-button[mediaairplayunavailable],

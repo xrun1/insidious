@@ -75,10 +75,13 @@
     {% endif %}
 
     <media-control-bar>
+        <media-time-range></media-time-range>
+    </media-control-bar>
+    <media-control-bar>
         <media-play-button></media-play-button>
         <media-mute-button></media-mute-button>
         <media-volume-range></media-volume-range>
-        <media-time-range></media-time-range>
+        <media-text-display id=current-chapter></media-text-display>
         <media-time-display showduration></media-time-display>
         <media-playback-rate-menu-button id=speed-button>
         </media-playback-rate-menu-button>
@@ -108,6 +111,8 @@
     const controller = document.getElementById("controller")
     const media = document.getElementById("hls")
     const hls = document.getElementById("hls").api
+    const timeRange = document.querySelector("media-time-range")
+    const currentChapter = document.querySelector("#current-chapter")
     const qualities = document.getElementById("qualities")
     const qualityButton = document.getElementById("quality-button")
     const audioTracks = document.getElementById("audio-tracks")
@@ -298,6 +303,13 @@
         fastForwarding = false
     }
 
+    function updateCurrentChapter() {
+        if (! timeRange.mediaChaptersCues.length) return 
+        currentChapter.textContent = timeRange.mediaChaptersCues.findLast(ch =>
+            ch.startTime <= timeRange.mediaCurrentTime
+        ).text
+    }
+
     hls.on(Hls.Events.MANIFEST_LOADED, onLevelsUpdate)
     hls.on(Hls.Events.LEVELS_UPDATED, onLevelsUpdate)
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, onAudioTracksUpdate)
@@ -317,6 +329,7 @@
         const params = new URL(window.location.href).searchParams
         let start = params.get("start") || params.get("t")
         if (start) seekVideo(media, start)
+        updateCurrentChapter()
     })
 
     media.volume = getCookie("volume", 1.0)
@@ -346,6 +359,8 @@
     media.addEventListener("dblclick", () => {
         fullscreenButton.click()
     })
+
+    media.addEventListener("timeupdate", updateCurrentChapter)
 
     media.addEventListener("ended", () => {
         // user may be currently dragging the time slider around
