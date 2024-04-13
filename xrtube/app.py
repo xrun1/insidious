@@ -458,15 +458,20 @@ async def comments(
 
 @app.get("/generate_hls/master")
 async def make_master_m3u8(request: Request, video_url: str) -> Response:
-    api = f"{request.base_url}generate_hls/variant?format_json=%s"
+    api = f"{request.base_url}generate_hls/variant?video_url="
+    api += quote(video_url) + "&format_id="
     # WARN: relying on the implicit caching mechanism here
     text = master_playlist(api, await YoutubeClient().video(video_url))
     return Response(text, media_type="application/x-mpegURL")
 
 
 @app.get("/generate_hls/variant")
-async def make_variant_m3u8(request: Request, format_json: str) -> Response:
-    format = Format.model_validate_json(format_json)
+async def make_variant_m3u8(
+    request: Request, video_url: str, format_id: str,
+) -> Response:
+    # WARN: relying on the implicit caching mechanism here
+    video = await YoutubeClient().video(video_url)
+    format = next(f for f in video.formats if f.id == format_id)
     api = f"{request.base_url}proxy/get?url=%s"
 
     if format.has_dash:

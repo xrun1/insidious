@@ -98,8 +98,7 @@ def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
         if not format.id.endswith("-drc"):
             yield "DEFAULT=YES,"
             yield "AUTOSELECT=YES,"
-        json = format.model_dump_json(by_alias=True)
-        yield 'URI="%s"\n' % (api % quote(json))
+        yield 'URI="%s"\n' % (api + format.id)
         return
 
     def stream(
@@ -125,7 +124,7 @@ def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
             yield 'CODECS="%s",' % format.vcodec
 
         yield "BANDWIDTH=%d\n" % math.ceil(bitrate * 1000)
-        yield (api % quote(format.model_dump_json(by_alias=True))) + "\n"
+        yield (api + format.id) + "\n"
 
     audio_groups: dict[str, list[Format]] = {}
     for f in all:
