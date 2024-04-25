@@ -232,8 +232,8 @@ class WatchPage(Page):
     get_related: URL
     get_comments: URL
     get_playlist: URL | None = None
-    start: str | None = None
-    end: str | None = None
+    start: str | float | None = None
+    end: str | float | None = None
     loop: bool = False
     autoplay: bool = False
 
@@ -371,6 +371,7 @@ async def load_search_link(request: Request, url: str, title: str) -> Response:
 @app.get("/watch")
 @app.get("/v/{v}")
 @app.get("/shorts/{v}")
+@app.get("/clip/{v}")
 async def watch(
     request: Request,
     v: str,
@@ -385,6 +386,11 @@ async def watch(
     yt_url = request.url.remove_query_params(["end", "loop", "autoplay"])
     video = await client.video(client.convert_url(yt_url))
 
+    if request.url.path.startswith("/clip/"):
+        video.id = next(iter(re.findall(
+            r"/vi(?:_webp)?/([^/]+)/", video.best_thumbnail.url,
+        )), video.id)
+
     rel_params = {k: v for k, v in {
         "video_id": video.id,
         "video_name": video.title,
@@ -395,7 +401,7 @@ async def watch(
     get_rel = request.url_for("related").include_query_params(**rel_params)
 
     get_coms = request.url_for("comments").include_query_params(
-        video_id = v,
+        video_id = video.id,
         by_date = True,
     )
 
@@ -407,7 +413,9 @@ async def watch(
 
     return WatchPage(
         request, video.title, video, get_rel, get_coms, get_pl,
-        start or t, end, loop, autoplay,
+        start or t or video.clip_start, end or video.clip_end,
+        loop or (video.clip_start is not None),
+        autoplay,
     ).response
 
 

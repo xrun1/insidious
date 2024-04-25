@@ -343,12 +343,6 @@
         function handleEnd() {
             if (media.currentTime < endSeconds) return
 
-            if (media.currentTime > endSeconds + 4) {
-                console.log("eee")
-                media.removeEventListener("timeupdate", handleEnd)
-                return
-            }
-
             {% if start %}
                 media.currentTime = parseYoutubeStartTime("{{start}}")
             {% else %}

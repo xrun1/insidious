@@ -212,7 +212,7 @@ class VideoEntry(Entry, HasHoverThumbnails, HasChannel):
     entry_type: Literal["VideoEntry"]
     views: int | None = Field(None, alias="view_count")
     description: str | None = None
-    duration: int | None = None
+    duration: float | None = None
     upload_date: datetime | None = \
         Field(None, validation_alias=AliasChoices("timestamp", "upload_date"))
     live_status: LiveStatus | None = None
@@ -238,7 +238,7 @@ class VideoEntry(Entry, HasHoverThumbnails, HasChannel):
 
 class PartialEntry(VideoEntry):
     entry_type: Literal["PartialEntry"]  # type: ignore
-    duration: int | None = None
+    duration: float | None = None
     views: int | None = Field(None, alias="concurrent_view_count")
 
 
@@ -313,6 +313,8 @@ class Video(VideoEntry):
     likes: int | None = Field(alias="like_count")
     formats: list[Format]
     chapters: list[Chapter] | None = None
+    clip_start: float | None = Field(None, alias="section_start")
+    clip_end: float | None = Field(None, alias="section_end")
 
     @property
     def manifest_url(self) -> str:
