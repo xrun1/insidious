@@ -65,10 +65,11 @@ function processAllText() {
 }
 
 function parseYoutubeStartTime(time) {
-    // Accept strings like "1h03m12s", "4m22s" or just second numbers.
+    // Accept strings like "1h03m12s", "4m22.5s" or just second numbers.
+    // Unlike YT, this supports milliseconds.
     if (! isNaN(time)) return time
     const [h, m, s] = [0, 0, ...time.split(/[a-z]+/i).filter(x => x)]
-        .slice(-3).map(x => parseInt(x, 10))
+        .slice(-3).map(x => parseFloat(x, 10))
     return h * 3600 + m * 60 + s
 }
 
