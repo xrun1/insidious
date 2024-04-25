@@ -232,6 +232,9 @@ class WatchPage(Page):
     get_related: URL
     get_comments: URL
     get_playlist: URL | None = None
+    start: str | None = None
+    end: str | None = None
+    loop: bool = False
     autoplay: bool = False
 
 
@@ -369,10 +372,17 @@ async def load_search_link(request: Request, url: str, title: str) -> Response:
 @app.get("/v/{v}")
 @app.get("/shorts/{v}")
 async def watch(
-    request: Request, v: str, list: str | None = None, autoplay: bool = False,
+    request: Request,
+    v: str,
+    list: str | None = None,
+    t: str | None = None,
+    start: str | None = None,
+    end: str | None = None,  # Not recognized by YT from there onwards
+    loop: bool = False,
+    autoplay: bool = False,
 ) -> Response:
     client = YoutubeClient()
-    yt_url = request.url.remove_query_params(["autoplay"])
+    yt_url = request.url.remove_query_params(["end", "loop", "autoplay"])
     video = await client.video(client.convert_url(yt_url))
 
     rel_params = {k: v for k, v in {
@@ -396,7 +406,8 @@ async def watch(
         )
 
     return WatchPage(
-        request, video.title, video, get_rel, get_coms, get_pl, autoplay,
+        request, video.title, video, get_rel, get_coms, get_pl,
+        start or t, end, loop, autoplay,
     ).response
 
 

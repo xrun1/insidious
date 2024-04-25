@@ -64,15 +64,12 @@ function processAllText() {
     processText(".youtube-day-date", formatYoutubeDayDate)
 }
 
-function seekVideo(video, time) {
+function parseYoutubeStartTime(time) {
     // Accept strings like "1h03m12s", "4m22s" or just second numbers.
-    // NOTE: also called when clicking on comment/description timestamps
-    if (isNaN(time)) {
-        const [h, m, s] = [0, 0, ...time.split(/[a-z]+/i).filter(x => x)]
-            .slice(-3).map(x => parseInt(x, 10))
-        time = h * 3600 + m * 60 + s
-    }
-    video.currentTime = time
+    if (! isNaN(time)) return time
+    const [h, m, s] = [0, 0, ...time.split(/[a-z]+/i).filter(x => x)]
+        .slice(-3).map(x => parseInt(x, 10))
+    return h * 3600 + m * 60 + s
 }
 
 function processHmsTimeLinks(video) {
@@ -83,7 +80,7 @@ function processHmsTimeLinks(video) {
         a.href = url.href
         a.onclick = () => {
             video.pause()
-            seekVideo(video, hms)
+            video.currentTime = parseYoutubeStartTime(hms)
             video.play()
             return false
         }

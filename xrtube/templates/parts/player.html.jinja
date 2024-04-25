@@ -15,8 +15,14 @@
         defaultstreamtype=on-demand
     {% endif %}
 >
-    {% set ap = "autoplay" if autoplay else "" %}
-    <hls-video id=hls slot=media src="{{info.manifest_url}}" type=hls {{ap}}>
+    <hls-video
+        id=hls
+        slot=media
+        src="{{info.manifest_url}}"
+        type=hls
+        {% if loop %} loop {% endif %}
+        {% if autoplay %} autoplay {% endif %}
+    >
         <track default kind=chapters src="{{info.chapters_url}}">
         <track label=thumbnails default kind=metadata
             src="{{info.storyboard_url}}"
@@ -325,12 +331,36 @@
         setCookie("bandwidth", Math.min(max, hls.bandwidthEstimate), 60 * 120)
     })
 
-    media.addEventListener("loadedmetadata", () => {
-        const params = new URL(window.location.href).searchParams
-        let start = params.get("start") || params.get("t")
-        if (start) seekVideo(media, start)
-        updateCurrentChapter()
-    })
+    {% if start %}
+        media.addEventListener("loadedmetadata", () => {
+            media.currentTime = parseYoutubeStartTime("{{start}}")
+            updateCurrentChapter()
+        })
+    {% endif %}
+
+    {% if end %}
+        const endSeconds = parseYoutubeStartTime("{{end}}")
+        function handleEnd() {
+            if (media.currentTime < endSeconds) return
+
+            if (media.currentTime > endSeconds + 4) {
+                console.log("eee")
+                media.removeEventListener("timeupdate", handleEnd)
+                return
+            }
+
+            {% if start %}
+                media.currentTime = parseYoutubeStartTime("{{start}}")
+            {% else %}
+                media.currentTime = 0
+            {% endif %}
+
+            {% if not loop %}
+                media.pause()
+            {% endif %}
+        }
+        media.addEventListener("timeupdate", handleEnd)
+    {% endif %}
 
     media.volume = getCookie("volume", 1.0)
     media.muted = getCookie("muted", false)
