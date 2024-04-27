@@ -363,11 +363,6 @@
         setCookie("muted", media.muted)
     })
 
-    media.playbackRate = getCookie("speed", 1.0)
-    media.addEventListener("ratechange", () => {
-        if (! fastForwarding) setCookie("speed", media.playbackRate)
-    })
-
     media.addEventListener("mousedown", event => {
         if (event.button === 0) startFastForwardSoon()
     })
