@@ -22,11 +22,11 @@
         100svw - var(--side) - var(--gap) * 3
     );
     --narrow-video-width: min(100svh, 100svw - var(--gap) * 2);
-    --player-main-controls-height: 2.8rem;
+    --player-main-controls-height: 2.75rem;
     --player-time-range-height: 0.3rem;
-    --player-control-bar-height: calc(
-        var(--player-time-range-height) + var(--player-time-range-height)
-    );
+    --player-controls-height: calc(
+        var(--player-main-controls-height) + var(--player-time-range-height)
+    )
 }
 
 html {
@@ -318,7 +318,7 @@ img {
     transform: translateZ(0);
 
     &:has(media-controller:not([mediaisfullscreen])) {
-        padding-bottom: var(--player-control-bar-height);
+        padding-bottom: var(--player-controls-height);
     }
 }
 
@@ -332,7 +332,7 @@ media-controller {
 
     &:not([mediaisfullscreen]) media-control-bar {
         opacity: 1;
-        translate: 0 var(--player-control-bar-height);
+        translate: 0 var(--player-controls-height);
         backdrop-filter: blur(10px);
     }
 
@@ -342,7 +342,7 @@ media-controller {
     }
     &[mediaisfullscreen][userinactive]:not([mediapaused]) {
         & media-control-bar {
-            translate: 0 var(--player-main-controls-height);
+            translate: 0 var(--player-controls-height);
             opacity: 0.7;
             border-top: 1px solid rgba(0, 0, 0, 0.7);
             --media-range-track-height: 0.08rem;
@@ -368,6 +368,7 @@ media-controller {
         width: 100%;
 
         &:has(> media-time-range) {
+            backdrop-filter: unset !important;
             z-index: 10;
             --media-range-thumb-border: 1px solid rgba(0, 0, 0, 0.7);
         }
