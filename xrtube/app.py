@@ -135,6 +135,8 @@ HTTPX = httpx.AsyncClient(follow_redirects=True, headers={
 })
 INVIDIOUS = InvidiousClient()
 MANIFEST_URL = re.compile(r'(^|")(https?://[^"]+?)($|")', re.MULTILINE)
+RSS_YT_URL = re.compile(r"https?://(www\.)?youtu(\.be|be\.com)(?!/xml/)")
+RSS_YTIMG_URL = re.compile(r"https?://(.*\.)?ytimg.com")
 dying = False
 RELOAD_PAGE = asyncio.Event()
 RELOAD_STYLE = asyncio.Event()
@@ -558,6 +560,21 @@ async def proxy(
 
     background_tasks.add_task(reply.aclose)
     return StreamingResponse(iter(), 200, reply_headers, mime)
+
+
+@app.get("/feeds/videos.xml")
+async def rss_feed(request: Request):
+    with httpx_to_fastapi_errors():
+        url = request.url.replace(scheme="https", netloc="youtube.com")
+        reply = await HTTPX.get(str(url))
+        reply.raise_for_status()
+        new_base = request.url.scheme + "://" + request.url.netloc
+        xml = RSS_YT_URL.sub(new_base, reply.text)
+        xml = RSS_YTIMG_URL.sub(
+            lambda match: f"{new_base}/proxy/get?url={quote(match[0])}",
+            xml,
+        )
+        return Response(content=xml, media_type="application/xml")
 
 
 @app.get("/{v}", response_class=RedirectResponse)
