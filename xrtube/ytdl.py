@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import auto
 from functools import partial
 from typing import (
@@ -28,6 +28,7 @@ from pydantic import (
 )
 from typing_extensions import override
 from yt_dlp import YoutubeDL
+from yt_dlp.utils import math
 
 from .utils import AutoStrEnum
 
@@ -395,6 +396,13 @@ class Video(VideoEntry):
 
 class PartialVideo(Video):
     views: int | None = Field(None, alias="concurrent_view_count")
+
+    @property
+    def releases_in(self) -> int | None:
+        if not self.live_release_date:
+            return None
+        delta = self.live_release_date - datetime.utcnow().replace(tzinfo=UTC)
+        return math.ceil(max(3, delta.total_seconds()))
 
 
 InPlaylist: TypeAlias = ShortEntry | VideoEntry | PartialEntry

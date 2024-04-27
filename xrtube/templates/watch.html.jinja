@@ -118,5 +118,14 @@
                 ></div>
             {% endif %}
         </div>
+
+        {% if info.releases_in %}
+            <div
+                hx-get="{{request.url}}"
+                hx-trigger="load delay:{{info.releases_in}}s"
+                hx-select=.page-content
+                hx-target=.page-content
+            ></div>
+        {% endif %}
     </div>
 </body></html>
