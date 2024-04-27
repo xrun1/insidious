@@ -342,7 +342,7 @@ media-controller {
     }
     &[mediaisfullscreen][userinactive]:not([mediapaused]) {
         & media-control-bar {
-            translate: 0 var(--player-controls-height);
+            translate: 0 var(--player-main-controls-height);
             opacity: 0.7;
             border-top: 1px solid rgba(0, 0, 0, 0.7);
             --media-range-track-height: 0.08rem;
