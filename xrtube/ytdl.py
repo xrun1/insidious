@@ -232,6 +232,11 @@ class VideoEntry(Entry, HasHoverThumbnails, HasChannel):
         return self.live_release_date or self.upload_date
 
     @property
+    def fully_released(self) -> bool:
+        partial = (LiveStatus.is_upcoming, LiveStatus.is_live)
+        return self.live_status not in partial
+
+    @property
     def dislikes_url(self) -> str:
         return "/dislikes?video_id=%s" % self.id
 
@@ -306,10 +311,10 @@ class Search(Entries[InSearch]):
 class Video(VideoEntry):
     entry_type: Literal["Video"] = "Video"  # type: ignore
     url: str = Field(alias="original_url")
-    width: int
-    height: int
-    aspect_ratio: float
-    fps: float
+    width: int | None = None
+    height: int | None = None
+    aspect_ratio: float | None = None
+    fps: float | None = None
     likes: int | None = Field(alias="like_count")
     formats: list[Format]
     chapters: list[Chapter] | None = None
@@ -386,6 +391,10 @@ class Video(VideoEntry):
 
                     if (now := end) >= max_sec:
                         return
+
+
+class PartialVideo(Video):
+    views: int | None = Field(None, alias="concurrent_view_count")
 
 
 InPlaylist: TypeAlias = ShortEntry | VideoEntry | PartialEntry
@@ -466,6 +475,7 @@ class YoutubeClient:
             "playliststart": self._offset + 1,
             "playlistend": self._offset + per_page,
             "extract_flat": "in_playlist",
+            "ignore_no_formats_error": True,  # Don't fail on premiering vids
             "compat_opts": ["no-youtube-unavailable-videos"],
             "extractor_args": {
                 # This client has the HLS manifests, no need for others
@@ -497,7 +507,10 @@ class YoutubeClient:
 
     async def video(self, url: URL | str) -> Video:
         url = URL(str(url)).remove_query_params("list")
-        return Video.model_validate(await self._get(url))
+        data = await self._get(url)
+        if "concurrent_view_count" in data:
+            return PartialVideo.model_validate(data)
+        return Video.model_validate(data)
 
     @backoff.on_exception(backoff.expo, NoDataReceived, max_tries=10)
     async def _get(self, url: URL | str) -> dict[str, Any]:

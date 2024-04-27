@@ -48,7 +48,11 @@
                             raw="{{info.release_date.timestamp()}}"
                         ></span>
                     </div>
-                    <div class=views title=Views>
+                    {% if not info.fully_released %}
+                        <div class=views title=Spectators>
+                    {% else %}
+                        <div class=views title=Views>
+                    {% endif %}
                         <span class=icon>👁{{no_emoji}}</span>
                         <span class=number raw="{{info.views}}"></span>
                     </div>
