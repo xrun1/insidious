@@ -435,6 +435,7 @@ class Channel(Search, HasThumbnails):
         "featured", "videos", "shorts", "streams", "playlists",
     ]
 
+    id: str
     title: str = Field(alias="channel")
     description: str
     tab: str = Field(alias="webpage_url_basename", default="featured")

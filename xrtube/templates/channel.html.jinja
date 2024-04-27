@@ -1,6 +1,12 @@
 <!DOCTYPE html><html>
 <head>
     {% include "parts/head.html.jinja" %}
+    <link
+        rel=alternate
+        type=application/rss+xml
+        title="{{full_title}}"
+        href="/feeds/videos.xml?channel_id={{info.id}}"
+    >
 </head>
 
 <body>
