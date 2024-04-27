@@ -229,13 +229,14 @@ class ContinuationPage(Page):
 class WatchPage(Page):
     template = "watch.html.jinja"
     info: Video
-    get_related: URL
-    get_comments: URL
+    get_related: URL | None = None
+    get_comments: URL | None = None
     get_playlist: URL | None = None
     start: str | float | None = None
     end: str | float | None = None
     loop: bool = False
     autoplay: bool = False
+    is_embed: bool = False
 
 
 @dataclass(slots=True)
@@ -370,6 +371,7 @@ async def load_search_link(request: Request, url: str, title: str) -> Response:
 
 @app.get("/watch")
 @app.get("/v/{v}")
+@app.get("/embed/{v}")
 @app.get("/shorts/{v}")
 @app.get("/clip/{v}")
 async def watch(
@@ -385,27 +387,30 @@ async def watch(
     client = YoutubeClient()
     yt_url = request.url.remove_query_params(["end", "loop", "autoplay"])
     video = await client.video(client.convert_url(yt_url))
+    get_rel = get_coms = get_pl = None
+    is_embed = True
 
     if request.url.path.startswith("/clip/"):
         video.id = next(iter(re.findall(
             r"/vi(?:_webp)?/([^/]+)/", video.best_thumbnail.url,
         )), video.id)
 
-    rel_params = {k: v for k, v in {
-        "video_id": video.id,
-        "video_name": video.title,
-        "uploader_id": video.uploader_id,
-        "channel_name": video.channel_name,
-        "channel_url": video.channel_url,
-    }.items() if v is not None}
-    get_rel = request.url_for("related").include_query_params(**rel_params)
+    if not request.url.path.startswith("/embed/"):
+        is_embed = False
+        rel_params = {k: v for k, v in {
+            "video_id": video.id,
+            "video_name": video.title,
+            "uploader_id": video.uploader_id,
+            "channel_name": video.channel_name,
+            "channel_url": video.channel_url,
+        }.items() if v is not None}
+        get_rel = request.url_for("related").include_query_params(**rel_params)
 
-    get_coms = request.url_for("comments").include_query_params(
-        video_id = video.id,
-        by_date = True,
-    )
+        get_coms = request.url_for("comments").include_query_params(
+            video_id = video.id,
+            by_date = True,
+        )
 
-    get_pl = None
     if list:
         get_pl = request.url_for("playlist").include_query_params(
             list=list, find_attr=f"id:{v}", per_page=100,
@@ -416,6 +421,7 @@ async def watch(
         start or t or video.clip_start, end or video.clip_end,
         loop or (video.clip_start is not None),
         autoplay,
+        is_embed,
     ).response
 
 

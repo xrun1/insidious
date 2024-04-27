@@ -677,3 +677,33 @@ media-controller {
         }
     }
 }
+
+body.embed {
+    display: block;
+    padding: 0;
+    overflow-y: auto;
+
+    & #watch-page {
+        display: block;
+        height: 100svh;
+    }
+
+    & #video-column {
+        min-width: 100% !important;
+        max-width: 100% !important;
+        height: 100svh;
+    }
+
+    & #player-holder, media-controller {
+        height: calc(100svh - var(--player-controls-height)) !important;
+        aspect-ratio: unset !important;
+    }
+
+    & #player-and-controls {
+        border-radius: 0;
+    }
+
+    & #header, #other-videos, #player-and-controls ~ * {
+        display: none;
+    }
+}

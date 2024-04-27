@@ -3,7 +3,7 @@
     {% include "parts/head.html.jinja" %}
 </head>
 
-<body>
+<body {{'class=embed' if is_embed else ''}}>
     {% include "parts/header.html.jinja" %}
 
     <div id=watch-page class=page-content>
@@ -72,13 +72,16 @@
                 >{{youtube_format(info.description)}}</p>
             {% endif %}
 
-            <hr>
-            <div
-                id=comments
-                hx-get="{{get_comments}}"
-                hx-trigger=load
-                hx-swap=innerHTML
-            ></div>
+
+            {% if get_comments %}
+                <hr>
+                <div
+                    id=comments
+                    hx-get="{{get_comments}}"
+                    hx-trigger=load
+                    hx-swap=innerHTML
+                ></div>
+            {% endif %}
         </div>
 
         <div id=other-videos>
@@ -100,13 +103,16 @@
                     hx-swap="innerHTML ignoreTitle:true"
                 ></div>
             {% endif %}
-            <div
-                id=related
-                hx-get="{{get_related}}"
-                hx-trigger=load
-                hx-select=#pages
-                hx-swap="innerHTML ignoreTitle:true"
-            ></div>
+
+            {% if get_related %}
+                <div
+                    id=related
+                    hx-get="{{get_related}}"
+                    hx-trigger=load
+                    hx-select=#pages
+                    hx-swap="innerHTML ignoreTitle:true"
+                ></div>
+            {% endif %}
         </div>
     </div>
 </body></html>
