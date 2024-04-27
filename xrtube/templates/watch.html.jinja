@@ -48,20 +48,30 @@
                             raw="{{info.release_date.timestamp()}}"
                         ></span>
                     </div>
-                    {% if not info.fully_released %}
-                        <div class=views title=Spectators>
-                    {% else %}
+
+                    {% if info.fully_released %}
                         <div class=views title=Views>
+                    {% else %}
+                        <div
+                            class=views 
+                            title=Spectators
+                            hx-get="{{request.url}}"
+                            hx-trigger="load delay:60s"
+                            hx-select=.views
+                        >
+                            <script>processAllText()</script>
                     {% endif %}
                         <span class=icon>👁{{no_emoji}}</span>
                         <span class=number raw="{{info.views}}"></span>
                     </div>
+
                     {% if info.likes is not none %}
                         <div class=likes title="Likes">
                             <span class=icon>👍{{no_emoji}}</span>
                             <span class=number raw="{{info.likes}}"></span>
                         </div>
                     {% endif %}
+
                     <div hx-get="{{info.dislikes_url}}" hx-trigger=load>
                         {% include "parts/dislikes.html.jinja" %}
                     </div>
