@@ -40,7 +40,14 @@
                     </div>
                 </div>
 
-                <div class=video-little-details>
+                <div
+                    class=video-little-details
+                    {% if info.metadata_reload_time %}
+                        hx-get="{{request.url}}"
+                        hx-trigger="load delay:{{info.metadata_reload_time}}s"
+                        hx-select=.video-little-details
+                    {% endif %}
+                >
                     <div class=date title="Release date">
                         <span class=icon>🕒{{no_emoji}}</span>
                         <span
@@ -53,11 +60,7 @@
                         <div class=views title=Views>
                     {% else %}
                         <div
-                            class=views 
-                            title=Spectators
-                            hx-get="{{request.url}}"
-                            hx-trigger="load delay:60s"
-                            hx-select=.views
+                            class=views title=Spectators
                         >
                             <script>processAllText()</script>
                     {% endif %}
@@ -75,6 +78,7 @@
                     <div hx-get="{{info.dislikes_url}}" hx-trigger=load>
                         {% include "parts/dislikes.html.jinja" %}
                     </div>
+                    <script>processAllText()</script>
                 </div>
                 <script>processAllText()</script>
             </div>

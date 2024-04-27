@@ -238,6 +238,15 @@ class VideoEntry(Entry, HasHoverThumbnails, HasChannel):
         return self.live_status not in partial
 
     @property
+    def metadata_reload_time(self) -> int | None:
+        if not self.release_date:
+            return None
+        delta = self.release_date - datetime.utcnow().replace(tzinfo=UTC)
+        if delta.days > 3:  # noqa: PLR2004
+            return None
+        return max(60, math.ceil(delta.total_seconds() / (60 * 12)))
+
+    @property
     def dislikes_url(self) -> str:
         return "/dislikes?video_id=%s" % self.id
 
