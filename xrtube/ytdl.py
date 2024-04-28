@@ -241,7 +241,7 @@ class VideoEntry(Entry, HasHoverThumbnails, HasChannel):
     def metadata_reload_time(self) -> int | None:
         if not self.release_date:
             return None
-        delta = self.release_date - datetime.utcnow().replace(tzinfo=UTC)
+        delta = datetime.utcnow() - self.release_date.replace(tzinfo=None)
         if delta.days > 3:  # noqa: PLR2004
             return None
         return max(60, math.ceil(delta.total_seconds() / (60 * 12)))
@@ -408,6 +408,8 @@ class PartialVideo(Video):
 
     @property
     def releases_in(self) -> int | None:
+        if self.live_status != LiveStatus.is_upcoming:
+            return None
         if not self.live_release_date:
             return None
         delta = self.live_release_date - datetime.utcnow().replace(tzinfo=UTC)
