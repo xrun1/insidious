@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeAlias
 from urllib.parse import quote
 
-import appdirs
 import httpx
 import jinja2
 import yt_dlp
