@@ -10,12 +10,12 @@ from urllib.parse import quote
 from construct import Container, StreamError
 from pymp4.parser import Box
 
-from xrtube.utils import report
+from insidious.utils import report
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Iterator
 
-    from xrtube.ytdl import Format, Video
+    from insidious.ytdl import Format, Video
 
 HLS_MIME = "application/x-mpegURL"
 HLS_ALT_MIME = "application/vnd.apple.mpegurl"

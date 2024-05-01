@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-base="$(dirname "$0")/xrtube/npm"
+base="$(dirname "$0")/insidious/npm"
 
 get() { url_path="$1"
     file="$base/$url_path"

@@ -3,7 +3,7 @@
     build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-    name = "xrtube"
+    name = "insidious"
     version = "0.1.0"
     description = "Youtube front-end"
     authors = ["xrun1 <126838916+xrun1@users.noreply.github.com>"]
@@ -11,7 +11,7 @@
     readme = "README.md"
 
     [tool.poetry.scripts]
-        xrtube = "xrtube.__main__:run"
+        insidious = "insidious.__main__:run"
 
     [tool.poetry.dependencies]
         python = "^3.11"

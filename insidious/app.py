@@ -29,8 +29,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
 
-from xrtube.invidious import Comment, Comments, InvidiousClient
-from xrtube.streaming import (
+from insidious.invidious import Comment, Comments, InvidiousClient
+from insidious.streaming import (
     HLS_ALT_MIME,
     HLS_MIME,
     dash_variant_playlist,
@@ -140,7 +140,7 @@ class Page:
 
     @property
     def full_title(self) -> str:
-        return f"{self.title or ''} | {NAME}".removeprefix(" | ")
+        return f"{self.title or ''} | {NAME.capitalize()}".removeprefix(" | ")
 
     @property
     def response(self) -> Response:

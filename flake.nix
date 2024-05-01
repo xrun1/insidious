@@ -23,7 +23,7 @@
         };
     in rec {
         packages.${sys}.default = pyPkgs.buildPythonPackage rec {
-            pname = "xrtube";
+            pname = "insidious";
             version = "0.1.0";
             meta.mainProgram = pname;
             src = ./.;
