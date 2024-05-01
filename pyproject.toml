@@ -5,7 +5,7 @@
 [tool.poetry]
     name = "insidious"
     version = "0.1.0"
-    description = "Youtube front-end"
+    description = "YouTube front-end"
     authors = ["xrun1 <126838916+xrun1@users.noreply.github.com>"]
     license = "LGPL-3.0-or-later"
     readme = "README.md"

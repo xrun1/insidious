@@ -47,6 +47,9 @@
                 pymp4 construct21068
             ];
         };
+
+        nixosModules.default = import ./os.nix self;
+
         devShells.${sys}.default = pkgs.mkShell {
             inputsFrom = [packages.${sys}.default];
             packages = with pkgs; [
