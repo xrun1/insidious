@@ -5,7 +5,6 @@ import logging as log
 import os
 import re
 import shutil
-import time
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
@@ -46,8 +45,8 @@ from .markup import yt_to_html
 from .pagination import Pagination, RelatedPagination, T
 from .utils import httpx_to_fastapi_errors, report
 from .ytdl import (
+    CachedYoutubeDL,
     Channel,
-    Format,
     HasThumbnails,
     InPlaylist,
     InSearch,
@@ -74,17 +73,7 @@ def create_background_job(coro: Awaitable[None]) -> asyncio.Task[None]:
 
 async def prune_cache() -> None:
     while True:
-        freed = 0
-        for file in CACHE_DIR.glob("*.dump"):
-            stats = file.stat()
-            if stats.st_mtime < time.time() - 600:
-                file.unlink()
-                freed += stats.st_size
-
-        significant_size = 0.1
-        if (mib := freed / 1024 / 1024) >= significant_size:
-            log.info("Cache: freed %d MiB", round(mib, 1))
-
+        CachedYoutubeDL.prune_cache()
         await asyncio.sleep(300)
 
 
@@ -140,10 +129,6 @@ RSS_YTIMG_URL = re.compile(r"https?://(.*\.)?ytimg.com")
 dying = False
 RELOAD_PAGE = asyncio.Event()
 RELOAD_STYLE = asyncio.Event()
-
-CACHE_DIR = Path(appdirs.user_cache_dir(NAME))
-CACHE_DIR.mkdir(parents=True, exist_ok=True)
-os.chdir(CACHE_DIR)  # for ytdlp's write/load_pages mechanism
 
 
 @dataclass(slots=True)

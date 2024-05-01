@@ -43,6 +43,7 @@
                 backoff
                 appdirs
                 websockets
+                lz4
                 pymp4 construct21068
             ];
         };
