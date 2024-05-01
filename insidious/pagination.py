@@ -15,16 +15,18 @@ from uuid import UUID, uuid4
 from typing_extensions import override
 from yt_dlp.utils import DownloadError
 
-from .utils import report
-from .ytdl import (
+from .extractors.data import (
     Playlist,
     PlaylistEntry,
     Search,
     SearchLink,
     ShortEntry,
     VideoEntry,
+)
+from .extractors.ytdlp import (
     YoutubeClient,
 )
+from .utils import report
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

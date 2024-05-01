@@ -15,7 +15,7 @@ from insidious.utils import report
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Iterator
 
-    from insidious.ytdl import Format, Video
+    from .extractors.data import Format, Video
 
 HLS_MIME = "application/x-mpegURL"
 HLS_ALT_MIME = "application/vnd.apple.mpegurl"

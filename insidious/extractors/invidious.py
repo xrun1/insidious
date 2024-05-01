@@ -11,7 +11,7 @@ import backoff
 import httpx
 from pydantic import AliasPath, BaseModel, Field
 
-from insidious.ytdl import HasThumbnails, Thumbnail
+from .data import HasThumbnails, Thumbnail
 
 
 class Comment(HasThumbnails):

@@ -28,23 +28,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
 
-from insidious.invidious import Comment, Comments, InvidiousClient
-from insidious.streaming import (
-    HLS_ALT_MIME,
-    HLS_MIME,
-    dash_variant_playlist,
-    filter_master_playlist,
-    master_playlist,
-    sort_master_playlist,
-    variant_playlist,
-)
-
 from . import DISPLAY_NAME, NAME
-from .markup import yt_to_html
-from .pagination import Pagination, RelatedPagination, T
-from .utils import httpx_to_fastapi_errors, report
-from .ytdl import (
-    CachedYoutubeDL,
+from .extractors.data import (
     Channel,
     HasThumbnails,
     InPlaylist,
@@ -56,8 +41,24 @@ from .ytdl import (
     ShortEntry,
     Video,
     VideoEntry,
+)
+from .extractors.invidious import Comment, Comments, InvidiousClient
+from .extractors.markup import yt_to_html
+from .extractors.ytdlp import (
+    CachedYoutubeDL,
     YoutubeClient,
 )
+from .pagination import Pagination, RelatedPagination, T
+from .streaming import (
+    HLS_ALT_MIME,
+    HLS_MIME,
+    dash_variant_playlist,
+    filter_master_playlist,
+    master_playlist,
+    sort_master_playlist,
+    variant_playlist,
+)
+from .utils import httpx_to_fastapi_errors, report
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
