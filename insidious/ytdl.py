@@ -247,8 +247,8 @@ class VideoEntry(Entry, HasHoverThumbnails, HasChannel):
         if value is None:
             return None
         if isinstance(value, int):
-            return datetime.fromtimestamp(value)
-        return datetime.strptime(value, "%Y%m%d")
+            return datetime.fromtimestamp(value, UTC)
+        return datetime.strptime(value, "%Y%m%d").replace(tzinfo=UTC)
 
     @property
     def release_date(self) -> datetime | None:
@@ -263,7 +263,7 @@ class VideoEntry(Entry, HasHoverThumbnails, HasChannel):
     def metadata_reload_time(self) -> int | None:
         if not self.release_date:
             return None
-        delta = datetime.utcnow() - self.release_date.replace(tzinfo=None)
+        delta = datetime.now(UTC) - self.release_date
         if delta.days > 3:  # noqa: PLR2004
             return None
         return max(60, math.ceil(delta.total_seconds() / (60 * 12)))
@@ -434,7 +434,7 @@ class PartialVideo(Video):
             return None
         if not self.live_release_date:
             return None
-        delta = self.live_release_date - datetime.utcnow().replace(tzinfo=UTC)
+        delta = self.live_release_date - datetime.now(UTC)
         return math.ceil(max(3, delta.total_seconds()))
 
 
@@ -525,7 +525,7 @@ class CacheFile:
     def expire_in(self, seconds: float) -> None:
         with self._lock, self.path.open("rb+") as f:
             access, _, *rest = self._unzip(f.read()).splitlines()
-            expire = str(datetime.utcnow().timestamp() + seconds).encode()
+            expire = str(datetime.now(UTC).timestamp() + seconds).encode()
             lines = [access, expire, *rest]
             f.seek(0)
             f.write(self._zip(b"\n".join(lines)))
@@ -545,10 +545,11 @@ class CacheFile:
             _, *lines = dump.splitlines()
             expire_ts, url, headers, status, reason, *data = lines
 
-            if datetime.utcnow() >= datetime.fromtimestamp(float(expire_ts)):
+            expire_date = datetime.fromtimestamp(float(expire_ts), UTC)
+            if datetime.now(UTC) >= expire_date:
                 return None
 
-            access_ts = str(datetime.utcnow().timestamp()).encode()
+            access_ts = str(datetime.now(UTC).timestamp()).encode()
             f.seek(0)
             f.write(self._zip(b"\n".join((access_ts, *lines))))
 
@@ -561,7 +562,7 @@ class CacheFile:
         )
 
     def write(self, resp: YtdlpResponse, cache_time: float) -> None:
-        now = datetime.utcnow().timestamp()
+        now = datetime.now(UTC).timestamp()
         dump = "\n".join((
             str(now),
             str(now + cache_time),
@@ -638,7 +639,7 @@ class CachedYoutubeDL(YoutubeDL):
 
     @staticmethod
     def prune_cache(size_limit: int = 1024 * 1024 * 512) -> None:
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         by_access: list[tuple[datetime, Path]] = []
         sizes: dict[Path, int] = {}
 
