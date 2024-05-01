@@ -14,11 +14,12 @@ from pathlib import Path
 import docopt
 import uvicorn
 
-from . import NAME, __version__
+from . import DISPLAY_NAME, NAME, __version__
 
 
 def run() -> None:
-    args = docopt.docopt(__doc__.format(NAME=NAME), version=__version__)
+    doc = __doc__.format(NAME=DISPLAY_NAME)
+    args = docopt.docopt(doc, version=__version__)
     dir = args["--reload"]
     if dir:
         dir = Path(dir).resolve()  # We change the cwd later, "." would break

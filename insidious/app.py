@@ -39,7 +39,7 @@ from insidious.streaming import (
     variant_playlist,
 )
 
-from . import NAME
+from . import DISPLAY_NAME, NAME
 from .markup import yt_to_html
 from .pagination import Pagination, RelatedPagination, T
 from .utils import httpx_to_fastapi_errors, report
@@ -139,7 +139,7 @@ class Page:
 
     @property
     def full_title(self) -> str:
-        return f"{self.title or ''} | {NAME.capitalize()}".removeprefix(" | ")
+        return f"{self.title or ''} | {DISPLAY_NAME}".removeprefix(" | ")
 
     @property
     def response(self) -> Response:
