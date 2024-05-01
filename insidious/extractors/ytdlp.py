@@ -37,6 +37,7 @@ from yt_dlp.networking.common import (
 
 from insidious import NAME
 
+from .client import YoutubeClient
 from .data import (
     Channel,
     ChannelEntry,
@@ -234,7 +235,7 @@ class CachedYoutubeDL(YoutubeDL):
 
 
 @dataclass
-class YoutubeClient:
+class YtdlpClient(YoutubeClient):
     _ytdl_instances: ClassVar[dict[tuple[int, int, int], CachedYoutubeDL]] = {}
     _pool: ClassVar[ThreadPoolExecutor] = ThreadPoolExecutor(max_workers=16)
 
@@ -245,12 +246,15 @@ class YoutubeClient:
     def headers(self) -> dict[str, str]:
         return self._ytdl.params["http_headers"]
 
+    @override
     async def search(self, url: URL | str) -> Search:
         return Search.model_validate((await self._get(url))[0])
 
+    @override
     async def channel(self, url: URL | str) -> Channel:
         return Channel.model_validate((await self._get(url))[0])
 
+    @override
     async def playlist(self, url: URL | str) -> Playlist:
         pl = Playlist.model_validate((await self._get(url))[0])
         for i, entry in enumerate(pl, 1):
@@ -261,6 +265,7 @@ class YoutubeClient:
             ))
         return pl
 
+    @override
     async def video(self, url: URL | str) -> Video:
         url = URL(str(url)).remove_query_params("list")
         data, expire_in = await self._get(url)
@@ -289,10 +294,6 @@ class YoutubeClient:
     @classmethod
     def _thread(cls, fn: Callable[[], T]) -> asyncio.Future[T]:
         return asyncio.get_event_loop().run_in_executor(cls._pool, fn)
-
-    @staticmethod
-    def convert_url(url: URL) -> URL:
-        return url.replace(scheme="https", hostname="youtube.com", port=None)
 
     @property
     def _offset(self) -> int:

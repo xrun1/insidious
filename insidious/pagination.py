@@ -23,9 +23,7 @@ from .extractors.data import (
     ShortEntry,
     VideoEntry,
 )
-from .extractors.ytdlp import (
-    YoutubeClient,
-)
+from .extractors.ytdlp import YtdlpClient
 from .utils import report
 
 if TYPE_CHECKING:
@@ -38,12 +36,12 @@ T = TypeVar("T")
 NON_WORD_CHARS = re.compile(r"\W+")
 
 
-class Extender(YoutubeClient):
+class Extender(YtdlpClient):
     @override
     @staticmethod
     def convert_url(url: URL) -> URL:
         params = ("page", "pagination_id", "per_page", "find_attr")
-        return YoutubeClient.convert_url(url).remove_query_params(params)
+        return YtdlpClient.convert_url(url).remove_query_params(params)
 
 
 @dataclass(slots=True)

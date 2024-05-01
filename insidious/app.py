@@ -31,6 +31,8 @@ from watchfiles import awatch
 from . import DISPLAY_NAME, NAME
 from .extractors.data import (
     Channel,
+    Comment,
+    Comments,
     HasThumbnails,
     InPlaylist,
     InSearch,
@@ -42,11 +44,11 @@ from .extractors.data import (
     Video,
     VideoEntry,
 )
-from .extractors.invidious import Comment, Comments, InvidiousClient
+from .extractors.invidious import InvidiousClient
 from .extractors.markup import yt_to_html
 from .extractors.ytdlp import (
     CachedYoutubeDL,
-    YoutubeClient,
+    YtdlpClient,
 )
 from .pagination import Pagination, RelatedPagination, T
 from .streaming import (
@@ -119,7 +121,7 @@ if os.getenv("UVICORN_RELOAD"):
     StaticFiles.is_not_modified = lambda *_, **_kws: False  # type: ignore
 
 HTTPX = httpx.AsyncClient(follow_redirects=True, headers={
-    **YoutubeClient().headers,
+    **YtdlpClient().headers,
     "Referer": "https://www.youtube.com/",
 })
 INVIDIOUS = InvidiousClient()
@@ -333,13 +335,13 @@ async def playlist(request: Request) -> Response:
 @app.get("/load_playlist_entry")
 async def load_playlist_entry(request: Request, url: str) -> Response:
     # We want at least some entries for hover thumbnails preview
-    pl = await YoutubeClient(per_page=6).playlist(url)
+    pl = await YtdlpClient(per_page=6).playlist(url)
     return LoadedPlaylistEntry(request, None, pl).response
 
 
 @app.get("/load_search_link")
 async def load_search_link(request: Request, url: str, title: str) -> Response:
-    search = await YoutubeClient().search(url)
+    search = await YtdlpClient().search(url)
     search.title = title
     no_thumb = [
         e for e in search
@@ -350,7 +352,7 @@ async def load_search_link(request: Request, url: str, title: str) -> Response:
     if no_thumb and not search:
         with report(StopIteration):
             plentry = next(e for e in no_thumb if isinstance(e, PlaylistEntry))
-            pl = await YoutubeClient().playlist(plentry.url)
+            pl = await YtdlpClient().playlist(plentry.url)
             search.entries = [pl]
 
     return LoadedSearchLinkEntry(request, None, search).response
@@ -371,7 +373,7 @@ async def watch(
     loop: bool = False,
     autoplay: bool = False,
 ) -> Response:
-    client = YoutubeClient()
+    client = YtdlpClient()
     yt_url = request.url.remove_query_params(["end", "loop", "autoplay"])
     video = await client.video(client.convert_url(yt_url))
     get_rel = get_coms = get_pl = None
@@ -415,14 +417,14 @@ async def watch(
 @app.get("/storyboard")
 async def storyboard(video_url: str) -> Response:
     # WARN: relying on the implicit caching mechanism here
-    text = (await YoutubeClient().video(video_url)).webvtt_storyboard
+    text = (await YtdlpClient().video(video_url)).webvtt_storyboard
     return Response(text, media_type="text/vtt")
 
 
 @app.get("/chapters")
 async def chapters(video_url: str) -> Response:
     # WARN: relying on the implicit caching mechanism here
-    text = (await YoutubeClient().video(video_url)).webvtt_chapters
+    text = (await YtdlpClient().video(video_url)).webvtt_chapters
     return Response(text, media_type="text/vtt")
 
 
@@ -473,7 +475,7 @@ async def make_master_m3u8(request: Request, video_url: str) -> Response:
     api = f"{request.base_url}generate_hls/variant?video_url="
     api += quote(video_url) + "&format_id="
     # WARN: relying on the implicit caching mechanism here
-    text = master_playlist(api, await YoutubeClient().video(video_url))
+    text = master_playlist(api, await YtdlpClient().video(video_url))
     return Response(text, media_type="application/x-mpegURL")
 
 
@@ -482,7 +484,7 @@ async def make_variant_m3u8(
     request: Request, video_url: str, format_id: str,
 ) -> Response:
     # WARN: relying on the implicit caching mechanism here
-    video = await YoutubeClient().video(video_url)
+    video = await YtdlpClient().video(video_url)
     format = next(f for f in video.formats if f.id == format_id)
     api = f"{request.base_url}proxy/get?url=%s"
 

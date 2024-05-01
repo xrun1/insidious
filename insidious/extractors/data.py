@@ -18,6 +18,7 @@ from urllib.parse import quote
 from fastapi.datastructures import URL
 from pydantic import (
     AliasChoices,
+    AliasPath,
     BaseModel,
     Field,
     field_validator,
@@ -466,3 +467,34 @@ class Channel(Search, HasThumbnails):
 
         path = f"{path}/{to_tab}".removesuffix("/featured")
         return from_url.replace(path=path)
+
+
+class Comment(HasThumbnails):
+    id: str = Field(alias="commentId")
+    thumbnails: list[Thumbnail] = Field(alias="authorThumbnails")
+    author_name: str = Field(alias="author")
+    author_id: str = Field(alias="authorId")
+    author_uri: str = Field(alias="authorUrl")
+    text: str = Field(alias="content")
+    date: datetime = Field(alias="published")
+    likes: int = Field(alias="likeCount")
+    by_uploader: bool = Field(alias="authorIsChannelOwner")
+    edited: bool = Field(alias="isEdited")
+    pinned: bool = Field(alias="isPinned")
+    sponsor: bool = Field(alias="isSponsor")
+    replies: int | None = \
+        Field(None, validation_alias=AliasPath("replies", "replyCount"))
+    continuation_id: str | None = \
+        Field(None, validation_alias=AliasPath("replies", "continuation"))
+
+    def replies_url(self, video_id: str) -> str | None:
+        if not self.continuation_id:
+            return None
+        args = (video_id, quote(self.continuation_id))
+        return "/comments?video_id=%s&by_date=True&continuation_id=%s" % args
+
+
+class Comments(BaseModel):
+    data: list[Comment] = Field(alias="comments")
+    total: int | None = Field(None, alias="commentCount")
+    continuation_id: str | None = Field(None, alias="continuation")
