@@ -44,6 +44,7 @@
                 appdirs
                 websockets
                 lz4
+                pure-protobuf
                 pymp4 construct21068
             ];
         };

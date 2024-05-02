@@ -30,6 +30,7 @@
         pymp4 = { git = "https://github.com/xrun1/pymp4.git" }
         construct = "==2.10.68"
         lz4 = "^4.3.3"
+        pure-protobuf = "^3.1.0"
 
     [tool.poetry.group.dev.dependencies]
         ruff = "0.1.8"

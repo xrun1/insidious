@@ -252,7 +252,7 @@ class PlaylistEntry(Entry):
 
     @property
     def load_url(self) -> str | None:
-        return "/load_playlist_entry?url=%s" % quote(self.url)
+        return f"/load_playlist_entry?video_id={self.id}"
 
 
 class ChannelEntry(Entry):
@@ -285,20 +285,20 @@ class Entries(Sequence[T], BaseModel):
         return len(self.entries)
 
 
-class SearchLink(BaseModel):
-    entry_type: Literal["SearchLink"]
+class ChannelTabPreview(BaseModel):
+    entry_type: Literal["ChannelTabPreview"]
     url: str
     title: str
 
     @property
     def load_url(self) -> str:
         params = (quote(self.url), quote(self.title))
-        return "/load_search_link?url=%s&title=%s" % params
+        return "/load_channel_tab_preview?url=%s&title=%s" % params
 
 
 InSearch: TypeAlias = (
     ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry |
-    SearchLink
+    ChannelTabPreview
 )
 
 
@@ -326,15 +326,15 @@ class Video(VideoEntry):
         for fmt in self.formats:
             if fmt.manifest_url and not fmt.has_dash:
                 return "/proxy/get?url=%s" % quote(fmt.manifest_url)
-        return "/generate_hls/master?video_url=%s" % quote(self.url)
+        return f"/generate_hls/master?video_id={self.id}"
 
     @property
     def storyboard_url(self) -> str:
-        return "/storyboard?video_url=%s" % quote(self.url)
+        return f"/storyboard?video_id={self.id}"
 
     @property
     def chapters_url(self) -> str:
-        return "/chapters?video_url=%s" % quote(self.url)
+        return f"/chapters?video_id={self.id}"
 
     @property
     def webvtt_storyboard(self) -> str:

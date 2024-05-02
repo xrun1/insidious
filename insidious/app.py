@@ -15,18 +15,18 @@ from urllib.parse import quote
 
 import httpx
 import jinja2
-import yt_dlp
 from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
 from fastapi.responses import (
     HTMLResponse,
-    RedirectResponse,
     Response,
     StreamingResponse,
 )
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
+
+from insidious.extractors.filters import SearchFilter
 
 from . import DISPLAY_NAME, NAME
 from .extractors.data import (
@@ -39,7 +39,6 @@ from .extractors.data import (
     LiveStatus,
     Playlist,
     PlaylistEntry,
-    Search,
     ShortEntry,
     Video,
     VideoEntry,
@@ -235,9 +234,9 @@ class LoadedPlaylistEntry(Page):
 
 
 @dataclass(slots=True)
-class LoadedSearchLinkEntry(Page):
+class LoadedChannelTabPreview(Page):
     template = "parts/entry.html.jinja"
-    entry: Search
+    entry: Channel
 
 
 @dataclass(slots=True)
@@ -278,9 +277,12 @@ async def home(request: Request) -> Response:
 
 
 @app.get("/results")
-async def results(request: Request, search_query: str = "") -> Response:
+async def results(
+    request: Request, search_query: str = "", sp: str = "",
+) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        pg.add(await pg.extender.search(pg.extender.convert_url(request.url)))
+        filter = SearchFilter.parse(sp)
+        pg.add(await pg.client.search(search_query, filter, pg.page))
 
     return SearchPage(request, search_query, pg, search_query).response
 
@@ -288,74 +290,79 @@ async def results(request: Request, search_query: str = "") -> Response:
 @app.get("/hashtag/{tag}")
 async def hashtag(request: Request, tag: str) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        url = pg.extender.convert_url(request.url)
-        pg.add(await pg.extender.playlist(url))
+        pg.add(await pg.client.hashtag(tag, pg.page))
 
     return SearchPage(request, f"#{tag}", pg).response
 
 
-@app.get("/@{id}")
-@app.get("/@{id}/{tab}")
-@app.get("/c/{id}")
-@app.get("/c/{id}/{tab}")
-@app.get("/channel/{id}")
-@app.get("/channel/{id}/{tab}")
 @app.get("/user/{id}")
 @app.get("/user/{id}/{tab}")
-async def channel(request: Request, tab: str = "featured") -> Response:
+async def user(
+    request: Request, id: str, tab: str = "featured", query: str = "",
+) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        url = pg.extender.convert_url(request.url)
+        pg.add(channel := await pg.client.user(id, tab, query, pg.page))
+        return ChannelPage(request, channel.title, channel, pg).response
 
-        if tab == "featured" and not request.url.path.endswith("/featured"):
-            url = url.replace(path=url.path + "/featured")
+    return ContinuationPage(request, None, pg).response
 
-        try:
-            pg.add(channel := await pg.extender.channel(url))
-        except yt_dlp.DownloadError as e:
-            log.warning("%s", e)
-            path = url.path.removesuffix(f"/{tab}") + "/featured"
-            channel = await pg.extender_with(0).channel(url.replace(path=path))
-            pg.done = True
 
+@app.get("/channel/{id}")
+@app.get("/channel/{id}/{tab}")
+async def channel(
+    request: Request, id: str, tab: str = "featured", query: str = "",
+) -> Response:
+    if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
+        pg.add(channel := await pg.client.channel(id, tab, query, pg.page))
         return ChannelPage(request, channel.title, channel, pg).response
 
     return ContinuationPage(request, None, pg).response
 
 
 @app.get("/playlist")
-async def playlist(request: Request) -> Response:
+async def playlist(request: Request, list: str) -> Response:
     if (pg := Pagination[InPlaylist].get(request).advance()).needs_more_data:
-        url = pg.extender.convert_url(request.url)
-        pg.add(pl := await pg.extender.playlist(url))
+        pg.add(pl := await pg.client.playlist(list, pg.page))
         return PlaylistPage(request, pl.title, pl, pg).response
 
     return ContinuationPage(request, None, pg).response
 
 
 @app.get("/load_playlist_entry")
-async def load_playlist_entry(request: Request, url: str) -> Response:
+async def load_playlist_entry(request: Request, video_id: str) -> Response:
     # We want at least some entries for hover thumbnails preview
-    pl = await YtdlpClient(per_page=6).playlist(url)
+    pl = await YtdlpClient(per_page=6).playlist(video_id)
     return LoadedPlaylistEntry(request, None, pl).response
 
 
-@app.get("/load_search_link")
-async def load_search_link(request: Request, url: str, title: str) -> Response:
-    search = await YtdlpClient().search(url)
-    search.title = title
+@app.get("/load_channel_tab_preview")
+async def load_tab_preview(request: Request, url: str, title: str) -> Response:
+    *_, api, id, tab = ([""] * 4) + URL(url).path.split("/")
+
+    if api in {"", "c"}:
+        results = await YtdlpClient().named_channel(id, tab)
+    elif api == "channel":
+        results = await YtdlpClient().channel(id, tab)
+    elif api == "user":
+        results = await YtdlpClient().user(id, tab)
+    else:
+        raise ValueError(f"Invalid channel tab preview url {url!r}")
+
+    results.title = title
     no_thumb = [
-        e for e in search
+        e for e in results
         if not isinstance(e, HasThumbnails) or not e.thumbnails
     ]
-    search.entries = [e for e in search.entries if e not in no_thumb]
+    results.entries = [e for e in results.entries if e not in no_thumb]
+    results.thumbnails = []  # make jinja template use entry thumbnails instead
 
-    if no_thumb and not search:
+    if no_thumb and not results:
         with report(StopIteration):
             plentry = next(e for e in no_thumb if isinstance(e, PlaylistEntry))
-            pl = await YtdlpClient().playlist(plentry.url)
-            search.entries = [pl]
+            pl = await YtdlpClient().playlist(plentry.id)
+            results.entries = [pl]
 
-    return LoadedSearchLinkEntry(request, None, search).response
+    return LoadedChannelTabPreview(request, None, results).response
 
 
 @app.get("/watch")
@@ -373,9 +380,7 @@ async def watch(
     loop: bool = False,
     autoplay: bool = False,
 ) -> Response:
-    client = YtdlpClient()
-    yt_url = request.url.remove_query_params(["end", "loop", "autoplay"])
-    video = await client.video(client.convert_url(yt_url))
+    video = await YtdlpClient().video(v)
     get_rel = get_coms = get_pl = None
     is_embed = True
 
@@ -391,7 +396,7 @@ async def watch(
             "video_name": video.title,
             "uploader_id": video.uploader_id,
             "channel_name": video.channel_name,
-            "channel_url": video.channel_url,
+            "channel_id": video.channel_id,
         }.items() if v is not None}
         get_rel = request.url_for("related").include_query_params(**rel_params)
 
@@ -415,16 +420,14 @@ async def watch(
 
 
 @app.get("/storyboard")
-async def storyboard(video_url: str) -> Response:
-    # WARN: relying on the implicit caching mechanism here
-    text = (await YtdlpClient().video(video_url)).webvtt_storyboard
+async def storyboard(video_id: str) -> Response:
+    text = (await YtdlpClient().video(video_id)).webvtt_storyboard
     return Response(text, media_type="text/vtt")
 
 
 @app.get("/chapters")
-async def chapters(video_url: str) -> Response:
-    # WARN: relying on the implicit caching mechanism here
-    text = (await YtdlpClient().video(video_url)).webvtt_chapters
+async def chapters(video_id: str) -> Response:
+    text = (await YtdlpClient().video(video_id)).webvtt_chapters
     return Response(text, media_type="text/vtt")
 
 
@@ -471,20 +474,18 @@ async def comments(
 
 
 @app.get("/generate_hls/master")
-async def make_master_m3u8(request: Request, video_url: str) -> Response:
-    api = f"{request.base_url}generate_hls/variant?video_url="
-    api += quote(video_url) + "&format_id="
-    # WARN: relying on the implicit caching mechanism here
-    text = master_playlist(api, await YtdlpClient().video(video_url))
+async def make_master_m3u8(request: Request, video_id: str) -> Response:
+    api = f"{request.base_url}generate_hls/variant?{video_id=}&format_id="
+    text = master_playlist(api, await YtdlpClient().video(video_id))
     return Response(text, media_type="application/x-mpegURL")
 
 
 @app.get("/generate_hls/variant")
 async def make_variant_m3u8(
-    request: Request, video_url: str, format_id: str,
+    request: Request, video_id: str, format_id: str,
 ) -> Response:
     # WARN: relying on the implicit caching mechanism here
-    video = await YtdlpClient().video(video_url)
+    video = await YtdlpClient().video(video_id)
     format = next(f for f in video.formats if f.id == format_id)
     api = f"{request.base_url}proxy/get?url=%s"
 
@@ -564,15 +565,6 @@ async def rss_feed(request: Request):
         return Response(content=xml, media_type="application/xml")
 
 
-@app.get("/{v}", response_class=RedirectResponse)
-async def short_url_watch(request: Request, v: str) -> Response:
-    if v == "favicon.ico":
-        return Response(status_code=404)
-
-    url = request.url.replace(path="/watch").include_query_params(v=v)
-    return RedirectResponse(url)
-
-
 @app.websocket("/wait_reload")
 async def wait_reload(ws: WebSocket) -> None:
     global dying  # noqa: PLW0603
@@ -601,3 +593,22 @@ async def wait_reload(ws: WebSocket) -> None:
 async def wait_alive(ws: WebSocket) -> None:
     if not dying:
         await ws.accept()
+
+
+# Have to declare this last due to the catch-all route below
+@app.get("/{name}")
+@app.get("/{name}/{tab}")
+@app.get("/c/{name}")
+@app.get("/c/{name}/{tab}")
+async def named_channel(
+    request: Request, name: str, tab: str = "featured", query: str = "",
+) -> Response:
+    if name == "favicon.ico":
+        return Response(status_code=404)
+
+    if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
+        channel = await pg.client.named_channel(name, tab, query, pg.page)
+        pg.add(channel)
+        return ChannelPage(request, channel.title, channel, pg).response
+
+    return ContinuationPage(request, None, pg).response

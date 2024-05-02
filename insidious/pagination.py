@@ -9,17 +9,17 @@ from collections import Counter, deque
 from dataclasses import dataclass, field
 from itertools import islice
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Self, TypeVar
-from urllib.parse import quote
 from uuid import UUID, uuid4
 
-from typing_extensions import override
 from yt_dlp.utils import DownloadError
 
+from insidious.extractors.filters import SearchFilter, Type
+
 from .extractors.data import (
+    ChannelTabPreview,
     Playlist,
     PlaylistEntry,
     Search,
-    SearchLink,
     ShortEntry,
     VideoEntry,
 )
@@ -34,14 +34,6 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 NON_WORD_CHARS = re.compile(r"\W+")
-
-
-class Extender(YtdlpClient):
-    @override
-    @staticmethod
-    def convert_url(url: URL) -> URL:
-        params = ("page", "pagination_id", "per_page", "find_attr")
-        return YtdlpClient.convert_url(url).remove_query_params(params)
 
 
 @dataclass(slots=True)
@@ -103,11 +95,12 @@ class Pagination(Generic[T]):
         return self.request.url.include_query_params(**params)
 
     @property
-    def extender(self) -> Extender:
-        return self.extender_with(self.per_page)
+    def client(self) -> YtdlpClient:
+        return self.client_with(self.per_page)
 
-    def extender_with(self, per_page: int) -> Extender:
-        return Extender(page=self.page, per_page=per_page)
+    @staticmethod
+    def client_with(per_page: int) -> YtdlpClient:
+        return YtdlpClient(per_page=per_page)
 
     def advance(self) -> Self:
         for _ in range(min(len(self._data), self.per_page)):
@@ -205,8 +198,8 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
         return self.request.query_params.get("channel_name")
 
     @property
-    def channel_url(self) -> str | None:
-        return self.request.query_params.get("channel_url")
+    def channel_id(self) -> str | None:
+        return self.request.query_params.get("channel_id")
 
     def on_videos(self, entries: Playlist | Search, weight: float = 1) -> None:
         """Process the videos in a playlist or search results."""
@@ -216,7 +209,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
         weight += 1
 
         for i, entry in enumerate(entries.entries):
-            if isinstance(entry, SearchLink):
+            if isinstance(entry, ChannelTabPreview):
                 ignore += 1
             elif entry.id == self.video_id or \
                     entry.id in self.returned_videos_id:
@@ -250,9 +243,10 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
     async def on_list_entry(self, e: PlaylistEntry, weight: float = 1) -> None:
         """Load details and videos of a playlist found in search results."""
         with report(DownloadError):
-            playlist = await self.extender_with(per_page=100).playlist(e.url)
+            client = self.client_with(per_page=100)
+            playlist = await client.playlist(e.id, self.page)
             common_channels = Counter(
-                e.channel_url for e in playlist
+                e.channel_id for e in playlist
                 if not isinstance(e, ShortEntry)
             ).most_common()
 
@@ -266,8 +260,8 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
                 msg = "Related: playlist %r has %r"
                 log.info(msg, playlist.title, self.video_name)
                 weight = 4
-            elif any(isinstance(e, VideoEntry) and self.channel_url and
-                     e.channel_url == self.channel_url for e in playlist):
+            elif any(isinstance(e, VideoEntry) and self.channel_id and
+                     e.channel_id == self.channel_id for e in playlist):
                 msg = "Related: playlist %r has a video from %r's channel"
                 log.info(msg, playlist.title, self.video_name)
                 weight = 3
@@ -282,12 +276,11 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
             query += " " + addition
             weight = 2
 
-        url = "https://www.youtube.com/results?search_query={}&sp=EgIQAw%3D%3D"
-        url = url.format(quote(query))
-
         with report(DownloadError):
-            got = await self.extender_with(per_page=3).search(url)
-            log.info("Related: found %d playlists for %r", len(got), url)
+            got = await self.client_with(per_page=3).search(
+                query, SearchFilter(type=Type.Playlist), self.page,
+            )
+            log.info("Related: found %d playlists for %r", len(got), query)
 
             for entry in got.entries:
                 if isinstance(entry, PlaylistEntry):
@@ -301,29 +294,30 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
 
     async def find_channel_videos(self) -> None:
         """Search the watched video's source channel for similar videos."""
-        if not self.channel_url:
-            log.info("Related: no channel URL for %r", self.video_name)
+        if not self.channel_id:
+            log.info("Related: no channel ID for %r", self.video_name)
             return
 
         # TODO: better handle spaceless languages
         words = self.cleaned_video_name.strip().split()
         query = " ".join(words[:math.ceil(len(words) / 2)])
-        url = self.channel_url + "/search?query=" + quote(query)
 
         # NOTE: Failure on "- Topic" auto-generated channels is expected
         with report(DownloadError):
-            got = await self.extender.search(url)
-            log.info("Related: found %d channel videos for %r", len(got), url)
+            got = await self.client.channel(
+                self.channel_id, "search", query, self.page,
+            )
+            msg = "Related: found %d channel videos for %r on %s"
+            log.info(msg, len(got), query, self.channel_id)
             self.on_videos(got, weight=3)
 
     async def find_videos_basic(self) -> None:
         """Search the site for similar videos"""
         query = self.cleaned_video_name
-        url = "https://www.youtube.com/results?search_query=%s" % quote(query)
 
         with report(DownloadError):
-            got = await self.extender.search(url)
-            log.info("Related: found %d videos from %r", len(got), url)
+            got = await self.client.search(query, page=self.page)
+            log.info("Related: found %d videos from %r", len(got), query)
             self.on_videos(got, weight=0.5)
 
     def finish_batch(self) -> Self:

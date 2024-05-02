@@ -21,7 +21,7 @@ from typing import (
     TypeAlias,
     TypeVar,
 )
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, quote_plus
 
 import appdirs
 import backoff
@@ -36,17 +36,18 @@ from yt_dlp.networking.common import (
 )
 
 from insidious import NAME
+from insidious.extractors.filters import SearchFilter
 
 from .client import YoutubeClient
 from .data import (
     Channel,
     ChannelEntry,
+    ChannelTabPreview,
     PartialEntry,
     PartialVideo,
     Playlist,
     PlaylistEntry,
     Search,
-    SearchLink,
     ShortEntry,
     Video,
     VideoEntry,
@@ -239,36 +240,56 @@ class YtdlpClient(YoutubeClient):
     _ytdl_instances: ClassVar[dict[tuple[int, int, int], CachedYoutubeDL]] = {}
     _pool: ClassVar[ThreadPoolExecutor] = ThreadPoolExecutor(max_workers=16)
 
-    page: int = 1
     per_page: int = 12
 
     @property
     def headers(self) -> dict[str, str]:
-        return self._ytdl.params["http_headers"]
+        return self._ytdl().params["http_headers"]
 
     @override
-    async def search(self, url: URL | str) -> Search:
-        return Search.model_validate((await self._get(url))[0])
+    async def search(
+        self, query: str, filter: SearchFilter | None = None, page: int = 1,
+    ) -> Search:
+        sp = (filter or SearchFilter()).url_parameter
+        path = f"results?search_query={quote_plus(query)}&sp={sp}"
+        return Search.model_validate((await self._get(path, page))[0])
 
     @override
-    async def channel(self, url: URL | str) -> Channel:
-        return Channel.model_validate((await self._get(url))[0])
+    async def channel(
+        self, id: str, tab: str = "featured", search: str = "", page: int = 1,
+    ) -> Channel:
+        return await self._channel(f"channel/{id}", tab, search, page)
 
     @override
-    async def playlist(self, url: URL | str) -> Playlist:
-        pl = Playlist.model_validate((await self._get(url))[0])
-        for i, entry in enumerate(pl, 1):
-            entry.nth = self._offset + i
-            entry.url = str(URL(entry.url).include_query_params(
-                list = pl.id,
-                index = entry.nth,
-            ))
+    async def named_channel(
+        self,
+        name: str, tab: str = "featured", search: str = "", page: int = 1,
+    ) -> Channel:
+        return await self._channel(name, tab, search, page)
+
+    @override
+    async def user(
+        self, id: str, tab: str = "featured", search: str = "", page: int = 1,
+    ) -> Channel:
+        return await self._channel(f"user/{id}", tab, search, page)
+
+    @override
+    async def playlist(self, id: str, page: int = 1) -> Playlist:
+        path = f"playlist?list={id}"
+        pl = Playlist.model_validate((await self._get(path, page))[0])
+        self._fix_playlist_numbers(pl, page)
         return pl
 
     @override
-    async def video(self, url: URL | str) -> Video:
-        url = URL(str(url)).remove_query_params("list")
-        data, expire_in = await self._get(url)
+    async def hashtag(self, tag: str, page: int = 1) -> Playlist:
+        path = f"hashtag/{tag}"
+        pl = Playlist.model_validate((await self._get(path, page))[0])
+        self._fix_playlist_numbers(pl, page)
+        return pl
+
+    @override
+    async def video(self, id: str) -> Video:
+        data, expire_in = await self._get(f"watch?v={id}")
 
         if "concurrent_view_count" in data:
             video = PartialVideo.model_validate(data)
@@ -279,11 +300,36 @@ class YtdlpClient(YoutubeClient):
         expire_in(min(video.metadata_reload_time or limit, limit))
         return video
 
+    async def _channel(
+        self, path: str, tab: str, search: str, page: int,
+    ) -> Channel:
+        base_path = path
+        path += f"/search?q={quote_plus(search)}" if search else f"/{tab}"
+        try:
+            return Channel.model_validate((await self._get(path, page))[0])
+        except yt_dlp.DownloadError as e:
+            log.warning("%s", e)
+            path = base_path + "/featured"
+            channel = Channel.model_validate((await self._get(path, 1))[0])
+            channel.entries.clear()
+            return channel
+
+    def _fix_playlist_numbers(self, pl: Playlist, page: int) -> None:
+        for i, entry in enumerate(pl, 1):
+            entry.nth = self._offset(page) + i
+            entry.url = str(URL(entry.url).include_query_params(
+                list = pl.id,
+                index = entry.nth,
+            ))
+
     @backoff.on_exception(backoff.expo, NoDataReceived, max_tries=10)
-    async def _get(self, url: URL | str) -> tuple[dict[str, Any], ExpireIn]:
+    async def _get(
+        self, path: str, page: int = 1,
+    ) -> tuple[dict[str, Any], ExpireIn]:
         def task():
-            with self._ytdl.adjust_cache_expiration() as expire_in:
-                data = self._ytdl.extract_info(str(url), download=False)
+            with self._ytdl(page).adjust_cache_expiration() as expire_in:
+                url = f"https://youtube.com/{path}"
+                data = self._ytdl(page).extract_info(url, download=False)
                 return (data, expire_in)
 
         data, expire_in = await self._thread(task)
@@ -295,18 +341,16 @@ class YtdlpClient(YoutubeClient):
     def _thread(cls, fn: Callable[[], T]) -> asyncio.Future[T]:
         return asyncio.get_event_loop().run_in_executor(cls._pool, fn)
 
-    @property
-    def _offset(self) -> int:
-        return self.per_page * (self.page - 1)
+    def _offset(self, page: int) -> int:
+        return self.per_page * (page - 1)
 
-    @property
-    def _ytdl(self) -> CachedYoutubeDL:
+    def _ytdl(self, page: int = 1) -> CachedYoutubeDL:
         thread = threading.current_thread().native_id or -1
-        client = self._ytdl_instances.get((self.page, self.per_page, thread))
+        client = self._ytdl_instances.get((page, self.per_page, thread))
         client = client or CachedYoutubeDL({
             "quiet": True,
-            "playliststart": self._offset + 1,
-            "playlistend": self._offset + self.per_page,
+            "playliststart": self._offset(page) + 1,
+            "playlistend": self._offset(page) + self.per_page,
             "extract_flat": "in_playlist",
             "ignore_no_formats_error": True,  # Don't fail on premiering vids
             "compat_opts": ["no-youtube-unavailable-videos"],
@@ -317,7 +361,7 @@ class YtdlpClient(YoutubeClient):
                 "youtubetab": {"approximate_date": ["timestamp"]},
             },
         })
-        self._ytdl_instances[self.page, self.per_page, thread] = client
+        self._ytdl_instances[page, self.per_page, thread] = client
         return client
 
     @staticmethod
@@ -334,7 +378,7 @@ class YtdlpClient(YoutubeClient):
                 data["id"] = entry.get("id") or \
                     parse_qs(URL(entry["url"]).query)["list"][-1]
             elif any(name in entry["url"] for name in tabs):
-                etype = SearchLink.__name__
+                etype = ChannelTabPreview.__name__
             elif "concurrent_view_count" in entry:
                 etype = PartialEntry.__name__
             else:
