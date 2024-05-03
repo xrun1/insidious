@@ -293,10 +293,10 @@ class YtdlpClient(YoutubeClient):
         path = f"playlist?list={id}"
         pl = Playlist.model_validate((await self._get(path, page))[0])
         for entry in pl:
-            entry.url = str(URL(entry.url).include_query_params(
-                list = pl.id,
-                index = entry.nth,
-            ))
+            url = URL(entry.url).include_query_params(list=pl.id)
+            if entry.nth not in {None, 1}:
+                url = url.include_query_params(index=entry.nth)
+            entry.url = str(url)
         return pl
 
     @override
