@@ -304,7 +304,7 @@ class YtdlpClient(YoutubeClient):
         self, path: str, tab: str, search: str, page: int,
     ) -> Channel:
         base_path = path
-        path += f"/search?q={quote_plus(search)}" if search else f"/{tab}"
+        path += f"/search?query={quote_plus(search)}" if search else f"/{tab}"
         try:
             return Channel.model_validate((await self._get(path, page))[0])
         except yt_dlp.DownloadError as e:
