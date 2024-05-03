@@ -10,8 +10,8 @@
         class="lazy-loader {{'large' if pagination.running_short else ''}}"
         hx-get="{{pagination.next_url}}"
         hx-trigger="{{'load' if pagination.finding else 'intersect once'}}"
-        hx-select="#pages > *"
-        hx-target="closest #pages"
+        hx-select=".pages > *"
+        hx-target="closest .pages"
         hx-swap="beforeend ignoreTitle:true"
     ></div>
 {% endif %}

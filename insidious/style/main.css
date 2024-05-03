@@ -250,7 +250,7 @@ img {
                     display: none;
                 }
             }
-            & #pages {
+            & .pages {
                 margin-top: calc(var(--gap-small) / 2);
                 & .page {
                     gap: 0;
