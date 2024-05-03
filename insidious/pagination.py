@@ -23,7 +23,7 @@ from .extractors.data import (
     ShortEntry,
     VideoEntry,
 )
-from .extractors.ytdlp import YtdlpClient
+from .extractors.ytdlp import YTDLP
 from .utils import report
 
 if TYPE_CHECKING:
@@ -93,10 +93,6 @@ class Pagination(Generic[T]):
             "continuation_id": self.continuation_id,
         }.items() if v is not None}
         return self.request.url.include_query_params(**params)
-
-    @property
-    def client(self) -> YtdlpClient:
-        return YtdlpClient()
 
     def advance(self) -> Self:
         for _ in range(min(len(self._data), self.per_page)):
@@ -239,7 +235,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
     async def on_list_entry(self, e: PlaylistEntry, weight: float = 1) -> None:
         """Load details and videos of a playlist found in search results."""
         with report(DownloadError):
-            playlist = await self.client.playlist(e.id, self.page)
+            playlist = await YTDLP.playlist(e.id, self.page)
             common_channels = Counter(
                 e.channel_id for e in playlist
                 if not isinstance(e, ShortEntry)
@@ -273,7 +269,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
 
         with report(DownloadError):
             filter = SearchFilter(type=Type.Playlist)
-            got = await self.client.search(query, filter)
+            got = await YTDLP.search(query, filter)
             log.info("Related: using %d playlists for %r", len(got), query)
 
             for entry in got.entries:
@@ -298,7 +294,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
 
         # NOTE: Failure on "- Topic" auto-generated channels is expected
         with report(DownloadError):
-            got = await self.client.channel(
+            got = await YTDLP.channel(
                 self.channel_id, "search", query, self.page,
             )
             msg = "Related: found %d channel videos for %r on %s"
@@ -310,7 +306,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
         query = self.cleaned_video_name
 
         with report(DownloadError):
-            got = await self.client.search(query, page=self.page)
+            got = await YTDLP.search(query, page=self.page)
             log.info("Related: found %d videos from %r", len(got), query)
             self.on_videos(got, weight=0.5)
 

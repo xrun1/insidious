@@ -422,3 +422,6 @@ class YtdlpClient(YoutubeClient):
 
         async with max_parallel_requests(url):
             return await loop.run_in_executor(self._pool, task)
+
+
+YTDLP = YtdlpClient()

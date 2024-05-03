@@ -62,3 +62,6 @@ class InvidiousClient(YoutubeClient):
         base = InvidiousClient._sites[0] + "/api/v1"
         InvidiousClient._sites.append(InvidiousClient._sites.popleft())
         return base
+
+
+INVIDIOUS = InvidiousClient()

@@ -41,12 +41,9 @@ from .extractors.data import (
     VideoEntry,
 )
 from .extractors.filters import SearchFilter
-from .extractors.invidious import InvidiousClient
+from .extractors.invidious import INVIDIOUS
 from .extractors.markup import yt_to_html
-from .extractors.ytdlp import (
-    CachedYoutubeDL,
-    YtdlpClient,
-)
+from .extractors.ytdlp import YTDLP, CachedYoutubeDL
 from .net import HttpClient
 from .pagination import Pagination, RelatedPagination, T
 from .streaming import (
@@ -119,10 +116,9 @@ if os.getenv("UVICORN_RELOAD"):
     StaticFiles.is_not_modified = lambda *_, **_kws: False  # type: ignore
 
 HTTPX = HttpClient(follow_redirects=True, headers={
-    **YtdlpClient().headers,
+    **YTDLP.headers,
     "Referer": "https://www.youtube.com/",
 })
-INVIDIOUS = InvidiousClient()
 MANIFEST_URL = re.compile(r'(^|")(https?://[^"]+?)($|")', re.MULTILINE)
 RSS_YT_URL = re.compile(r"https?://(www\.)?youtu(\.be|be\.com)(?!/xml/)")
 RSS_YTIMG_URL = re.compile(r"https?://(.*\.)?ytimg.com")
@@ -281,7 +277,7 @@ async def results(
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         filter = SearchFilter.parse(sp)
-        pg.add(await pg.client.search(search_query, filter, pg.page))
+        pg.add(await YTDLP.search(search_query, filter, pg.page))
 
     return SearchPage(request, search_query, pg, search_query).response
 
@@ -289,7 +285,7 @@ async def results(
 @app.get("/hashtag/{tag}")
 async def hashtag(request: Request, tag: str) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        pg.add(await pg.client.hashtag(tag, pg.page))
+        pg.add(await YTDLP.hashtag(tag, pg.page))
 
     return SearchPage(request, f"#{tag}", pg).response
 
@@ -300,7 +296,7 @@ async def user(
     request: Request, id: str, tab: str = "featured", query: str = "",
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        pg.add(channel := await pg.client.user(id, tab, query, pg.page))
+        pg.add(channel := await YTDLP.user(id, tab, query, pg.page))
         return ChannelPage(request, channel.title, channel, pg).response
 
     return ContinuationPage(request, None, pg).response
@@ -312,7 +308,7 @@ async def channel(
     request: Request, id: str, tab: str = "featured", query: str = "",
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        pg.add(channel := await pg.client.channel(id, tab, query, pg.page))
+        pg.add(channel := await YTDLP.channel(id, tab, query, pg.page))
         return ChannelPage(request, channel.title, channel, pg).response
 
     return ContinuationPage(request, None, pg).response
@@ -321,7 +317,7 @@ async def channel(
 @app.get("/playlist")
 async def playlist(request: Request, list: str) -> Response:
     if (pg := Pagination[InPlaylist].get(request).advance()).needs_more_data:
-        pg.add(pl := await pg.client.playlist(list, pg.page))
+        pg.add(pl := await YTDLP.playlist(list, pg.page))
         return PlaylistPage(request, pl.title, pl, pg).response
 
     return ContinuationPage(request, None, pg).response
@@ -330,7 +326,7 @@ async def playlist(request: Request, list: str) -> Response:
 @app.get("/load_playlist_entry")
 async def load_playlist_entry(request: Request, video_id: str) -> Response:
     # We want at least some entries for hover thumbnails preview
-    pl = await YtdlpClient().playlist(video_id)
+    pl = await YTDLP.playlist(video_id)
     return LoadedPlaylistEntry(request, None, pl).response
 
 
@@ -339,11 +335,11 @@ async def load_tab_preview(request: Request, url: str, title: str) -> Response:
     *_, api, id, tab = ([""] * 4) + URL(url).path.split("/")
 
     if api in {"", "c"}:
-        results = await YtdlpClient().named_channel(id, tab)
+        results = await YTDLP.named_channel(id, tab)
     elif api == "channel":
-        results = await YtdlpClient().channel(id, tab)
+        results = await YTDLP.channel(id, tab)
     elif api == "user":
-        results = await YtdlpClient().user(id, tab)
+        results = await YTDLP.user(id, tab)
     else:
         raise ValueError(f"Invalid channel tab preview url {url!r}")
 
@@ -358,7 +354,7 @@ async def load_tab_preview(request: Request, url: str, title: str) -> Response:
     if no_thumb and not results:
         with report(StopIteration):
             plentry = next(e for e in no_thumb if isinstance(e, PlaylistEntry))
-            pl = await YtdlpClient().playlist(plentry.id)
+            pl = await YTDLP.playlist(plentry.id)
             results.entries = [pl]
 
     return LoadedChannelTabPreview(request, None, results).response
@@ -379,7 +375,7 @@ async def watch(
     loop: bool = False,
     autoplay: bool = False,
 ) -> Response:
-    video = await YtdlpClient().video(v)
+    video = await YTDLP.video(v)
     get_rel = get_coms = get_pl = None
     is_embed = True
 
@@ -420,13 +416,13 @@ async def watch(
 
 @app.get("/storyboard")
 async def storyboard(video_id: str) -> Response:
-    text = (await YtdlpClient().video(video_id)).webvtt_storyboard
+    text = (await YTDLP.video(video_id)).webvtt_storyboard
     return Response(text, media_type="text/vtt")
 
 
 @app.get("/chapters")
 async def chapters(video_id: str) -> Response:
-    text = (await YtdlpClient().video(video_id)).webvtt_chapters
+    text = (await YTDLP.video(video_id)).webvtt_chapters
     return Response(text, media_type="text/vtt")
 
 
@@ -475,7 +471,7 @@ async def comments(
 @app.get("/generate_hls/master")
 async def make_master_m3u8(request: Request, video_id: str) -> Response:
     api = f"{request.base_url}generate_hls/variant?{video_id=}&format_id="
-    text = master_playlist(api, await YtdlpClient().video(video_id))
+    text = master_playlist(api, await YTDLP.video(video_id))
     return Response(text, media_type="application/x-mpegURL")
 
 
@@ -484,7 +480,7 @@ async def make_variant_m3u8(
     request: Request, video_id: str, format_id: str,
 ) -> Response:
     # WARN: relying on the implicit caching mechanism here
-    video = await YtdlpClient().video(video_id)
+    video = await YTDLP.video(video_id)
     format = next(f for f in video.formats if f.id == format_id)
     api = f"{request.base_url}proxy/get?url=%s"
 
@@ -606,7 +602,7 @@ async def named_channel(
         return Response(status_code=404)
 
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        channel = await pg.client.named_channel(name, tab, query, pg.page)
+        channel = await YTDLP.named_channel(name, tab, query, pg.page)
         pg.add(channel)
         return ChannelPage(request, channel.title, channel, pg).response
 
