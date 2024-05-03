@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeAlias
 from urllib.parse import quote
 
-import httpx
 import jinja2
 from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
@@ -25,8 +24,6 @@ from fastapi.responses import (
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from watchfiles import awatch
-
-from insidious.extractors.filters import SearchFilter
 
 from . import DISPLAY_NAME, NAME
 from .extractors.data import (
@@ -43,12 +40,14 @@ from .extractors.data import (
     Video,
     VideoEntry,
 )
+from .extractors.filters import SearchFilter
 from .extractors.invidious import InvidiousClient
 from .extractors.markup import yt_to_html
 from .extractors.ytdlp import (
     CachedYoutubeDL,
     YtdlpClient,
 )
+from .net import HttpClient
 from .pagination import Pagination, RelatedPagination, T
 from .streaming import (
     HLS_ALT_MIME,
@@ -119,7 +118,7 @@ if os.getenv("UVICORN_RELOAD"):
     # Fix browser reusing cached files at reload despite disk modifications
     StaticFiles.is_not_modified = lambda *_, **_kws: False  # type: ignore
 
-HTTPX = httpx.AsyncClient(follow_redirects=True, headers={
+HTTPX = HttpClient(follow_redirects=True, headers={
     **YtdlpClient().headers,
     "Referer": "https://www.youtube.com/",
 })

@@ -10,6 +10,8 @@ import backoff
 import httpx
 from typing_extensions import override
 
+from insidious.net import HttpClient
+
 from .client import YoutubeClient
 from .data import Comments
 
@@ -18,7 +20,7 @@ from .data import Comments
 class InvidiousClient(YoutubeClient):
     _sites: ClassVar[deque[str]] = deque()
     _httpx: httpx.AsyncClient = \
-        field(default_factory=lambda: httpx.AsyncClient(follow_redirects=True))
+        field(default_factory=lambda: HttpClient(follow_redirects=True))
 
     @override
     @backoff.on_exception(

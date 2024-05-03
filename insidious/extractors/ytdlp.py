@@ -37,6 +37,7 @@ from yt_dlp.networking.common import (
 
 from insidious import NAME
 from insidious.extractors.filters import SearchFilter
+from insidious.net import PARALLEL_REQUESTS_PER_HOST, max_parallel_requests
 
 from .client import YoutubeClient
 from .data import (
@@ -253,7 +254,8 @@ class CachedYoutubeDL(YoutubeDL):
 @dataclass
 class YtdlpClient(YoutubeClient):
     _ytdl_instances: ClassVar[dict[threading.Thread, CachedYoutubeDL]] = {}
-    _pool: ClassVar[ThreadPoolExecutor] = ThreadPoolExecutor(max_workers=16)
+    _pool: ClassVar[ThreadPoolExecutor] = \
+        ThreadPoolExecutor(max_workers=PARALLEL_REQUESTS_PER_HOST)
 
     @property
     def headers(self) -> dict[str, str]:
@@ -401,11 +403,14 @@ class YtdlpClient(YoutubeClient):
         self, path: str, page: int = 1, entry_based: bool = True,
     ) -> tuple[RawData, ExpireIn]:
 
+        loop = asyncio.get_event_loop()
+        url = f"https://youtube.com/{path}"
+
         @backoff.on_exception(backoff.expo, NoDataReceived, max_tries=10)
         def task():
             with self._ytdl.adjust_cache_expiration() as expire_in:
                 if (data := self._ytdl.extract_info(
-                    f"https://youtube.com/{path}",
+                    url,
                     process = not entry_based,
                     download = False,
                 )) is None:
@@ -415,4 +420,5 @@ class YtdlpClient(YoutubeClient):
                     return (data, expire_in)
                 return (self._process_entries(data, page), expire_in)
 
-        return await asyncio.get_event_loop().run_in_executor(self._pool, task)
+        async with max_parallel_requests(url):
+            return await loop.run_in_executor(self._pool, task)
