@@ -55,7 +55,7 @@
             inputsFrom = [packages.${sys}.default];
             packages = with pkgs; [
                 ruff nodePackages.pyright  # linting
-                pyPkgs.ipdb pyPkgs.rich  # debugging
+                pyPkgs.ipdb pyPkgs.rich pyPkgs.pyperclip  # debugging
                 wget  # ./update-static.sh
             ];
             shellHook = ''export PYTHONBREAKPOINT=ipdb.set_trace'';
