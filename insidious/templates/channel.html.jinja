@@ -57,7 +57,10 @@
         >
             {% for tab in info.tabs %}
                 {% set url = info.tab_url(request.url, tab) %}
-                <a href="{{url}}" hx-get="{{url}}">{{tab.capitalize()}}</a>
+                {% set cls = "current" if url == request.url else "" %}
+                <a class="{{cls}}" href="{{url}}" hx-get="{{url}}">
+                    {{tab.capitalize()}}
+                </a>
             {% endfor %}
         </nav>
 

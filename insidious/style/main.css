@@ -139,6 +139,10 @@ img {
         gap: var(--gap-small);
         width: 100%;
         justify-content: center;
+
+        & .current {
+            font-weight: bold;
+        }
     }
 
     /* These links are useful only when the channel/playlist page is embedded,
