@@ -331,7 +331,7 @@ async def playlist(request: Request, list: str) -> Response:
 @app.get("/load_playlist_entry")
 async def load_playlist_entry(request: Request, video_id: str) -> Response:
     # We want at least some entries for hover thumbnails preview
-    pl = await YtdlpClient(per_page=6).playlist(video_id)
+    pl = await YtdlpClient().playlist(video_id)
     return LoadedPlaylistEntry(request, None, pl).response
 
 

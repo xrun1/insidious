@@ -96,11 +96,7 @@ class Pagination(Generic[T]):
 
     @property
     def client(self) -> YtdlpClient:
-        return self.client_with(self.per_page)
-
-    @staticmethod
-    def client_with(per_page: int) -> YtdlpClient:
-        return YtdlpClient(per_page=per_page)
+        return YtdlpClient()
 
     def advance(self) -> Self:
         for _ in range(min(len(self._data), self.per_page)):
@@ -243,8 +239,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
     async def on_list_entry(self, e: PlaylistEntry, weight: float = 1) -> None:
         """Load details and videos of a playlist found in search results."""
         with report(DownloadError):
-            client = self.client_with(per_page=100)
-            playlist = await client.playlist(e.id, self.page)
+            playlist = await self.client.playlist(e.id, self.page)
             common_channels = Counter(
                 e.channel_id for e in playlist
                 if not isinstance(e, ShortEntry)
@@ -277,10 +272,9 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
             weight = 2
 
         with report(DownloadError):
-            got = await self.client_with(per_page=3).search(
-                query, SearchFilter(type=Type.Playlist), self.page,
-            )
-            log.info("Related: found %d playlists for %r", len(got), query)
+            filter = SearchFilter(type=Type.Playlist)
+            got = await self.client.search(query, filter)
+            log.info("Related: using %d playlists for %r", len(got), query)
 
             for entry in got.entries:
                 if isinstance(entry, PlaylistEntry):
@@ -322,8 +316,8 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
 
     def finish_batch(self) -> Self:
         """Commit all fetched results to data, will remove previous page."""
-        log.info("Related: got %d results for %r, page %d",
-                 len(self.current_batch), self.video_name, self.page)
+        log.info("Related: got %d total results on page %d for %r",
+                 len(self.current_batch), self.page, self.video_name)
 
         by_score = sorted(self.current_batch.values())
         self.add([related.entry for related in reversed(by_score)])
@@ -342,11 +336,12 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
         - Same, but just V's title (fuzzier and less promoted)
         - Basic site-wide search with the video name
 
-        If a playlists's first 100 loaded entries contain a video from V's
-        uploader, it gets heavier promotion; and even more if it has V itself.
+        If a playlists's first loaded page (usually 100 entries max) contain a
+        video from V's uploader, it gets heavier promotion;
+        and even more if it has V itself.
         Playlists where most of the content is from the same uploader get
         demoted for being lacking variety and often being parts of one series
-        with all of the same thubnails.
+        with all of the same thumbnails.
         """
         if not self.needs_more_data:
             return self

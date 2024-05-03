@@ -8,9 +8,9 @@ import logging as log
 import threading
 import urllib.request
 from collections import defaultdict
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -54,6 +54,8 @@ from .data import (
 )
 
 T = TypeVar("T")
+RawData: TypeAlias = dict[str, Any]
+RequestCallback: TypeAlias = Callable[[YtdlpRequest], None]
 
 MAX_CACHE_TIME = 60 * 60
 CACHE_DIR = Path(appdirs.user_cache_dir(NAME))
@@ -166,7 +168,8 @@ class CacheFile:
 class CachedYoutubeDL(YoutubeDL):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.newly_written: list[CacheFile] | None = None
+        self._newly_written: list[CacheFile] | None = None
+        self._urlopen_callback: RequestCallback | None = None
 
     @override
     def urlopen(
@@ -178,20 +181,32 @@ class CachedYoutubeDL(YoutubeDL):
         elif isinstance(req, urllib.request.Request):
             req = yt_dlp.compat.urllib_req_to_req(req)
 
+        if self._urlopen_callback:
+            self._urlopen_callback(req)
+
         if (file := CacheFile.from_request(req)):
             if (resp := file.response()):
                 return resp
+
             file.write(resp := super().urlopen(req), MAX_CACHE_TIME)
-            if self.newly_written is not None:
-                self.newly_written.append(file)
+            if self._newly_written is not None:
+                self._newly_written.append(file)
             return resp
 
         return super().urlopen(req)
 
     @contextmanager
+    def before_requests(self, callback: RequestCallback) -> Iterator[None]:
+        self._urlopen_callback = callback
+        try:
+            yield
+        finally:
+            self._urlopen_callback = None
+
+    @contextmanager
     def adjust_cache_expiration(self) -> Iterator[ExpireIn]:
         # WARN: not threadsafe
-        self.newly_written = batch = []
+        self._newly_written = batch = []
 
         def make_expire_in(seconds: float):
             for file in batch:
@@ -200,7 +215,7 @@ class CachedYoutubeDL(YoutubeDL):
         try:
             yield make_expire_in
         finally:
-            self.newly_written = None
+            self._newly_written = None
 
     @staticmethod
     def prune_cache(size_limit: int = 1024 * 1024 * 512) -> None:
@@ -237,14 +252,12 @@ class CachedYoutubeDL(YoutubeDL):
 
 @dataclass
 class YtdlpClient(YoutubeClient):
-    _ytdl_instances: ClassVar[dict[tuple[int, int, int], CachedYoutubeDL]] = {}
+    _ytdl_instances: ClassVar[dict[threading.Thread, CachedYoutubeDL]] = {}
     _pool: ClassVar[ThreadPoolExecutor] = ThreadPoolExecutor(max_workers=16)
-
-    per_page: int = 12
 
     @property
     def headers(self) -> dict[str, str]:
-        return self._ytdl().params["http_headers"]
+        return self._ytdl.params["http_headers"]
 
     @override
     async def search(
@@ -277,19 +290,21 @@ class YtdlpClient(YoutubeClient):
     async def playlist(self, id: str, page: int = 1) -> Playlist:
         path = f"playlist?list={id}"
         pl = Playlist.model_validate((await self._get(path, page))[0])
-        self._fix_playlist_numbers(pl, page)
+        for entry in pl:
+            entry.url = str(URL(entry.url).include_query_params(
+                list = pl.id,
+                index = entry.nth,
+            ))
         return pl
 
     @override
     async def hashtag(self, tag: str, page: int = 1) -> Playlist:
         path = f"hashtag/{tag}"
-        pl = Playlist.model_validate((await self._get(path, page))[0])
-        self._fix_playlist_numbers(pl, page)
-        return pl
+        return Playlist.model_validate((await self._get(path, page))[0])
 
     @override
     async def video(self, id: str) -> Video:
-        data, expire_in = await self._get(f"watch?v={id}")
+        data, expire_in = await self._get(f"watch?v={id}", entry_based=False)
 
         if "concurrent_view_count" in data:
             video = PartialVideo.model_validate(data)
@@ -299,6 +314,24 @@ class YtdlpClient(YoutubeClient):
         limit = MAX_CACHE_TIME
         expire_in(min(video.metadata_reload_time or limit, limit))
         return video
+
+    @property
+    def _ytdl(self) -> CachedYoutubeDL:
+        thread = threading.current_thread()
+        client = self._ytdl_instances.get(thread) or CachedYoutubeDL({
+            "quiet": True,
+            "extract_flat": "in_playlist",
+            "ignore_no_formats_error": True,  # Don't fail on premiering vids
+            "compat_opts": ["no-youtube-unavailable-videos"],
+            "extractor_args": {
+                # This client has the HLS manifests, no need for others
+                "youtube": {"player_client": ["ios"]},
+                # Retrieve upload dates in flat playlists
+                "youtubetab": {"approximate_date": ["timestamp"]},
+            },
+        })
+        self._ytdl_instances[thread] = client
+        return client
 
     async def _channel(
         self, path: str, tab: str, search: str, page: int,
@@ -314,75 +347,72 @@ class YtdlpClient(YoutubeClient):
             channel.entries.clear()
             return channel
 
-    def _fix_playlist_numbers(self, pl: Playlist, page: int) -> None:
-        for i, entry in enumerate(pl, 1):
-            entry.nth = self._offset(page) + i
-            entry.url = str(URL(entry.url).include_query_params(
-                list = pl.id,
-                index = entry.nth,
-            ))
+    def _process_entries(self, data: RawData, page: int) -> RawData:
+        tabs = [f"/{name}?" for name in Channel.tabs]
+        generator: Iterable[RawData] = data["entries"]
+        gathered: list[RawData] = []
+        nth = 1
+        page_now = 1
+        got_page_data = False
 
-    @backoff.on_exception(backoff.expo, NoDataReceived, max_tries=10)
-    async def _get(
-        self, path: str, page: int = 1,
-    ) -> tuple[dict[str, Any], ExpireIn]:
-        def task():
-            with self._ytdl(page).adjust_cache_expiration() as expire_in:
-                url = f"https://youtube.com/{path}"
-                data = self._ytdl(page).extract_info(url, download=False)
-                return (data, expire_in)
+        def process(entry: RawData) -> RawData:
+            extra: RawData = {"nth": nth}
 
-        data, expire_in = await self._thread(task)
-        if data is None:
-            raise NoDataReceived
-        return (self._extend_entries(data), expire_in)
-
-    @classmethod
-    def _thread(cls, fn: Callable[[], T]) -> asyncio.Future[T]:
-        return asyncio.get_event_loop().run_in_executor(cls._pool, fn)
-
-    def _offset(self, page: int) -> int:
-        return self.per_page * (page - 1)
-
-    def _ytdl(self, page: int = 1) -> CachedYoutubeDL:
-        thread = threading.current_thread().native_id or -1
-        client = self._ytdl_instances.get((page, self.per_page, thread))
-        client = client or CachedYoutubeDL({
-            "quiet": True,
-            "playliststart": self._offset(page) + 1,
-            "playlistend": self._offset(page) + self.per_page,
-            "extract_flat": "in_playlist",
-            "ignore_no_formats_error": True,  # Don't fail on premiering vids
-            "compat_opts": ["no-youtube-unavailable-videos"],
-            "extractor_args": {
-                # This client has the HLS manifests, no need for others
-                "youtube": {"player_client": ["ios"]},
-                # Retrieve upload dates in flat playlists
-                "youtubetab": {"approximate_date": ["timestamp"]},
-            },
-        })
-        self._ytdl_instances[page, self.per_page, thread] = client
-        return client
-
-    @staticmethod
-    def _extend_entries(data: dict[str, Any]) -> dict[str, Any]:
-        def extend(entry: dict[str, Any]) -> dict[str, Any]:
-            data = {}
-            tabs = [f"/{name}?" for name in Channel.tabs]
             if "/shorts/" in entry["url"]:
-                etype = ShortEntry.__name__
+                etype = ShortEntry
             elif "/channel/" in entry["url"]:
-                etype = ChannelEntry.__name__
+                etype = ChannelEntry
             elif "/playlist?" in entry["url"]:
-                etype = PlaylistEntry.__name__
-                data["id"] = entry.get("id") or \
+                etype = PlaylistEntry
+                extra["id"] = entry.get("id") or \
                     parse_qs(URL(entry["url"]).query)["list"][-1]
             elif any(name in entry["url"] for name in tabs):
-                etype = ChannelTabPreview.__name__
+                etype = ChannelTabPreview
             elif "concurrent_view_count" in entry:
-                etype = PartialEntry.__name__
+                etype = PartialEntry
             else:
-                etype = VideoEntry.__name__
-            return entry | data | {"entry_type": etype}
+                etype = VideoEntry
 
-        return data | {"entries": [extend(e) for e in data.get("entries", [])]}
+            extra["entry_type"] = etype.__name__
+            return entry | extra
+
+        class Interrupt(Exception):
+            ...
+
+        def interrupt(_: YtdlpRequest) -> None:
+            nonlocal page_now
+            nonlocal got_page_data
+            if got_page_data:
+                page_now += 1
+                got_page_data = False
+            if page_now > page:
+                raise Interrupt
+
+        with suppress(Interrupt), self._ytdl.before_requests(interrupt):
+            for entry in generator:
+                got_page_data = True
+                if page_now == page:
+                    gathered.append(process(entry))
+                nth += 1
+
+        return data | {"entries": gathered}
+
+    async def _get(
+        self, path: str, page: int = 1, entry_based: bool = True,
+    ) -> tuple[RawData, ExpireIn]:
+
+        @backoff.on_exception(backoff.expo, NoDataReceived, max_tries=10)
+        def task():
+            with self._ytdl.adjust_cache_expiration() as expire_in:
+                if (data := self._ytdl.extract_info(
+                    f"https://youtube.com/{path}",
+                    process = not entry_based,
+                    download = False,
+                )) is None:
+                    raise NoDataReceived
+
+                if not entry_based:
+                    return (data, expire_in)
+                return (self._process_entries(data, page), expire_in)
+
+        return await asyncio.get_event_loop().run_in_executor(self._pool, task)
