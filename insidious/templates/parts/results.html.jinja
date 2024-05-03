@@ -11,7 +11,7 @@
         hx-get="{{pagination.next_url}}"
         hx-trigger="{{'load' if pagination.finding else 'intersect once'}}"
         hx-select="#pages > *"
-        hx-target="#pages"
+        hx-target="closest #pages"
         hx-swap="beforeend ignoreTitle:true"
     ></div>
 {% endif %}
