@@ -1,5 +1,5 @@
 {% set highlight = pagination and pagination.found_item == entry %}
-{% set url = local_url(entry.shortest_url or entry.url) %}
+{% set url = local_url(entry.goto_url or entry.shortest_url or entry.url) %}
 {% set thumbnails = entry.thumbnails_srcset %}
 {% if not thumbnails and entry.entries %}
     {% set thumbnails = (entry.entries | random).thumbnails_srcset %}

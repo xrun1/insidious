@@ -443,6 +443,12 @@ class Playlist(
             return self[0].hover_srcsets
         return [entry.thumbnails_srcset for entry in self[1:6]]
 
+    @property
+    def goto_url(self) -> str | None:
+        if not self.entries:
+            return None
+        return self.entries[0].url
+
 
 InChannel: TypeAlias = InSearch
 
