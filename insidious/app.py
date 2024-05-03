@@ -350,6 +350,7 @@ async def load_tab_preview(request: Request, url: str, title: str) -> Response:
     ]
     results.entries = [e for e in results.entries if e not in no_thumb]
     results.thumbnails = []  # make jinja template use entry thumbnails instead
+    results.followers = None
 
     if no_thumb and not results:
         with report(StopIteration):
