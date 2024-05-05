@@ -394,8 +394,7 @@
     media.addEventListener("timeupdate", updateCurrentChapter)
 
     media.addEventListener("ended", () => {
-        // user may be currently dragging the time slider around
-        if (controller.hasAttribute("mediapreviewtime")) return
+        if (document.hasFocus()) return
 
         let timer = null
         function nextVideo() {
