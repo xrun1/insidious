@@ -71,4 +71,4 @@ def yt_to_html(text: str, allow_markup: bool = True) -> str:
     for uuid, replacement in parts.items():
         text = text.replace(str(uuid), replacement)
 
-    return text
+    return text.rstrip()
