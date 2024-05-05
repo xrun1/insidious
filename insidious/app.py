@@ -470,7 +470,8 @@ async def comments(
 
 @app.get("/generate_hls/master")
 async def make_master_m3u8(request: Request, video_id: str) -> Response:
-    api = f"{request.base_url}generate_hls/variant?{video_id=}&format_id="
+    api = str(request.base_url)
+    api += f"generate_hls/variant?video_id={video_id}&format_id="
     text = master_playlist(api, await YTDLP.video(video_id))
     return Response(text, media_type="application/x-mpegURL")
 
