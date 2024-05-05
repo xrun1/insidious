@@ -56,12 +56,24 @@
             hx-push-url=true
         >
             {% for tab in info.tabs %}
-                {% set url = info.tab_url(request.url, tab) %}
-                {% set cls = "current" if url == request.url else "" %}
+                {% set url = subpage_path(tab) %}
+                {% set cls = "current" if url == request.url.path else "" %}
                 <a class="{{cls}}" href="{{url}}" hx-get="{{url}}">
                     {{tab.capitalize()}}
                 </a>
             {% endfor %}
+
+            <form class=search-row hx-get={{subpage_path("search")}}>
+                <input
+                    type=search
+                    class='{{"current" if search_query else ""}}'
+                    placeholder="Search channel"
+                    autocomplete=true
+                    name=query
+                    value="{{search_query or ''}}"
+                >
+                <input type=submit value="🔎{{no_emoji}}" title=Search>
+            </form>
         </nav>
 
         <div class=pages>

@@ -185,6 +185,13 @@ class ChannelPage(Page):
     template = "channel.html.jinja"
     info: Channel
     pagination: Pagination[InSearch]
+    search_query: str | None = None
+
+    def subpage_path(self, tab: str) -> str:
+        path = self.request.url.path.rstrip("/").removesuffix("/search")
+        for name in Channel.tabs:
+            path = path.removesuffix(f"/{name}")
+        return f"{path}/{tab}".removesuffix("/featured")
 
 
 @dataclass(slots=True)
@@ -329,7 +336,7 @@ async def user(
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         pg.add(channel := await YTDLP.user(id, tab, query, pg.page))
-        return ChannelPage(request, channel.title, channel, pg).response
+        return ChannelPage(request, channel.title, channel, pg, query).response
 
     return ContinuationPage(request, None, pg).response
 
@@ -341,7 +348,7 @@ async def channel(
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         pg.add(channel := await YTDLP.channel(id, tab, query, pg.page))
-        return ChannelPage(request, channel.title, channel, pg).response
+        return ChannelPage(request, channel.title, channel, pg, query).response
 
     return ContinuationPage(request, None, pg).response
 
@@ -633,6 +640,6 @@ async def named_channel(
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         channel = await YTDLP.named_channel(name, tab, query, pg.page)
         pg.add(channel)
-        return ChannelPage(request, channel.title, channel, pg).response
+        return ChannelPage(request, channel.title, channel, pg, query).response
 
     return ContinuationPage(request, None, pg).response

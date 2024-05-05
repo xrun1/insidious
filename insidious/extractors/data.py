@@ -465,15 +465,6 @@ class Channel(Search, HasThumbnails):
     tab: str = Field(alias="webpage_url_basename", default="featured")
     followers: int | None = Field(None, alias="channel_follower_count")
 
-    def tab_url(self, from_url: URL, to_tab: str) -> URL:
-        path = from_url.path.rstrip("/")
-
-        for tab in self.tabs:
-            path = path.removesuffix(f"/{tab}")
-
-        path = f"{path}/{to_tab}".removesuffix("/featured")
-        return from_url.replace(path=path)
-
 
 class Comment(HasThumbnails):
     id: str = Field(alias="commentId")
