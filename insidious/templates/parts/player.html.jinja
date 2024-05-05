@@ -52,7 +52,6 @@
     <media-playback-rate-menu
         rates="0.5 0.75 1 1.25 1.5 1.75 2 2.5 3"
         anchor=auto
-        open-on-hover=speed-button
         hidden 
     >
         <div slot=header>Speed</div>
@@ -61,7 +60,6 @@
     <media-chrome-menu
         id=qualities
         anchor=quality-button
-        open-on-hover=quality-button
         hidden
     >
         <div slot=header>Quality</div>
@@ -70,13 +68,12 @@
     <media-chrome-menu
         id=audio-tracks
         anchor=audio-button
-        open-on-hover=audio-button
         hidden 
     >
         <div slot=header>Audio track</div>
     </media-chrome-menu>
 
-    <media-captions-menu anchor=auto open-on-hover=subs-button hidden>
+    <media-captions-menu anchor=auto hidden>
         <div slot=header>Subtitles</div>
     </media-captions-menu>
 
@@ -409,34 +406,6 @@
         }
         timer = setInterval(nextVideo, 1000)
         nextVideo()
-    })
-
-    document.querySelectorAll("[open-on-hover]").forEach(menu => {
-        const buttonId = menu.getAttribute("open-on-hover")
-        const button = document.getElementById(buttonId)
-
-        function onLeave() {
-            if (! menu.hasAttribute("hover-opened")) return
-            if (button.matches(":hover") || menu.matches(":hover")) return
-            menu.removeAttribute("hover-opened")
-            menu.hidden = true
-        }
-
-        menu.addEventListener("mouseleave", onLeave)
-        button.addEventListener("mouseleave", onLeave)
-        button.addEventListener("mouseenter", () => {
-            if (! menu.hidden) return
-            menu.setAttribute("hover-opened", "")
-            menu.hidden = false
-        })
-        button.addEventListener("click", () => { 
-            if (! menu.hasAttribute("hover-opened")) return
-            menu.removeAttribute("hover-opened")
-            menu.hidden = false
-        })
-        menu.addEventListener("click", () => { 
-            if (menu.hasAttribute("hover-opened")) menu.hidden = true 
-        })
     })
 
     processHmsTimeLinks(media)
