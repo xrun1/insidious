@@ -138,6 +138,7 @@ img {
 #search {
     display: grid;
     grid-template-rows: min-content 0fr;
+    justify-items: center;
     transition: 0.3s grid-template-rows ease-out;
 
     &:has(#search-filters.on) {
