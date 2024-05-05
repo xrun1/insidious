@@ -220,13 +220,6 @@ img {
         height: 12rem;
     }
 
-    & .user-id {
-        margin-right: var(--gap-small);
-        & > .at {
-            font-weight: 800; 
-        }
-    }
-
     & nav {
         display: flex;
         flex-flow: row wrap;
@@ -290,13 +283,21 @@ img {
 
     & .info {
         flex: 1;
-        min-width: var(--thumb-width);
+        min-width: calc(var(--thumb-width) * 2);
+        display: flex;
+        flex-flow: row wrap;
+        align-items: center;
+        gap: var(--gap-small);
         & h1 { 
             display: inline;
-            margin-right: var(--gap-small);
+        }
+        & .user-id {
+            & > .at {
+                font-weight: 800; 
+            }
         }
         & p {
-            margin-top: var(--gap-small);
+            width: 100%;
         }
     }
 }
