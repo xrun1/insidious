@@ -33,10 +33,12 @@
             {% set id = group + "-" + label.lower().replace(" ", "-") %}
             {% set on = getattr(search_filter, group) == enum_item %}
 
-            <input type=radio
-                name={{group}} id={{id}} value={{value}} {{check(on)}} required
-            >
-            <label for={{id}}>{{label}}</label>
+            <div class=filter-choice>
+                <input type=radio
+                    name={{group}} id={{id}} value={{value}} {{check(on)}}
+                    required
+                ><label for={{id}}>{{label}}</label>
+            </div>
         {% endmacro -%}
 
         {% macro feature(label, enum_item=None) -%}
@@ -44,10 +46,11 @@
             {% set value = enum_item or label.replace(" ", "") %}
             {% set on = search_filter.features.__and__(Features[value]) %}
 
-            <input type=checkbox
-                id={{id}} name="feature[]" value={{value}} {{check(on)}}
-            >
-            <label for={{id}}>{{label}}</label>
+            <div class=filter-choice>
+                <input type=checkbox
+                    id={{id}} name="feature[]" value={{value}} {{check(on)}}
+                ><label for={{id}}>{{label}}</label>
+            </div>
         {% endmacro -%}
 
         {% macro legend(name) -%}

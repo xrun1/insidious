@@ -40,7 +40,7 @@
 
                 {% if info.uploader_id not in (None, "@" + info.title) %}
                     <span class=user-id title="User ID">
-                        <span class=at>@</span><!--
+                        <span class=at>@</span><!-- dumb anti-whitespace
                         -->{{info.uploader_id.removeprefix("@")}}
                     </span>
                 {% endif %}

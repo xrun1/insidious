@@ -136,8 +136,16 @@ img {
 }
 
 #search {
+    display: grid;
+    grid-template-rows: min-content 0fr;
+    transition: 0.3s grid-template-rows ease-out;
+
+    &:has(#search-filters.on) {
+        grid-template-rows: min-content 1fr;
+    }
+
     &:has(:is(
-        input[type=radio]:checked:not(:first-of-type),
+        .filter-choice:not(:first-of-type) input[type=radio]:checked,
         input[type=checkbox]:checked
     )) #filterButton {
         color: var(--accent-light);
@@ -158,17 +166,27 @@ img {
     }
 
     & #search-filters {
-        max-height: 0;
+        max-width: var(--max-search-width);
         opacity: 0;
+        overflow: hidden;
         transition: 0.3s all ease-out;
-        overflow-y: hidden;
 
         & fieldset {
             margin-top: var(--gap-small);
+            display: flex;
+            flex-flow: row wrap;
+            gap: 0 var(--gap-small);
+            padding: var(--hpad) var(--vpad);
+            padding-block: 0;
+
+            & label {
+                padding-left: calc(var(--gap-small) / 2);
+                line-height: 160%;
+                padding-block: 0.3rem;
+            }
         }
 
         &.on {
-            max-height: 21rem;
             opacity: 1;
         }
 
@@ -179,9 +197,8 @@ img {
             transition: 0.2s all;
         }
 
-        & fieldset:has(input[type=radio]:checked:not(:first-of-type)) .reset,
+        & fieldset:has(:not(:first-of-type) input[type=radio]:checked) .reset,
         & fieldset:has(input[type=checkbox]:checked) .reset {
-            /* display: initial; */
             transform: scale(100%);
             width: 1.5rem;
             padding: 0 var(--hpad);
