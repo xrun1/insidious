@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import asyncio
+from functools import reduce
 import logging as log
+import operator
 import os
 import re
 import shutil
-from collections.abc import AsyncGenerator, Awaitable, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
 from contextlib import asynccontextmanager, suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeAlias
@@ -18,6 +20,7 @@ from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
 from fastapi.responses import (
     HTMLResponse,
+    RedirectResponse,
     Response,
     StreamingResponse,
 )
@@ -40,7 +43,7 @@ from .extractors.data import (
     Video,
     VideoEntry,
 )
-from .extractors.filters import SearchFilter
+from .extractors.filters import Date, Duration, Features, SearchFilter, Sort, Type
 from .extractors.invidious import INVIDIOUS
 from .extractors.markup import yt_to_html
 from .extractors.ytdlp import YTDLP, CachedYoutubeDL
@@ -139,12 +142,15 @@ class Page:
 
     @property
     def response(self) -> Response:
-        enums = {LiveStatus}
+        passthrough = {
+            LiveStatus, Date, Type, Duration, Features, Sort, SearchFilter,
+            type, getattr,
+        }
         return TEMPLATES.TemplateResponse(self.template, {
             a: getattr(self, a) for a in dir(self)
             if not a.startswith("_") and a != "response"
         } | {
-            e.__name__: e for e in enums
+            x.__name__: x for x in passthrough
         } | {
             "UVICORN_RELOAD": os.getenv("UVICORN_RELOAD"),
             "no_emoji": "&#xFE0E;",
@@ -192,7 +198,8 @@ class PlaylistPage(Page):
 class SearchPage(Page):
     template = "search.html.jinja"
     pagination: Pagination[InSearch]
-    field_query: str | None = None
+    search_query: str | None = None
+    search_filter: SearchFilter = field(default_factory=SearchFilter)
 
 
 @dataclass(slots=True)
@@ -274,11 +281,37 @@ async def home(request: Request) -> Response:
 async def results(
     request: Request, search_query: str = "", sp: str = "",
 ) -> Response:
+    filter = SearchFilter.parse(sp)
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        filter = SearchFilter.parse(sp)
         pg.add(await YTDLP.search(search_query, filter, pg.page))
 
-    return SearchPage(request, search_query, pg, search_query).response
+    return SearchPage(request, search_query, pg, search_query, filter).response
+
+
+@app.get("/search")
+async def form_search(
+    request: Request,
+    query: str,
+    type: str,
+    duration: str,
+    date: str,
+    sort: str,
+) -> Response:
+    fts = (
+        Features[value] for name, value in request.query_params.multi_items()
+        if name == "feature[]"
+    )
+    filter = SearchFilter(
+        date = Date[date],
+        type = Type[type],
+        duration = Duration[duration],
+        features = reduce(operator.__or__, fts, Features.Any),
+        sort = Sort[sort],
+    )
+    url = request.url.replace(path="results").replace_query_params(
+        search_query=query, sp=filter.url_parameter,
+    )
+    return RedirectResponse(url)
 
 
 @app.get("/hashtag/{tag}")
@@ -371,7 +404,8 @@ async def watch(
     list: str | None = None,
     t: str | None = None,
     start: str | None = None,
-    end: str | None = None,  # Not recognized by YT from there onwards
+    # Not recognized by YT from there onwards
+    end: str | None = None,
     loop: bool = False,
     autoplay: bool = False,
 ) -> Response:

@@ -42,9 +42,9 @@ class Type(IntEnum):
 
 class Duration(IntEnum):
     Any = 0
-    Under4Mn = 1
-    Over20Mn = 2
-    From4To20Mn = 3
+    Under4Min = 1
+    Over20Min = 2
+    From4To20Min = 3
 
 
 class Features(IntFlag):

@@ -1,17 +1,128 @@
+{% set search_filter = search_filter or SearchFilter() %}
+{% set filter_is_default = search_filter == SearchFilter() %}
 <div id=header>
     <form
         id=search
-        hx-get=/results
+        hx-get=/search
         hx-select=.page-content
         hx-target=.page-content
         hx-push-url=true
     >
-        <input
-            type=search
-            placeholder=Search
-            autocomplete=true
-            name=search_query
-            value="{{field_query or ''}}"
-        >
+        <div id=search-row>
+            <input
+                type=search
+                placeholder=Search
+                autocomplete=true
+                name=query
+                value="{{search_query or ''}}"
+            >
+            <button type=button
+                id=filterButton title=Filters onclick="toggleFilters()"
+            >
+                <span class=icon>⧩{{no_emoji}}</span>
+            </button>
+            <input type=submit value="🔎{{no_emoji}}" title=Search>
+        </div>
+
+        {% macro check(on) -%}{{"checked" if on else ""}}{% endmacro -%}
+
+        {% macro radio(enum_item, label=None, checked=false) -%}
+            {% set group = type(enum_item).__name__.lower() %}
+            {% set value = enum_item.name %}
+            {% set label = label or value %}
+            {% set id = group + "-" + label.lower().replace(" ", "-") %}
+            {% set on = getattr(search_filter, group) == enum_item %}
+
+            <input type=radio
+                name={{group}} id={{id}} value={{value}} {{check(on)}} required
+            >
+            <label for={{id}}>{{label}}</label>
+        {% endmacro -%}
+
+        {% macro feature(label, enum_item=None) -%}
+            {% set id = "feature-" + label.lower().replace(" ", "-") %}
+            {% set value = enum_item or label.replace(" ", "") %}
+            {% set on = search_filter.features.__and__(Features[value]) %}
+
+            <input type=checkbox
+                id={{id}} name="feature[]" value={{value}} {{check(on)}}
+            >
+            <label for={{id}}>{{label}}</label>
+        {% endmacro -%}
+
+        {% macro legend(name) -%}
+            <legend>{{name}}
+                <button
+                    type=button
+                    title=Reset
+                    class=reset
+                    onclick="resetFilters(this)"
+                >
+                   ↻{{no_emoji}}
+                </button>
+            </legend>
+        {% endmacro -%}
+
+        <div id=search-filters class={{"" if filter_is_default else "on"}}>
+            <fieldset>
+                {{legend("Type")}}
+                {{radio(Type.Any, checked=true)}}
+                {{radio(Type.Video)}}
+                {{radio(Type.Channel)}}
+                {{radio(Type.Playlist)}}
+                {{radio(Type.Movie)}}
+            </fieldset>
+            <fieldset>
+                {{legend("Duration")}}
+                {{radio(Duration.Any, checked=true)}}
+                {{radio(Duration.Under4Min, "Under 4 min")}}
+                {{radio(Duration.From4To20Min, "4-20 min")}}
+                {{radio(Duration.Over20Min, "Over 20 min")}}
+            </fieldset>
+            <fieldset>
+                {{legend("Upload date")}}
+                {{radio(Date.Any, checked=true)}}
+                {{radio(Date.LastHour, "Last hour")}}
+                {{radio(Date.Today)}}
+                {{radio(Date.ThisWeek, "This week")}}
+                {{radio(Date.ThisMonth, "This month")}}
+                {{radio(Date.ThisYear, "This year")}}
+            </fieldset>
+            <fieldset>
+                {{legend("Sort by")}}
+                {{radio(Sort.Relevance, checked=true)}}
+                {{radio(Sort.Date)}}
+                {{radio(Sort.Views)}}
+                {{radio(Sort.Rating)}}
+            </fieldset>
+            <fieldset>
+                {{legend("Features")}}
+                {{feature("Live")}}
+                {{feature("4K", "In4K")}}
+                {{feature("HD")}}
+                {{feature("Subtitles")}}
+                {{feature("Creative Commons")}}
+                {{feature("360°", "In360")}}
+                {{feature("VR180")}}
+                {{feature("3D", "In3D")}}
+                {{feature("HDR")}}
+                {{feature("Location")}}
+                {{feature("Purchased")}}
+            </fieldset>
+        </div>
     </form>
+    <script>
+        function toggleFilters() {
+            document.querySelector("#search-filters").classList.toggle("on")
+        }
+
+        function resetFilters(el) {
+            const fieldset = el.parentElement.parentElement
+            const firstRadio = fieldset.querySelector("[type=radio]")
+            if (firstRadio) firstRadio.checked = true
+            fieldset.querySelectorAll("input[type=checkbox]").forEach(box => {
+                box.checked = false
+            })
+        }
+    </script>
 </div>
