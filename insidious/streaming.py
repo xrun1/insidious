@@ -138,26 +138,6 @@ def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
             yield from stream(group_name, *formats)
 
 
-def filter_master_playlist(content: str, height: int, fps: float) -> str:
-    skip = False
-    lines = []
-    for line in content.splitlines():
-        if skip:
-            skip = False
-            continue
-        if line.startswith("#EXT-X-STREAM-INF:"):
-            parts = (p for p in STREAM_TAGS_RE.split(line) if "=" in p)
-            tags = dict(t.split("=", maxsplit=1) for t in parts)
-            with report(ValueError, IndexError):
-                stream_h = int(tags.get("RESOLUTION", "0,0").split("x")[1])
-                stream_fps = float(tags.get("FRAME-RATE", "30"))
-                if stream_h != height or stream_fps != fps:
-                    skip = True
-                    continue
-        lines.append(line)
-    return "\n".join(lines)
-
-
 async def _mp4_boxes(
     mp4_data: AsyncIterator[bytes],
 ) -> tuple[Container, Container, Container]:

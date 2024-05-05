@@ -50,7 +50,6 @@ from .streaming import (
     HLS_ALT_MIME,
     HLS_MIME,
     dash_variant_playlist,
-    filter_master_playlist,
     master_playlist,
     sort_master_playlist,
     variant_playlist,
@@ -494,12 +493,6 @@ async def make_variant_m3u8(
             mp4_data = reply.aiter_bytes()
             text = await variant_playlist(api % quote(format.url), mp4_data)
             return Response(text, media_type=HLS_MIME)
-
-
-@app.get("/filter_hls/master")
-async def filter_master(content: str, height: int, fps: float) -> Response:
-    modified = filter_master_playlist(content, height, fps)
-    return Response(modified, media_type=HLS_MIME)
 
 
 @app.get("/proxy/get", response_class=Response)
