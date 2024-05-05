@@ -38,6 +38,13 @@
                     <h1>{{youtube_format(info.title, allow_markup=False)}}</h1>
                 </a>
 
+                {% if info.uploader_id not in (None, "@" + info.title) %}
+                    <span class=user-id title="User ID">
+                        <span class=at>@</span><!--
+                        -->{{info.uploader_id.removeprefix("@")}}
+                    </span>
+                {% endif %}
+
                 {% if info.followers %}
                     <span class=followers title=Subscribers>
                         <span class=icon>👥{{no_emoji}}</span>

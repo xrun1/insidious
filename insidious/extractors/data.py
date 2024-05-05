@@ -464,6 +464,7 @@ class Channel(Search, HasThumbnails):
     description: str
     tab: str = Field(alias="webpage_url_basename", default="featured")
     followers: int | None = Field(None, alias="channel_follower_count")
+    uploader_id: str | None = None
 
 
 class Comment(HasThumbnails):

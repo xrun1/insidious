@@ -203,6 +203,13 @@ img {
         height: 12rem;
     }
 
+    & .user-id {
+        margin-right: var(--gap-small);
+        & > .at {
+            font-weight: 800; 
+        }
+    }
+
     & nav {
         display: flex;
         flex-flow: row wrap;
@@ -377,6 +384,9 @@ img {
             overflow: hidden;
             & h1 {
                 align-self: flex-start;
+            }
+            .user-id {
+                display: none;
             }
             & p {
                 margin-block-start: 0;
