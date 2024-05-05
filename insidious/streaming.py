@@ -4,7 +4,7 @@ import io
 import logging as log
 import math
 import re
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import quote
 
 from construct import Container, StreamError
@@ -23,11 +23,17 @@ STREAM_TAGS_RE = re.compile(r"([A-Z\d_-]+=(?:\".*?\"|'.*?'|.*?))(?:,|$)")
 
 
 def master_playlist(api: str, video: Video) -> str:
+    def sort_key(f: Format) -> Any:
+        return (
+            bool(f.vcodec),
+            f.height or 480,
+            f.fps or 30,
+            f.average_bitrate or 0,
+        )
+
     content = "".join(
         "".join(_master_entry(api, f, *video.formats))
-        for f in sorted(video.formats, key=lambda f:
-            (f.height or 480, f.fps or 30, f.average_bitrate or 0),
-        )
+        for f in sorted(video.formats, key=sort_key)
     ).rstrip()
     return f"#EXTM3U\n#EXT-X-VERSION:7\n{content}"
 
