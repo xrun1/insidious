@@ -169,7 +169,6 @@ img {
 
     & #search-filters {
         max-width: var(--max-search-width);
-        margin-top: var(--gap-small);
         display: flex;
         flex-flow: row wrap;
         justify-content: center;
@@ -204,6 +203,7 @@ img {
 
         &.on {
             opacity: 1;
+            margin-top: var(--gap-small);
         }
 
         .reset {
