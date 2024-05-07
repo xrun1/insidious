@@ -43,7 +43,8 @@ from .client import YoutubeClient
 from .data import (
     Channel,
     ChannelEntry,
-    ChannelTabPreview,
+    FeaturedChannelPlaylist,
+    FeaturedChannelTab,
     PartialEntry,
     PartialVideo,
     Playlist,
@@ -349,8 +350,9 @@ class YtdlpClient(YoutubeClient):
             channel.entries.clear()
             return channel
 
-    def _process_entries(self, data: RawData, page: int) -> RawData:
+    def _process_entries(self, url: str, data: RawData, page: int) -> RawData:
         tabs = [f"/{name}?" for name in Channel.tabs]
+        in_featured = URL(url).path.endswith("/featured")
         generator: Iterable[RawData] = data["entries"]
         gathered: list[RawData] = []
         nth = 1
@@ -366,10 +368,12 @@ class YtdlpClient(YoutubeClient):
                 etype = ChannelEntry
             elif "/playlist?" in entry["url"]:
                 etype = PlaylistEntry
+                if in_featured:
+                    etype = FeaturedChannelPlaylist
                 extra["id"] = entry.get("id") or \
                     parse_qs(URL(entry["url"]).query)["list"][-1]
             elif any(name in entry["url"] for name in tabs):
-                etype = ChannelTabPreview
+                etype = FeaturedChannelTab
             elif "concurrent_view_count" in entry:
                 etype = PartialEntry
             else:
@@ -418,7 +422,7 @@ class YtdlpClient(YoutubeClient):
 
                 if not entry_based:
                     return (data, expire_in)
-                return (self._process_entries(data, page), expire_in)
+                return (self._process_entries(url, data, page), expire_in)
 
         async with max_parallel_requests(url):
             return await loop.run_in_executor(self._pool, task)

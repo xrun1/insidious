@@ -242,9 +242,10 @@ class LoadedPlaylistEntry(Page):
 
 
 @dataclass(slots=True)
-class LoadedChannelTabPreview(Page):
-    template = "parts/entry.html.jinja"
-    entry: Channel
+class FeaturedSection(Page, Generic[T]):
+    template = "parts/featured.html.jinja"
+    section_title: str
+    pagination: Pagination[T]
 
 
 @dataclass(slots=True)
@@ -369,35 +370,33 @@ async def load_playlist_entry(request: Request, video_id: str) -> Response:
     return LoadedPlaylistEntry(request, None, pl).response
 
 
-@app.get("/load_channel_tab_preview")
-async def load_tab_preview(request: Request, url: str, title: str) -> Response:
+@app.get("/featured_playlist")
+async def featured_playlist(request: Request, id: str) -> Response:
+    if (pg := Pagination[InPlaylist].get(request).advance()).needs_more_data:
+        pg.add(pl := await YTDLP.playlist(id, pg.page))
+        return FeaturedSection(request, None, pl.title, pg).response
+
+    return ContinuationPage(request, None, pg).response
+
+
+@app.get("/featured_tab")
+async def featured_tab(request: Request, url: str, title: str) -> Response:
     *_, api, id, tab = ([""] * 4) + URL(url).path.split("/")
 
-    if api in {"", "c"}:
-        results = await YTDLP.named_channel(id, tab)
-    elif api == "channel":
-        results = await YTDLP.channel(id, tab)
-    elif api == "user":
-        results = await YTDLP.user(id, tab)
-    else:
-        raise ValueError(f"Invalid channel tab preview url {url!r}")
+    if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
+        if api in {"", "c"}:
+            channel = await YTDLP.named_channel(id, tab, page=pg.page)
+        elif api == "channel":
+            channel = await YTDLP.channel(id, tab, page=pg.page)
+        elif api == "user":
+            channel = await YTDLP.user(id, tab, page=pg.page)
+        else:
+            raise ValueError(f"Invalid channel tab preview url {url!r}")
 
-    results.title = title
-    no_thumb = [
-        e for e in results
-        if not isinstance(e, HasThumbnails) or not e.thumbnails
-    ]
-    results.entries = [e for e in results.entries if e not in no_thumb]
-    results.thumbnails = []  # make jinja template use entry thumbnails instead
-    results.followers = None
+        pg.add(channel)
+        return FeaturedSection(request, None, title, pg).response
 
-    if no_thumb and not results:
-        with report(StopIteration):
-            plentry = next(e for e in no_thumb if isinstance(e, PlaylistEntry))
-            pl = await YTDLP.playlist(plentry.id)
-            results.entries = [pl]
-
-    return LoadedChannelTabPreview(request, None, results).response
+    return ContinuationPage(request, None, pg).response
 
 
 @app.get("/watch")

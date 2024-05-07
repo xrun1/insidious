@@ -285,20 +285,31 @@ class Entries(Sequence[T], BaseModel):
         return len(self.entries)
 
 
-class ChannelTabPreview(BaseModel):
-    entry_type: Literal["ChannelTabPreview"]
+class FeaturedChannelTab(BaseModel):
+    entry_type: Literal["FeaturedChannelTab"]
     url: str
     title: str
 
     @property
     def load_url(self) -> str:
         params = (quote(self.url), quote(self.title))
-        return "/load_channel_tab_preview?url=%s&title=%s" % params
+        return "/featured_tab?url=%s&title=%s" % params
+
+
+class FeaturedChannelPlaylist(BaseModel):
+    entry_type: Literal["FeaturedChannelPlaylist"]
+    id: str
+    url: str
+    title: str
+
+    @property
+    def load_url(self) -> str:
+        return f"/featured_playlist?id={self.id}"
 
 
 InSearch: TypeAlias = (
     ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry |
-    ChannelTabPreview
+    FeaturedChannelTab | FeaturedChannelPlaylist
 )
 
 

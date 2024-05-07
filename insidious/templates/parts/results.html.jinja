@@ -2,19 +2,20 @@
     {% for entry in pagination.items %}
         {% include "parts/entry.html.jinja" %}
     {% endfor %}
-</div>
-<script>processAllText()</script>
 
-{% if pagination.next_url %}
-    <div
-        class="lazy-loader {{'large' if pagination.running_short else ''}}"
-        hx-get="{{pagination.next_url}}"
-        hx-trigger="{{'load' if pagination.finding else 'intersect once'}}"
-        hx-select=".pages > *"
-        hx-target="closest .pages"
-        hx-swap="beforeend ignoreTitle:true"
-    ></div>
-{% endif %}
+    <script>processAllText()</script>
+
+    {% if pagination.next_url %}
+        <div
+            class="lazy-loader {{'large' if pagination.running_short else ''}}"
+            hx-get="{{pagination.next_url}}"
+            hx-trigger="{{'load' if pagination.finding else 'intersect once'}}"
+            hx-select=".pages > *"
+            hx-target="closest .pages"
+            hx-swap="beforeend ignoreTitle:true"
+        ></div>
+    {% endif %}
+</div>
 
 {% if pagination and pagination.page < 2 and not pagination.next_url %}
     <p class=nothing-found>Nothing found</p>
