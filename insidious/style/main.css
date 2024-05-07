@@ -1,6 +1,7 @@
 :root {
     --thumb-width: min(33svw, 10rem);
     --thumb-height: calc(10rem / (16 / 9));
+    --short-thumb-height: calc(var(--thumb-height) * 2);
     --text-big: 1.125rem;
     --text-bigger: 1.25rem;
     --text-small: 0.875rem;
@@ -594,6 +595,22 @@ media-controller {
     }
 }
 
+.short-group {
+    outline: 1px solid black;
+    border-radius: var(--radius);
+    scroll-snap-type: x mandatory;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    gap: var(--gap-small);
+
+    & .entry {
+        min-width: var(--side);
+        scroll-snap-align: start;
+    }
+}
+
 .entry {
     display: grid;
     grid-template-columns: var(--thumb-width) 1fr;
@@ -722,7 +739,6 @@ media-controller {
                 }
             }
         }
-
     }
 }
 

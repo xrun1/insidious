@@ -1,6 +1,17 @@
 <div class=page>
     {% for entry in pagination.items %}
+        {% if entry.id in short_group_starter_ids %}
+            <div class=short-group>
+        {% endif %}
+
         {% include "parts/entry.html.jinja" %}
+
+        {% if entry.id in short_group_ender_ids %}
+                <script>
+                    mergeShortGroups(document.currentScript.parentNode)
+                </script>
+            </div>
+        {% endif %}
     {% endfor %}
 
     <script>processAllText()</script>

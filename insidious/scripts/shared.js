@@ -138,3 +138,20 @@ function getCookie(name, default_=null) {
             return JSON.parse(decodeURIComponent(cookie.split("=")[1]))
     return default_
 }
+
+function isShortGroup(el) {
+    return el.classList?.contains("short-group")
+}
+
+function mergeShortGroups(current) {
+    let prev = current.previousElementSibling
+    while (prev && prev.tagName == "SCRIPT")
+        prev = prev.previousElementSibling
+    console.log(current,  "-", prev)
+    if (isShortGroup(current) && isShortGroup(prev)) {
+        for (const child of current.children) {
+            prev.appendChild(child)
+        }
+        current.remove()
+    }
+}
