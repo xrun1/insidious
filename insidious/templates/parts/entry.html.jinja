@@ -1,4 +1,5 @@
 {% set highlight = pagination and pagination.found_item == entry %}
+{% set feat = "featured" if entry.entry_type.startswith("Featured") else "" %}
 {% set url = local_url(entry.goto_url or entry.shortest_url or entry.url) %}
 {% set thumbnails = entry.thumbnails_srcset %}
 {% if not thumbnails and entry.entries %}
@@ -6,7 +7,11 @@
 {% endif %}
 
 <div
-    class="entry {{'highlight' if highlight else ''}}"
+    class="
+        entry
+        {{'highlight' if highlight else ''}}
+        {{'featured' if feat else ''}}
+    "
     onmouseenter="runHoverSlideshow(this)"
     onmouseleave="stopHoverSlideshow(this)"
     {% if entry.load_url %}

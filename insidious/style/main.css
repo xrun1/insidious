@@ -677,8 +677,18 @@ media-controller {
     }
 }
 
-.featured-section {
+.featured {
     grid-column: 1 / -1;
+
+    &.entry {  /* not loaded yet */
+        & .thumbnail {
+            display: none;
+        }
+        & .title {
+            font-size: var(--text-big);
+            font-weight: 500;
+        }
+    }
 
     & .pages {
         display: flex;
@@ -821,7 +831,7 @@ media-controller {
 @media all and (max-width: calc((20rem + 1rem * 2) * 2)) {
     .page {
         grid-template-columns: auto;
-        &:has(.featured-section) {
+        &:has(.featured) {
             grid-template-columns: 1fr 1fr;
         }
     }
