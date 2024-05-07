@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import asyncio
-from functools import reduce
 import logging as log
 import operator
 import os
 import re
 import shutil
-from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass, field
 from datetime import timedelta
+from functools import reduce
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeAlias
 from urllib.parse import quote
@@ -33,17 +33,22 @@ from .extractors.data import (
     Channel,
     Comment,
     Comments,
-    HasThumbnails,
     InPlaylist,
     InSearch,
     LiveStatus,
     Playlist,
-    PlaylistEntry,
     ShortEntry,
     Video,
     VideoEntry,
 )
-from .extractors.filters import Date, Duration, Features, SearchFilter, Sort, Type
+from .extractors.filters import (
+    Date,
+    Duration,
+    Features,
+    SearchFilter,
+    Sort,
+    Type,
+)
 from .extractors.invidious import INVIDIOUS
 from .extractors.markup import yt_to_html
 from .extractors.ytdlp import YTDLP, CachedYoutubeDL
@@ -176,15 +181,19 @@ class Page:
 
 
 @dataclass(slots=True)
-class HomePage(Page, Generic[T]):
+class Paginated(Page, Generic[T]):
+    pagination: Pagination[T]
+
+
+@dataclass(slots=True)
+class HomePage(Page):
     template = "index.html.jinja"
 
 
 @dataclass(slots=True)
-class ChannelPage(Page):
+class ChannelPage(Paginated[InSearch]):
     template = "channel.html.jinja"
     info: Channel
-    pagination: Pagination[InSearch]
     search_query: str | None = None
 
     def subpage_path(self, tab: str) -> str:
@@ -195,30 +204,26 @@ class ChannelPage(Page):
 
 
 @dataclass(slots=True)
-class PlaylistPage(Page):
+class PlaylistPage(Paginated[InPlaylist]):
     template = "playlist.html.jinja"
     info: Playlist
-    pagination: Pagination[InPlaylist]
 
 
 @dataclass(slots=True)
-class SearchPage(Page):
+class SearchPage(Paginated[InSearch]):
     template = "search.html.jinja"
-    pagination: Pagination[InSearch]
     search_query: str | None = None
     search_filter: SearchFilter = field(default_factory=SearchFilter)
 
 
 @dataclass(slots=True)
-class RelatedPage(Page):
+class RelatedPage(Paginated[ShortEntry | VideoEntry]):
     template = "search.html.jinja"
-    pagination: Pagination[ShortEntry | VideoEntry]
 
 
 @dataclass(slots=True)
-class ContinuationPage(Page):
+class ContinuationPage(Paginated[Any]):
     template = "search.html.jinja"
-    pagination: Pagination[Any]
 
 
 @dataclass(slots=True)
@@ -242,11 +247,10 @@ class LoadedPlaylistEntry(Page):
 
 
 @dataclass(slots=True)
-class FeaturedSection(Page, Generic[T]):
+class FeaturedSection(Paginated[T]):
     template = "parts/featured.html.jinja"
     section_title: str
     full_view_url: str
-    pagination: Pagination[T]
 
 
 @dataclass(slots=True)
@@ -256,18 +260,16 @@ class Dislikes(Page):
 
 
 @dataclass(slots=True)
-class CommentsPart(Page):
+class CommentsPart(Paginated[Comment]):
     template = "parts/comments.html.jinja"
     info: Comments
     video_id: str
-    pagination: Pagination[Comment]
 
 
 @dataclass(slots=True)
-class CommentContinuationPage(Page):
+class CommentContinuationPage(Paginated[Comment]):
     template = CommentsPart.template
     video_id: str
-    pagination: Pagination[Comment]
 
 
 @app.middleware("http")
@@ -338,7 +340,7 @@ async def user(
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         pg.add(channel := await YTDLP.user(id, tab, query, pg.page))
-        return ChannelPage(request, channel.title, channel, pg, query).response
+        return ChannelPage(request, channel.title, pg, channel, query).response
 
     return ContinuationPage(request, None, pg).response
 
@@ -350,7 +352,7 @@ async def channel(
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         pg.add(channel := await YTDLP.channel(id, tab, query, pg.page))
-        return ChannelPage(request, channel.title, channel, pg, query).response
+        return ChannelPage(request, channel.title, pg, channel, query).response
 
     return ContinuationPage(request, None, pg).response
 
@@ -359,7 +361,7 @@ async def channel(
 async def playlist(request: Request, list: str) -> Response:
     if (pg := Pagination[InPlaylist].get(request).advance()).needs_more_data:
         pg.add(pl := await YTDLP.playlist(list, pg.page))
-        return PlaylistPage(request, pl.title, pl, pg).response
+        return PlaylistPage(request, pl.title, pg, pl).response
 
     return ContinuationPage(request, None, pg).response
 
@@ -375,7 +377,7 @@ async def load_playlist_entry(request: Request, video_id: str) -> Response:
 async def featured_playlist(request: Request, id: str) -> Response:
     if (pg := Pagination[InPlaylist].get(request).advance()).needs_more_data:
         pg.add(pl := await YTDLP.playlist(id, pg.page))
-        return FeaturedSection(request, None, pl.title, pl.url, pg).response
+        return FeaturedSection(request, None, pg, pl.title, pl.url).response
 
     return ContinuationPage(request, None, pg).response
 
@@ -395,7 +397,7 @@ async def featured_tab(request: Request, url: str, title: str) -> Response:
             raise ValueError(f"Invalid channel tab preview url {url!r}")
 
         pg.add(channel)
-        return FeaturedSection(request, None, title, url, pg).response
+        return FeaturedSection(request, None, pg, title, url).response
 
     return ContinuationPage(request, None, pg).response
 
@@ -504,9 +506,9 @@ async def comments(
         if not pg.continuation_id:
             pg.done = True
 
-        return CommentsPart(request, None, coms, video_id, pg).response
+        return CommentsPart(request, None, pg, coms, video_id).response
 
-    return CommentContinuationPage(request, None, video_id, pg).response
+    return CommentContinuationPage(request, None, pg, video_id).response
 
 
 @app.get("/generate_hls/master")
@@ -640,6 +642,6 @@ async def named_channel(
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         channel = await YTDLP.named_channel(name, tab, query, pg.page)
         pg.add(channel)
-        return ChannelPage(request, channel.title, channel, pg, query).response
+        return ChannelPage(request, channel.title, pg, channel, query).response
 
     return ContinuationPage(request, None, pg).response
