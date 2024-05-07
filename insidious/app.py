@@ -184,26 +184,6 @@ class Page:
 class Paginated(Page, Generic[T]):
     pagination: Pagination[T]
 
-    @property
-    def short_groups(self) -> list[list[ShortEntry]]:
-        groups: list[list[ShortEntry]] = [[]]
-
-        for entry in self.pagination.items:
-            if isinstance(entry, ShortEntry):
-                groups[-1].append(entry)
-            elif groups[-1]:
-                groups.append([])
-
-        return [g for g in groups if len(g) >= 5]  # noqa: PLR2004
-
-    @property
-    def short_group_starter_ids(self) -> set[str]:
-        return {g[0].id for g in self.short_groups}
-
-    @property
-    def short_group_ender_ids(self) -> set[str]:
-        return {g[-1].id for g in self.short_groups}
-
 
 @dataclass(slots=True)
 class HomePage(Page):
@@ -316,6 +296,7 @@ async def results(
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         pg.add(await YTDLP.search(search_query, filter, pg.page))
 
+    print(request.url, [(i, type(o).__name__, getattr(o, "title", "")) for i, o in enumerate(pg.items)])
     return SearchPage(request, search_query, pg, search_query, filter).response
 
 

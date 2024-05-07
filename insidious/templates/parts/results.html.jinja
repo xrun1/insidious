@@ -1,12 +1,16 @@
 <div class=page>
+    {% set group = namespace(inside=false) %}
     {% for entry in pagination.items %}
-        {% if entry.id in short_group_starter_ids %}
+        {% if entry.entry_type == "ShortEntry" and not group.inside %}
+            {% set group.inside = true %}
             <div class=short-group>
         {% endif %}
 
         {% include "parts/entry.html.jinja" %}
 
-        {% if entry.id in short_group_ender_ids %}
+        {% set at_end = loop.index == pagination.items|length %}
+        {% if (entry.entry_type != "ShortEntry" or at_end) and group.inside %}
+            {% set group.inside = false %}
                 <script>
                     mergeShortGroups(document.currentScript.parentNode)
                 </script>
