@@ -1,5 +1,14 @@
 <div class=featured>
-    <h2>{{section_title}}</h2>
+    <a
+        class=title
+        href="{{local_url(full_view_url)}}"
+        hx-get="{{local_url(full_view_url)}}"
+        hx-select=".page-content"
+        hx-target=".page-content"
+        hx-swap="outerHTML show:window:top"
+        hx-push-url=true
+    ><h2>{{section_title}}</h2></a>
+
     <div class=pages>
         {% include "parts/results.html.jinja" %}
     </div>

@@ -245,6 +245,7 @@ class LoadedPlaylistEntry(Page):
 class FeaturedSection(Page, Generic[T]):
     template = "parts/featured.html.jinja"
     section_title: str
+    full_view_url: str
     pagination: Pagination[T]
 
 
@@ -374,7 +375,7 @@ async def load_playlist_entry(request: Request, video_id: str) -> Response:
 async def featured_playlist(request: Request, id: str) -> Response:
     if (pg := Pagination[InPlaylist].get(request).advance()).needs_more_data:
         pg.add(pl := await YTDLP.playlist(id, pg.page))
-        return FeaturedSection(request, None, pl.title, pg).response
+        return FeaturedSection(request, None, pl.title, pl.url, pg).response
 
     return ContinuationPage(request, None, pg).response
 
@@ -394,7 +395,7 @@ async def featured_tab(request: Request, url: str, title: str) -> Response:
             raise ValueError(f"Invalid channel tab preview url {url!r}")
 
         pg.add(channel)
-        return FeaturedSection(request, None, title, pg).response
+        return FeaturedSection(request, None, title, url, pg).response
 
     return ContinuationPage(request, None, pg).response
 

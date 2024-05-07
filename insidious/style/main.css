@@ -12,6 +12,7 @@
     --vpad: 0.375rem;
     --radius: 0.4rem;
     --accent: #2a32a9;
+    --accent-dark: #151c8a;
     --accent-light: #6b75ff;
     --max-search-width: min(
         100svw - var(--gap) * 2,
@@ -688,6 +689,10 @@ media-controller {
             font-size: var(--text-big);
             font-weight: 500;
         }
+    }
+
+    > .title {
+        color: var(--accent-dark);
     }
 
     & .pages {
