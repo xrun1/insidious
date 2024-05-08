@@ -1,5 +1,21 @@
 <div class=page>
+    {% macro group_start() -%}
+        <div class=short-group>
+            {% if subpage_path %}
+                <a
+                    class=channel-featured-shorts-title
+                    href="{{subpage_path('shorts')}}"
+                    hx-get="{{subpage_path('shorts')}}"
+                    hx-select=".page-content"
+                    hx-target=".page-content"
+                    hx-swap="outerHTML show:window:top"
+                    hx-push-url=true
+                ><h2>Shorts</h2></a>
+            {% endif %}
+            <div class=shorts>
+    {% endmacro -%}
     {% macro group_end() -%}
+            </div>
             <script>
                 mergeShortGroups(document.currentScript.parentNode)
             </script>
@@ -10,7 +26,7 @@
     {% for entry in pagination.items %}
         {% if entry.entry_type == "ShortEntry" and not group.inside %}
             {% set group.inside = true %}
-            <div class=short-group>
+            {{group_start()}}
         {% elif entry.entry_type != "ShortEntry" and group.inside %}
             {% set group.inside = false %}
             {{group_end()}}

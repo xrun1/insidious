@@ -12,7 +12,7 @@
 <body>
     {% include "parts/header.html.jinja" %}
 
-    <div id=channel-page class=page-content>
+    <div id=channel-page class="page-content on-{{current_tab}}-tab">
         {% set url = local_url(info.url) %}
 
         {% if info.banners_srcset %}
@@ -63,8 +63,8 @@
             hx-push-url=true
         >
             {% for tab in info.tabs %}
+                {% set cls = "current" if tab == current_tab else "" %}
                 {% set url = subpage_path(tab) %}
-                {% set cls = "current" if url == request.url.path else "" %}
                 <a class="{{cls}}" href="{{url}}" hx-get="{{url}}">
                     {{tab.capitalize()}}
                 </a>

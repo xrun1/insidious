@@ -196,6 +196,14 @@ class ChannelPage(Paginated[InSearch]):
     info: Channel
     search_query: str | None = None
 
+    @property
+    def current_tab(self) -> str:
+        if (parts := self.request.url.path.rstrip("/").split("/")):
+            for name in (*Channel.tabs, "search"):
+                if parts[-1] == name:
+                    return name
+        return "featured"
+
     def subpage_path(self, tab: str) -> str:
         path = self.request.url.path.rstrip("/").removesuffix("/search")
         for name in Channel.tabs:

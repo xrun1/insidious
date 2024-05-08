@@ -147,9 +147,10 @@ function mergeShortGroups(current) {
     let prev = current.previousElementSibling
     while (prev && prev.tagName == "SCRIPT")
         prev = prev.previousElementSibling
-    console.log(current,  "-", prev)
+
     if (isShortGroup(current) && isShortGroup(prev)) {
-        for (const child of current.children) {
+        prev = prev.querySelector(".shorts")
+        for (const child of current.querySelectorAll(".entry")) {
             prev.appendChild(child)
         }
         current.remove()
