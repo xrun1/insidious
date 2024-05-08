@@ -12,7 +12,8 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from functools import reduce
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeAlias
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeAlias
+from typing_extensions import override
 from urllib.parse import quote
 
 import jinja2
@@ -147,19 +148,11 @@ class Page:
 
     @property
     def response(self) -> Response:
-        passthrough = {
-            LiveStatus, Date, Type, Duration, Features, Sort, SearchFilter,
-            type, getattr,
-        }
-        return TEMPLATES.TemplateResponse(self.template, {
-            a: getattr(self, a) for a in dir(self)
-            if not a.startswith("_") and a != "response"
-        } | {
-            x.__name__: x for x in passthrough
-        } | {
-            "UVICORN_RELOAD": os.getenv("UVICORN_RELOAD"),
-            "no_emoji": "&#xFE0E;",
-        })
+        return self._response_env(self.template)
+
+    @property
+    def continuation(self) -> Response:
+        return self._response_env("search.html.jinja")
 
     @staticmethod
     def local_url(url: str) -> str:
@@ -179,6 +172,21 @@ class Page:
         text = re.sub(rf"^0:0{wild}", "", str(timedelta(seconds=seconds)))
         return re.sub(r", 0:00:00", "", text)  # e.g. 1 day, 0:00:00
 
+    def _response_env(self, template: str) -> Response:
+        passthrough = {
+            LiveStatus, Date, Type, Duration, Features, Sort, SearchFilter,
+            type, getattr,
+        }
+        return TEMPLATES.TemplateResponse(template, {
+            a: getattr(self, a) for a in dir(self)
+            if not a.startswith("_") and a not in {"response", "continuation"}
+        } | {
+            x.__name__: x for x in passthrough
+        } | {
+            "UVICORN_RELOAD": os.getenv("UVICORN_RELOAD"),
+            "no_emoji": "&#xFE0E;",
+        })
+
 
 @dataclass(slots=True)
 class Paginated(Page, Generic[T]):
@@ -193,7 +201,7 @@ class HomePage(Page):
 @dataclass(slots=True)
 class ChannelPage(Paginated[InSearch]):
     template = "channel.html.jinja"
-    info: Channel
+    info: Channel | None = None
     search_query: str | None = None
 
     @property
@@ -214,7 +222,7 @@ class ChannelPage(Paginated[InSearch]):
 @dataclass(slots=True)
 class PlaylistPage(Paginated[InPlaylist]):
     template = "playlist.html.jinja"
-    info: Playlist
+    info: Playlist | None = None
 
 
 @dataclass(slots=True)
@@ -226,11 +234,6 @@ class SearchPage(Paginated[InSearch]):
 
 @dataclass(slots=True)
 class RelatedPage(Paginated[ShortEntry | VideoEntry]):
-    template = "search.html.jinja"
-
-
-@dataclass(slots=True)
-class ContinuationPage(Paginated[Any]):
     template = "search.html.jinja"
 
 
@@ -257,8 +260,8 @@ class LoadedPlaylistEntry(Page):
 @dataclass(slots=True)
 class FeaturedSection(Paginated[T]):
     template = "parts/featured.html.jinja"
-    section_title: str
-    full_view_url: str
+    section_title: str | None = None
+    full_view_url: str | None = None
 
 
 @dataclass(slots=True)
@@ -270,14 +273,13 @@ class Dislikes(Page):
 @dataclass(slots=True)
 class CommentsPart(Paginated[Comment]):
     template = "parts/comments.html.jinja"
-    info: Comments
+    info: Comments | None
     video_id: str
 
-
-@dataclass(slots=True)
-class CommentContinuationPage(Paginated[Comment]):
-    template = CommentsPart.template
-    video_id: str
+    @property
+    @override
+    def continuation(self) -> Response:
+        return self._response_env(self.template)
 
 
 @app.middleware("http")
@@ -304,7 +306,6 @@ async def results(
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         pg.add(await YTDLP.search(search_query, filter, pg.page))
 
-    print(request.url, [(i, type(o).__name__, getattr(o, "title", "")) for i, o in enumerate(pg.items)])
     return SearchPage(request, search_query, pg, search_query, filter).response
 
 
@@ -351,7 +352,7 @@ async def user(
         pg.add(channel := await YTDLP.user(id, tab, query, pg.page))
         return ChannelPage(request, channel.title, pg, channel, query).response
 
-    return ContinuationPage(request, None, pg).response
+    return ChannelPage(request, None, pg).continuation
 
 
 @app.get("/channel/{id}")
@@ -363,7 +364,7 @@ async def channel(
         pg.add(channel := await YTDLP.channel(id, tab, query, pg.page))
         return ChannelPage(request, channel.title, pg, channel, query).response
 
-    return ContinuationPage(request, None, pg).response
+    return ChannelPage(request, None, pg).continuation
 
 
 @app.get("/playlist")
@@ -372,7 +373,7 @@ async def playlist(request: Request, list: str) -> Response:
         pg.add(pl := await YTDLP.playlist(list, pg.page))
         return PlaylistPage(request, pl.title, pg, pl).response
 
-    return ContinuationPage(request, None, pg).response
+    return PlaylistPage(request, None, pg).continuation
 
 
 @app.get("/load_playlist_entry")
@@ -388,7 +389,7 @@ async def featured_playlist(request: Request, id: str) -> Response:
         pg.add(pl := await YTDLP.playlist(id, pg.page))
         return FeaturedSection(request, None, pg, pl.title, pl.url).response
 
-    return ContinuationPage(request, None, pg).response
+    return FeaturedSection(request, None, pg).continuation
 
 
 @app.get("/featured_tab")
@@ -408,7 +409,7 @@ async def featured_tab(request: Request, url: str, title: str) -> Response:
         pg.add(channel)
         return FeaturedSection(request, None, pg, title, url).response
 
-    return ContinuationPage(request, None, pg).response
+    return FeaturedSection(request, None, pg).continuation
 
 
 @app.get("/watch")
@@ -517,7 +518,7 @@ async def comments(
 
         return CommentsPart(request, None, pg, coms, video_id).response
 
-    return CommentContinuationPage(request, None, pg, video_id).response
+    return CommentsPart(request, None, pg, None, video_id).continuation
 
 
 @app.get("/generate_hls/master")
@@ -653,4 +654,4 @@ async def named_channel(
         pg.add(channel)
         return ChannelPage(request, channel.title, pg, channel, query).response
 
-    return ContinuationPage(request, None, pg).response
+    return ChannelPage(request, None, pg).continuation
