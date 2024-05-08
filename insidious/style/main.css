@@ -652,6 +652,7 @@ media-controller {
 }
 .related-channels-title {
     grid-column: 1 / -1;
+    margin-bottom: 0;
 }
 .related-channels-title ~ .related-channels-title {
     display: none;
