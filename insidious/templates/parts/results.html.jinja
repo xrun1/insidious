@@ -1,20 +1,26 @@
 <div class=page>
+    {% macro group_end() -%}
+            <script>
+                mergeShortGroups(document.currentScript.parentNode)
+            </script>
+        </div>
+    {% endmacro -%}
+
     {% set group = namespace(inside=false) %}
     {% for entry in pagination.items %}
         {% if entry.entry_type == "ShortEntry" and not group.inside %}
             {% set group.inside = true %}
             <div class=short-group>
+        {% elif entry.entry_type != "ShortEntry" and group.inside %}
+            {% set group.inside = false %}
+            {{group_end()}}
         {% endif %}
 
         {% include "parts/entry.html.jinja" %}
 
-        {% set at_end = loop.index == pagination.items|length %}
-        {% if (entry.entry_type != "ShortEntry" or at_end) and group.inside %}
+        {% if group.inside and loop.index == pagination.items|length %}
             {% set group.inside = false %}
-                <script>
-                    mergeShortGroups(document.currentScript.parentNode)
-                </script>
-            </div>
+            {{group_end()}}
         {% endif %}
     {% endfor %}
 
