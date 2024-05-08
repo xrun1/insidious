@@ -650,6 +650,12 @@ media-controller {
         }
     }
 }
+.related-channels-title {
+    grid-column: 1 / -1;
+}
+.related-channels-title ~ .related-channels-title {
+    display: none;
+}
 
 .entry {
     display: grid;

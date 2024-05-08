@@ -11,6 +11,7 @@
         entry
         {{'highlight' if highlight else ''}}
         {{'featured' if feat else ''}}
+        {{entry.entry_type.lower().removesuffix('entry')}}
     "
     onmouseenter="runHoverSlideshow(this)"
     onmouseleave="stopHoverSlideshow(this)"
