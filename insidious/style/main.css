@@ -593,7 +593,7 @@ media-controller {
     }
 }
 
-.short-group {
+.short-group:not(:has(.entry:only-of-type)) {
     outline: 1px solid black;
     border-radius: var(--radius);
     scroll-snap-type: x mandatory;
