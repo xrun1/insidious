@@ -201,16 +201,13 @@ class HomePage(Page):
 @dataclass(slots=True)
 class ChannelPage(Paginated[InSearch]):
     template = "channel.html.jinja"
+    current_tab: str
     info: Channel | None = None
     search_query: str | None = None
 
-    @property
-    def current_tab(self) -> str:
-        return self.request.url.path.rstrip("/").split("/")[-1]
-
     def subpage_path(self, tab: str) -> str:
-        path = self.request.url.path.rstrip("/").split("/")
-        return "/".join([*path[:-1], tab])
+        path = self.request.url.path.rstrip("/")
+        return path.removesuffix(f"/{self.current_tab}") + "/" + tab
 
 
 @dataclass(slots=True)
@@ -344,9 +341,10 @@ async def user(
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         pg.add(channel := await YTDLP.user(id, tab, query, pg.page))
-        return ChannelPage(request, channel.title, pg, channel, query).response
+        page = ChannelPage(request, channel.title, pg, tab, channel, query)
+        return page.response
 
-    return ChannelPage(request, None, pg).continuation
+    return ChannelPage(request, None, pg, tab).continuation
 
 
 @app.get("/channel/{id}")
@@ -356,9 +354,10 @@ async def channel(
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         pg.add(channel := await YTDLP.channel(id, tab, query, pg.page))
-        return ChannelPage(request, channel.title, pg, channel, query).response
+        page = ChannelPage(request, channel.title, pg, tab, channel, query)
+        return page.response
 
-    return ChannelPage(request, None, pg).continuation
+    return ChannelPage(request, None, pg, tab).continuation
 
 
 @app.get("/playlist")
@@ -646,6 +645,7 @@ async def named_channel(
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         channel = await YTDLP.named_channel(name, tab, query, pg.page)
         pg.add(channel)
-        return ChannelPage(request, channel.title, pg, channel, query).response
+        page = ChannelPage(request, channel.title, pg, tab, channel, query)
+        return page.response
 
-    return ChannelPage(request, None, pg).continuation
+    return ChannelPage(request, None, pg, tab).continuation
