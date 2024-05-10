@@ -795,14 +795,14 @@ media-controller {
     display: unset;
 }
 
-.comment-page {
+#comments {
     display: flex;
     flex-flow: column nowrap;
     align-items: flex-start;
     gap: var(--gap-small) 0;
 
-    &:not(:first-child) {
-        margin-top: var(--gap-small)
+    > h2 {
+        margin: 0;
     }
 
     & .comment {
@@ -878,7 +878,7 @@ media-controller {
     align-items: center;
 }
 
-.page {
+.page, #comments {
     position: relative;
 }
 .lazy-loader {

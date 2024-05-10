@@ -36,7 +36,6 @@ class InvidiousClient(YoutubeClient):
         by_date: bool = False,
         continuation_id: str | None = None,
     ) -> Comments:
-
         url = (await self._api) + f"/comments/{video_id}"
         params = {}
         if by_date:

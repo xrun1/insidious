@@ -2,94 +2,92 @@
     <h2 class=number raw="{{info.total}}" suffix=" comments"></h2>
 {% endif %}
 
-<div class=comment-page>
-    {% for comment in pagination.items %}
-        <div class=comment>
-            <img
-                class=avatar
-                sizes=10rem
-                srcset="{{comment.thumbnails_srcset}}"
-            >
+{% for comment in pagination.items %}
+    <div class=comment>
+        <img
+            class=avatar
+            sizes=10rem
+            srcset="{{comment.thumbnails_srcset}}"
+        >
 
-            <div class=content>
-                <p class=yt-markup>{{youtube_format(comment.text)}}</p>
+        <div class=content>
+            <p class=yt-markup>{{youtube_format(comment.text)}}</p>
 
-                <div class=details>
-                    {% if comment.by_uploader %}
-                        <span
-                            class="author by-uploader"
-                            title="Comment written by uploader"
-                        >
-                    {% else %}
-                        <span class=author title="Comment author">
-                    {% endif %}
-                        <span class=icon>👤{{no_emoji}}</span>
-                        <a href="{{comment.author_uri}}">
-                            {{comment.author_name.removeprefix('@')}}
-                        </a>
+            <div class=details>
+                {% if comment.by_uploader %}
+                    <span
+                        class="author by-uploader"
+                        title="Comment written by uploader"
+                    >
+                {% else %}
+                    <span class=author title="Comment author">
+                {% endif %}
+                    <span class=icon>👤{{no_emoji}}</span>
+                    <a href="{{comment.author_uri}}">
+                        {{comment.author_name.removeprefix('@')}}
+                    </a>
+                </span>
+
+                <span class=date title="Published date">
+                    <span class=icon>🕒{{no_emoji}}</span>
+                    <span class=youtube-date
+                          raw="{{comment.date.timestamp()}}"></span>
+                </span>
+
+                {% if comment.replies %}
+                    {% set attr = "[for-comment=&quot;" + comment.id %}
+                    {% set attr = attr + "&quot;]" %}
+                    {% set sel = ".thread-replies" + attr %}
+                    <span class=replies>
+                        <span class="icon open">💬{{no_emoji}}</span>
+                        <span class="icon close">❌{{no_emoji}}</span>
+                        <a
+                            class=number
+                            raw="{{comment.replies}}"
+                            suffix=" replies"
+                            href="javascript:;"
+                            hx-on:click="htmx.toggleClass(htmx.find('{{sel}}'), 'hidden');"
+                        ></a>
                     </span>
+                {% endif %}
 
-                    <span class=date title="Published date">
-                        <span class=icon>🕒{{no_emoji}}</span>
-                        <span class=youtube-date
-                              raw="{{comment.date.timestamp()}}"></span>
+                {% if comment.likes %}
+                    <span class=likes title=Likes>
+                        <span class=icon>👍{{no_emoji}}</span>
+                        <span class=number raw="{{comment.likes}}"></span>
                     </span>
+                {% endif %}
 
-                    {% if comment.replies %}
-                        {% set attr = "[for-comment=&quot;" + comment.id %}
-                        {% set attr = attr + "&quot;]" %}
-                        {% set sel = ".thread-replies" + attr %}
-                        <span class=replies>
-                            <span class="icon open">💬{{no_emoji}}</span>
-                            <span class="icon close">❌{{no_emoji}}</span>
-                            <a
-                                class=number
-                                raw="{{comment.replies}}"
-                                suffix=" replies"
-                                href="javascript:;"
-                                hx-on:click="htmx.toggleClass(htmx.find('{{sel}}'), 'hidden');"
-                            ></a>
-                        </span>
-                    {% endif %}
+                {% if comment.edited %}
+                    <span class="edited icon" title=Edited>
+                        ⌫{{no_emoji}}
+                    </span>
+                {% endif %}
 
-                    {% if comment.likes %}
-                        <span class=likes title=Likes>
-                            <span class=icon>👍{{no_emoji}}</span>
-                            <span class=number raw="{{comment.likes}}"></span>
-                        </span>
-                    {% endif %}
+                {% if comment.pinned %}
+                    <span class="pinned icon" title="Pinned by uploader">
+                        📌{{no_emoji}}
+                    </span>
+                {% endif %}
 
-                    {% if comment.edited %}
-                        <span class="edited icon" title=Edited>
-                            ⌫{{no_emoji}}
-                        </span>
-                    {% endif %}
-
-                    {% if comment.pinned %}
-                        <span class="pinned icon" title="Pinned by uploader">
-                            📌{{no_emoji}}
-                        </span>
-                    {% endif %}
-
-                    {% if comment.sponsor %}
-                        <span class="sponsor icon" title=Sponsor>
-                            💲{{no_emoji}}
-                        </span>
-                    {% endif %}
-                </div>
+                {% if comment.sponsor %}
+                    <span class="sponsor icon" title=Sponsor>
+                        💲{{no_emoji}}
+                    </span>
+                {% endif %}
             </div>
         </div>
+    </div>
 
-        {% if comment.replies %}
-            <div class="thread-replies hidden" for-comment="{{comment.id}}">
-                <div
-                    hx-get="{{comment.replies_url(video_id)}}"
-                    hx-trigger="intersect once"
-                ></div>
-            </div>
-        {% endif %}
-    {% endfor %}
-</div>
+    {% if comment.replies %}
+        <div class="thread-replies hidden" for-comment="{{comment.id}}">
+            <div
+                hx-get="{{comment.replies_url(video_id)}}"
+                hx-trigger="intersect once"
+            ></div>
+        </div>
+    {% endif %}
+{% endfor %}
 
 <script>
     processAllText()
@@ -101,8 +99,6 @@
         class="lazy-loader {{'large' if pagination.running_short else ''}}"
         hx-get="{{pagination.next_url}}"
         hx-trigger="intersect once"
-        hx-select=".comment-page, .comment-page ~ *"
-        hx-swap=afterend
+        hx-swap="outerHTML ignoreTitle:true"
     ></div>
 {% endif %}
-
