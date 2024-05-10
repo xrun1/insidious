@@ -17,7 +17,7 @@ URL_RE = re.compile(
     r"(https?://(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}"
     r"\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=!]*))",
 )
-HASHTAG_RE = re.compile(r"(?:^|(?<=\W))#([\w-]+)")
+HASHTAGS_RE = re.compile(r"(?:^|(?<=\W))#([\w#-]+)")
 TIME_RE = re.compile(r"(?:^|(?<=\W))((?:(\d+):)?(\d{1,2}):(\d{2}))(?=\W|$)")
 MARKUP_RE = {
     "strong": build_youtube_markup_regex("*"),
@@ -40,15 +40,18 @@ def yt_to_html(text: str, allow_markup: bool = True) -> str:
         parts[(id := uuid4())] = f'<a href="{url}">{pretty}</a>'
         return str(id)
 
-    def prepare_hashtag(match: re.Match[str]) -> str:
-        parts[(id := uuid4())] = f"""<a
-            href="/hashtag/{match[1]}"
-            hx-get="/hashtag/{match[1]}"
-            hx-select=".page-content"
-            hx-target=".page-content"
-            hx-push-url=true
-        >#{match[1]}</a>"""
-        return str(id)
+    def prepare_hashtags(match: re.Match[str]) -> str:
+        ids = []
+        for tag in match[1].split("#"):
+            parts[(id := uuid4())] = f"""<a
+                href="/hashtag/{tag}"
+                hx-get="/hashtag/{tag}"
+                hx-select=".page-content"
+                hx-target=".page-content"
+                hx-push-url=true
+            >#{tag}</a>"""
+            ids.append(str(id))
+        return "".join(ids)
 
     def prepare_timestamp(match: re.Match[str]) -> str:
         colon_time, h, m, s = match.groups()
@@ -60,7 +63,7 @@ def yt_to_html(text: str, allow_markup: bool = True) -> str:
     # The URLs/etc can contain characters like & which html.escape would break,
     # which is why do their replacements in two steps
     text = URL_RE.sub(prepare_url, text)
-    text = HASHTAG_RE.sub(prepare_hashtag, text)
+    text = HASHTAGS_RE.sub(prepare_hashtags, text)
     text = TIME_RE.sub(prepare_timestamp, text)
     text = html.escape(text, quote=False)
 
