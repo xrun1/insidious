@@ -119,6 +119,7 @@ img {
 
     > input[type=search] {
         flex-grow: 1;
+        min-width: 1rem;
     }
     > * {
         border-radius: 0;
@@ -162,7 +163,7 @@ img {
     }
 
     .search-row {
-        width: 100%;
+        width: var(--max-search-width) !important;
         height: 100%;
     }
 
@@ -899,7 +900,7 @@ media-controller {
 /* calc(var(--side) + var(--gap) * 2) * 2 */
 @media all and (max-width: calc((20rem + 1rem * 2) * 2)) {
     .page {
-        grid-template-columns: auto;
+        grid-template-columns: 100%;
         &:has(.featured) {
             grid-template-columns: 1fr 1fr;
         }
