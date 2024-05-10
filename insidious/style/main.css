@@ -15,7 +15,7 @@
     --accent: #2a32a9;
     --accent-dark: #151c8a;
     --accent-light: #6b75ff;
-    --max-search-width: min(
+    --preferred-max-page-width: min(
         100svw - var(--gap) * 2,
         var(--side) * 3 + var(--gap-small) * 2
     );
@@ -163,12 +163,12 @@ img {
     }
 
     .search-row {
-        width: var(--max-search-width) !important;
+        width: var(--preferred-max-page-width) !important;
         height: 100%;
     }
 
     & #search-filters {
-        max-width: var(--max-search-width);
+        max-width: var(--preferred-max-page-width);
         display: flex;
         flex-flow: row wrap;
         justify-content: center;
@@ -225,7 +225,7 @@ img {
 
 #channel-page, #playlist-page {
     display: flex;
-    width: var(--max-search-width);
+    width: var(--preferred-max-page-width);
     flex-flow: column wrap;
     align-items: center;
     justify-content: center;
@@ -587,7 +587,7 @@ media-controller {
     grid-template-columns: repeat(auto-fit, var(--side));
     justify-content: center;
     gap: var(--gap-small);
-    max-width: var(--max-search-width);
+    max-width: var(--preferred-max-page-width);
     margin: 0 auto;
 
     &:not(:first-child) {
