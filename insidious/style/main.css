@@ -599,7 +599,6 @@ media-controller {
     &:not(:has(:is(.entry:only-of-type, .channel-featured-shorts-title))) {
         outline: 1px solid black;
         border-radius: var(--radius);
-        scroll-snap-type: x mandatory;
     }
 
     & .shorts {
@@ -608,6 +607,7 @@ media-controller {
         justify-content: flex-start;
         overflow-x: auto;
         gap: var(--gap-small);
+        scroll-snap-type: x mandatory;
     }
 
     & .entry {
