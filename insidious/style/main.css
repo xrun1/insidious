@@ -15,16 +15,6 @@
     --accent: #2a32a9;
     --accent-dark: #151c8a;
     --accent-light: #6b75ff;
-    --preferred-max-page-width: min(
-        100svw - var(--gap) * 2,
-        var(--side) * 3 + var(--gap-small) * 2
-    );
-    --video-width: min(
-        100svh, 
-        max(50rem, 40svw), 
-        100svw - var(--side) - var(--gap) * 3
-    );
-    --narrow-video-width: min(100svh, 100svw - var(--gap) * 2);
     --player-main-controls-height: 2.75rem;
     --player-time-range-height: 0.3rem;
     --player-controls-height: calc(
@@ -35,18 +25,26 @@
 html {
     height: 100%;
     overflow-wrap: anywhere;
+    padding: var(--gap);
 }
 
 body {
     background: #fafafa;
     min-height: 100%;
-    padding: var(--gap);
-    display: grid;
-    grid-auto-columns: max-content;
-    grid-auto-rows: max-content;
-    justify-content: center;
-    gap: var(--gap);
     scrollbar-gutter: stable;
+    display: grid;
+    gap: var(--gap);
+    justify-content: center;
+    grid-template-rows: min-content;
+    grid-template-columns: min(100%, var(--side) * 3 + var(--gap-small) * 2);
+
+    &:has(#watch-page) {
+        grid-template-columns: calc(var(--side) + min(
+            100svh, 
+            max(50rem, 40svw), 
+            100svw - var(--side) - var(--gap) * 3
+        ));
+    }
 }
 
 p { 
@@ -119,7 +117,6 @@ img {
 
     > input[type=search] {
         flex-grow: 1;
-        min-width: 1rem;
     }
     > * {
         border-radius: 0;
@@ -163,12 +160,11 @@ img {
     }
 
     .search-row {
-        width: min(var(--preferred-max-page-width), 100%);
+        width: 100%;
         height: 100%;
     }
 
     & #search-filters {
-        max-width: var(--preferred-max-page-width);
         display: flex;
         flex-flow: row wrap;
         justify-content: center;
@@ -185,8 +181,10 @@ img {
 
             &:last-child {
                 display: grid;
-                grid-template-rows: repeat(6, 1fr);
+                grid-template-rows: repeat(6, min-content);
+                grid-template-columns: 1fr 1fr;
                 grid-auto-flow: column;
+                align-items: center;
             }
 
             .filter-choice {
@@ -225,7 +223,6 @@ img {
 
 #channel-page, #playlist-page {
     display: flex;
-    width: var(--preferred-max-page-width);
     flex-flow: column wrap;
     align-items: center;
     justify-content: center;
@@ -319,22 +316,27 @@ img {
 }
 
 #watch-page {
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr var(--side);
+    grid-template-rows: repeat(4, min-content);
+    align-content: center;
     gap: var(--gap);
 
-    > #video-column {
-        min-width: var(--video-width);
-        max-width: var(--video-width);
+    & #video-info {
+        grid-column: 1;
     }
 
-    > #other-videos {
-        min-width: var(--side);
-        max-width: var(--side);
+    & #comments {
+        grid-column: 1;
+    }
+
+    & #other-videos {
+        grid-column: 2;
+        grid-row: 1 / -1;
 
         > #playlist {
             position: relative;  /* confine lazy loaders inside to that div */
+            max-width: var(--side);
             max-height: 66svh;
             border: 1px solid black;
             overflow-y: scroll;
@@ -355,6 +357,12 @@ img {
                 & h1 {
                     margin: 0;
                 }
+
+                & .info {
+                    min-width: unset;
+                    gap: 0;
+                }
+
                 &:not(:hover) {
                     & .info {
                         display: flex;
@@ -441,7 +449,6 @@ img {
 }
 
 #player-and-controls {
-    margin-bottom: var(--gap);
     background-size: cover !important;
     border-radius: var(--radius);
     overflow: hidden;
@@ -582,12 +589,15 @@ media-controller {
     }
 }
 
+.pages { 
+    width: 100%;  /* needed in channels */
+}
+
 .page {
     display: grid;
     grid-template-columns: repeat(auto-fit, var(--side));
     justify-content: center;
     gap: var(--gap-small);
-    max-width: var(--preferred-max-page-width);
     margin: 0 auto;
 
     &:not(:first-child) {
@@ -897,6 +907,16 @@ media-controller {
     }
 }
 
+/* HACK: POS search field refuses to naturally narrow past a certain point */
+@media all and (max-width: 22rem) {
+    .search-row {
+        justify-content: center;
+        & > input[type=search] {
+            max-width: 50svw;
+        }
+    }
+}
+
 /* calc(var(--side) + var(--gap) * 2) * 2 */
 @media all and (max-width: calc((20rem + 1rem * 2) * 2)) {
     .page {
@@ -930,33 +950,50 @@ media-controller {
     }
 }
 
-@media all and (max-width: 48rem) {  /* 768px at 16px font size */
+@media all and (max-width: 56rem) {  /* 896px at 16px font size */
+    body:has(#watch-page) {
+        grid-template-columns: 100%;
+    }
     #watch-page {
-        flex-flow: column nowrap;
-        align-items: center;
-
-        > #video-column {
-            min-width: var(--narrow-video-width);
-            max-width: var(--narrow-video-width);
+        justify-items: center;
+        & #player-area {
+            grid-column: 1 / -1;
         }
-
-        > #other-videos {
-            max-width: unset;
+        & #other-videos {
+            grid-row: 2 / -1;    
         }
     }
 }
 
+@media all and (max-width: 48rem) {  /* 768px at 16px font size */
+    #watch-page {
+        grid-template-columns: 1fr;
+
+        & #playlist {
+            max-width: 100% !important;
+            max-height: 50svh !important;
+        }
+
+        & #other-videos {
+            grid-column: 1;
+            grid-row: -1;
+            width: 100%;
+        }
+    }
+}
+
+html:has(body.embed) {
+    padding: 0;
+}
 body.embed {
     display: block;
-    padding: 0;
-    overflow-y: auto;
 
     & #watch-page {
         display: block;
         height: 100svh;
     }
 
-    & #video-column {
+    & #player-area {
         min-width: 100% !important;
         max-width: 100% !important;
         height: 100svh;
@@ -971,7 +1008,7 @@ body.embed {
         border-radius: 0;
     }
 
-    & #header, #other-videos, #player-and-controls ~ * {
+    & #header, #player-area ~ * {
         display: none;
     }
 }
