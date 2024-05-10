@@ -163,7 +163,7 @@ img {
     }
 
     .search-row {
-        width: var(--preferred-max-page-width) !important;
+        width: min(var(--preferred-max-page-width), 100%);
         height: 100%;
     }
 
