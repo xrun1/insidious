@@ -401,7 +401,7 @@ img {
 }
 
 .video-author {
-    height: 4rem;
+    min-height: 4rem;
 
     & .avatar-info {
         width: 100%;
@@ -415,6 +415,7 @@ img {
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            min-width: var(--thumb-width);
             & h1 {
                 align-self: flex-start;
             }
@@ -907,7 +908,8 @@ media-controller {
 @media all and (max-width: 30rem) {
     .video-details {
         flex-flow: row wrap;
-    };
+        justify-content: center;
+    }
     .video-little-details {
         width: 100%;
         display: flex;
