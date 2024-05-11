@@ -307,7 +307,7 @@ class YtdlpClient(YoutubeClient):
 
     @override
     async def video(self, id: str) -> Video:
-        data, expire_in = await self._get(f"watch?v={id}", entry_based=False)
+        data, expire_in = await self._get(f"watch?v={id}", process=True)
 
         if "concurrent_view_count" in data:
             video = PartialVideo.model_validate(data)
@@ -342,18 +342,22 @@ class YtdlpClient(YoutubeClient):
         base_path = path
         path += f"/search?query={quote_plus(search)}" if search else f"/{tab}"
         try:
-            return Channel.model_validate((await self._get(path, page))[0])
+            # featured tab only returns channel banner with postprocessing
+            data, _ = await self._get(path, page, process=tab == "featured")
         except yt_dlp.DownloadError as e:
             log.warning("%s", e)
             path = base_path + "/featured"
-            channel = Channel.model_validate((await self._get(path, 1))[0])
+            data, _ = await self._get(path, page, process=True)
+            channel = Channel.model_validate(data)
             channel.entries.clear()
             return channel
+        else:
+            return Channel.model_validate(data)
 
     def _process_entries(self, url: str, data: RawData, page: int) -> RawData:
         tabs = [f"/{name}?" for name in Channel.tabs]
         in_featured = URL(url).path.endswith("/featured")
-        generator: Iterable[RawData] = data["entries"]
+        entries: Iterable[RawData] = data["entries"]
         gathered: list[RawData] = []
         nth = 1
         page_now = 1
@@ -395,7 +399,7 @@ class YtdlpClient(YoutubeClient):
                 raise Interrupt
 
         with suppress(Interrupt), self._ytdl.before_requests(interrupt):
-            for entry in generator:
+            for entry in entries:
                 got_page_data = True
                 if page_now == page:
                     gathered.append(process(entry))
@@ -404,7 +408,7 @@ class YtdlpClient(YoutubeClient):
         return data | {"entries": gathered}
 
     async def _get(
-        self, path: str, page: int = 1, entry_based: bool = True,
+        self, path: str, page: int = 1, process: bool = False,
     ) -> tuple[RawData, ExpireIn]:
 
         loop = asyncio.get_event_loop()
@@ -414,13 +418,11 @@ class YtdlpClient(YoutubeClient):
         def task():
             with self._ytdl.adjust_cache_expiration() as expire_in:
                 if (data := self._ytdl.extract_info(
-                    url,
-                    process = not entry_based,
-                    download = False,
+                    url, process=process, download=False,
                 )) is None:
                     raise NoDataReceived
 
-                if not entry_based:
+                if "entries" not in data:
                     return (data, expire_in)
                 return (self._process_entries(url, data, page), expire_in)
 
