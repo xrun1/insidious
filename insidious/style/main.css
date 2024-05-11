@@ -886,6 +886,13 @@ media-controller {
         &.hidden {
             display: none;
         }
+
+        & .lazy-loader { 
+            display: none;
+        }
+        & .load-button:last-of-type {
+            display: initial;
+        }
     }
 }
 
@@ -918,7 +925,6 @@ media-controller {
 .load-button {
     display: none;
     padding: var(--vpad) calc(var(--vpad) * 2);
-    grid-column: 1 / -1;
 }
 
 /* HACK: POS search field refuses to naturally narrow past a certain point */
@@ -1000,6 +1006,7 @@ media-controller {
             }
             & .load-button:last-of-type {
                 display: initial;
+                grid-column: 1 / -1;
                 justify-self: center;
             }
         }

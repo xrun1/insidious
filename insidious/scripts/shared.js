@@ -156,3 +156,12 @@ function mergeShortGroups(current) {
         current.remove()
     }
 }
+
+function loadButtonSaveCurrentScroll(button) {
+    button.previousPageHeight = button.parentNode.clientHeight
+}
+
+function loadButtonRestoreScroll(button) {
+    const now = button.parentNode.clientHeight 
+    window.scrollBy(0, -(now - button.previousPageHeight))
+}
