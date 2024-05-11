@@ -1,35 +1,46 @@
 :root {
+    --rempx: calc(1rem / 16);
     --thumb-width: min(33svw, 10rem);
     --thumb-height: calc(10rem / (16 / 9));
     --short-thumb-height: calc(var(--thumb-height) * 3);
-    --text-big: 1.125rem;
-    --text-bigger: 1.25rem;
+    --text-big: 1.0625rem;
+    --text-bigger: 1.125rem;
+    --text-normal: 1rem;
     --text-small: 0.875rem;
     --text-smaller: 0.7rem;
-    --side: min(90svw, 20rem);
+    --side: min(90svw, 21rem);
     --gap: 1rem;
     --gap-small: 0.6rem;
-    --hpad: 0.25rem;
     --vpad: 0.375rem;
+    --hpad: 0.5rem;
     --radius: 0.4rem;
-    --accent: #2a32a9;
-    --accent-dark: #151c8a;
-    --accent-light: #6b75ff;
     --player-main-controls-height: 2.75rem;
     --player-time-range-height: 0.3rem;
     --player-controls-height: calc(
         var(--player-main-controls-height) + var(--player-time-range-height)
-    )
+    );
+
+    --bg-back: #e1e1e1;
+    --bg-mid: #eee;
+    --bg-front: #fcfcfc;
+    --box-shadow: 0.25rem 0.15rem 0.65rem rgba(0, 0, 0, 0.15);
+    --box-shadow-down: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.15);
+    --box-shadow-strong: 0.25rem 0.15rem 0.65rem rgba(0, 0, 0, 0.26);
+    --accent: #2a32a9;
+    --accent-dark: #151c8a;
+    --accent-light: #6b75ff;
 }
 
 html {
     height: 100%;
     overflow-wrap: anywhere;
-    padding: var(--gap);
+    font-size: 93.75%;  /* scale rem so that 16px/rem would be 15px/rem */
 }
 
 body {
-    background: #fafafa;
+    background: var(--bg-back);
+    font-size: var(--text-normal);
+    padding: var(--gap);
     min-height: 100%;
     scrollbar-gutter: stable;
     display: grid;
@@ -64,26 +75,33 @@ a {
 h1 {
     font-size: var(--text-bigger);
     font-weight: 500;
-    margin-block-start: var(--gap-small);
-    margin-block-end: var(--gap-small);
+    margin: 0;
 }
 
 h2 {
     font-size: var(--text-big);
     font-weight: 500;
-    margin-block-start: var(--gap-small);
-    margin-block-end: var(--gap-small);
+    margin: 0;
 }
 
 input, button {
     border-radius: var(--radius);
-    padding: var(--hpad) var(--vpad);
-    border: 1px solid black;
+    padding: var(--vpad) var(--hpad);
+    background: var(--bg-front);
+    border: 0;
+    border-bottom: var(--rempx) solid transparent;
     outline: 0;
 
-    &:focus-visible {
-        border-color: var(--accent);
+    &:not(:is([type=checkbox], [type=radio])) {
+        box-shadow: var(--box-shadow);
     }
+
+    &:focus-visible {
+        border-bottom: var(--rempx) solid var(--accent);
+    }
+}
+button, input[type=submit] {
+    background: var(--bg-mid);
 }
 
 img {
@@ -95,8 +113,15 @@ img {
     }
 }
 
-:not(#explore-column).empty {
-    display: none; 
+.card {
+    background: var(--bg-front);
+    border-radius: var(--radius);
+    padding: var(--vpad) var(--hpad);
+    box-shadow: var(--box-shadow);
+
+    > .card {
+        box-shadow: var(--box-shadow-down);
+    }
 }
 
 .icon {
@@ -117,6 +142,7 @@ img {
 
     > input[type=search] {
         flex-grow: 1;
+        width: 8rem;
     }
     > * {
         border-radius: 0;
@@ -129,7 +155,6 @@ img {
     > *:last-child {
         border-top-right-radius: var(--radius);
         border-bottom-right-radius: var(--radius);
-        border-right: 1px solid black;
     }
 }
 
@@ -171,20 +196,25 @@ img {
         opacity: 0;
         overflow: hidden;
         transition: 0.3s all ease-out;
+        gap: var(--gap-small);
 
         & fieldset {
             display: flex;
             flex-flow: column nowrap;
-            gap: 0 var(--gap-small);
-            padding: var(--hpad) var(--vpad);
-            padding-block: 0;
+            gap: 0 calc(var(--gap-small) / 2);
+            border: 0;
+
+            & .legend {
+                grid-column: 1 / -1;
+                font-weight: 500;
+            }
 
             &:last-child {
                 display: grid;
-                grid-template-rows: repeat(6, min-content);
+                grid-template-rows: repeat(7, min-content);
                 grid-template-columns: 1fr 1fr;
-                grid-auto-flow: column;
                 align-items: center;
+                grid-auto-flow: column;
             }
 
             .filter-choice {
@@ -203,21 +233,6 @@ img {
             opacity: 1;
             margin-top: var(--gap-small);
         }
-
-        .reset {
-            transform: scale(0);
-            width: 0;
-            padding: 0;
-            transition: 0.2s all;
-        }
-
-        & fieldset:has(:not(:first-of-type) input[type=radio]:checked) .reset,
-        & fieldset:has(input[type=checkbox]:checked) .reset {
-            transform: scale(100%);
-            width: 1.5rem;
-            padding: 0 var(--hpad);
-            margin-left: calc(var(--gap-small) / 6);
-        }
     }
 }
 
@@ -225,7 +240,6 @@ img {
     display: flex;
     flex-flow: column wrap;
     align-items: center;
-    justify-content: center;
     gap: var(--gap);
 
     & .banner {
@@ -238,8 +252,15 @@ img {
         flex-flow: row wrap;
         gap: var(--gap-small);
         width: 100%;
-        justify-content: center;
         align-items: center;
+
+        & .tabs {
+            display: flex;
+            flex-flow: row wrap;
+            gap: var(--gap-small);
+            line-height: 2rem;
+            flex-grow: 2;
+        }
 
         & .current {
             font-weight: 600;
@@ -251,10 +272,8 @@ img {
 
         & .search-row {
             scale: 0.95;
-            margin-left: -0.2rem;
-            & input[type=search] {
-                width: 10rem;
-            }
+            flex-grow: 1;
+            margin-right: -0.5rem;
         }
     }
 
@@ -272,6 +291,7 @@ img {
         flex-flow: row wrap;
         gap: var(--gap-small);
         margin: calc(var(--gap-small) / 2) 0;
+        flex-basis: 100%;
 
         & + p {
             margin-block-start: 0;
@@ -279,8 +299,11 @@ img {
     }
 }
 
-#playlist-page .avatar-info, #channel-page nav {
-    margin: var(--gap-small) 0;
+#channel-page .avatar-info {
+    width: 100%;
+    & a:has(.avatar), .avatar {
+        height: var(--thumb-width);
+    }
 }
 
 .avatar-info {
@@ -288,10 +311,12 @@ img {
     flex-flow: row wrap;
     align-items: center;
     justify-content: center;
-    gap: var(--gap);
+    gap: var(--gap-small) var(--gap);
 
-    & a:has(> .avatar) {
+    & a:has(.avatar), .avatar {
         align-self: flex-start;
+        width: var(--thumb-width);
+        height: var(--thumb-height);
     }
 
     & .info {
@@ -300,17 +325,17 @@ img {
         display: flex;
         flex-flow: row wrap;
         align-items: center;
-        gap: var(--gap-small);
+        gap: 0 var(--gap-small);
         & h1 { 
             display: inline;
         }
         & .user-id {
-            & > .at {
+            > .at {
                 font-weight: 800; 
             }
         }
         & p {
-            width: 100%;
+            flex-basis: 100%;
         }
     }
 }
@@ -325,10 +350,19 @@ img {
         /* Prevent layout shift while video is loading */
         min-width: 100%;
         max-width: 100%;
+        padding: 0;
+        overflow: hidden;
+        /* Supposedly makes the transform/radius/clip render on GPU */
+        -webkit-transform: rotateZ(360deg);
+        transform: rotateZ(360deg);
+        box-shadow: var(--box-shadow-strong);
     }
 
     & #video-info {
         grid-column: 1;
+        display: flex;
+        flex-flow: column nowrap;
+        gap: var(--gap-small);
     }
 
     & #comments {
@@ -343,25 +377,16 @@ img {
             position: relative;  /* confine lazy loaders inside to that div */
             max-width: var(--side);
             max-height: 66svh;
-            border: 1px solid black;
             overflow-y: scroll;
             margin-bottom: var(--gap);
-            border-radius: var(--radius);
-            /* FIXME: need to implement our own scrollbar */
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
+            padding: 0;
 
             & .avatar-info {
                 position: sticky;
                 top: 0;
                 z-index: 100;
-                background: #fafafa;
-                padding: var(--hpad) var(--vpad);
-                border-bottom: 1px solid black;
-
-                & h1 {
-                    margin: 0;
-                }
+                padding: var(--vpad) var(--hpad);
+                border-radius: 0;
 
                 & .info {
                     min-width: unset;
@@ -409,8 +434,6 @@ img {
     flex-flow: row nowrap;
     justify-content: space-between;
     align-items: center;
-    margin: 0;
-    margin-bottom: var(--gap-small);
     gap: var(--gap);
 }
 
@@ -419,6 +442,7 @@ img {
 
     & .avatar-info {
         width: 100%;
+        box-shadow: none;
 
         & a:has(> .avatar), .avatar {
             width: 4rem;
@@ -455,11 +479,6 @@ img {
 
 #player-and-controls {
     background-size: cover !important;
-    border-radius: var(--radius);
-    overflow: hidden;
-    /* Apprently this makes the transform above render on GPU or something */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
 
     &:has(media-controller:not([mediaisfullscreen])) {
         padding-bottom: var(--player-controls-height);
@@ -477,7 +496,7 @@ media-controller {
     &:not([mediaisfullscreen]) media-control-bar {
         opacity: 1;
         translate: 0 var(--player-controls-height);
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(0.625rem);
     }
 
     & media-control-bar {
@@ -488,7 +507,7 @@ media-controller {
         & media-control-bar {
             translate: 0 var(--player-main-controls-height);
             opacity: 0.7;
-            border-top: 1px solid rgba(0, 0, 0, 0.7);
+            border-top: var(--rempx) solid rgba(0, 0, 0, 0.7);
             --media-range-track-height: 0.08rem;
             --media-range-thumb-opacity: 0;
         }
@@ -514,7 +533,7 @@ media-controller {
         &:has(> media-time-range) {
             backdrop-filter: unset !important;
             z-index: 10;
-            --media-range-thumb-border: 1px solid rgba(0, 0, 0, 0.7);
+            --media-range-thumb-border: var(--rempx) solid rgba(0, 0, 0, 0.7);
         }
 
         &:hover media-time-range {
@@ -533,6 +552,11 @@ media-controller {
         height: var(--player-time-range-height);
         --media-range-track-transition: height 0.1s;
         --media-range-padding: 0;
+    }
+
+    & media-play-button[slot=centered-chrome] {
+        border-radius: var(--radius);
+        background: hsla(0, 0%, 0%, 0.5);
     }
 
     & media-airplay-button[mediaairplayunavailable],
@@ -557,7 +581,7 @@ media-controller {
         position: absolute;
         top: var(--gap-small);
         left: var(--gap-small);
-        padding: calc(var(--hpad) * 2) calc(var(--vpad) * 2);
+        padding: calc(var(--vpad) * 2) calc(var(--hpad) * 2);
     }
 
     & #quality-button {
@@ -579,7 +603,7 @@ media-controller {
 
     &.upcoming {
         & #upcoming-notice {
-            border: 1px solid gray;
+            border: var(--rempx) solid gray;
             border-radius: var(--radius);
         }
 
@@ -612,8 +636,8 @@ media-controller {
 
 .short-group {
     &:not(:has(:is(.entry:only-of-type, .channel-featured-shorts-title))) {
-        outline: 1px solid black;
         border-radius: var(--radius);
+        overflow: hidden;
     }
 
     & .shorts {
@@ -628,6 +652,8 @@ media-controller {
     & .entry {
         min-width: var(--side);
         scroll-snap-align: start;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
     }
 
     &:has(.channel-featured-shorts-title) {
@@ -680,9 +706,10 @@ media-controller {
     grid-template-columns: var(--thumb-width) 1fr;
     grid-template-rows: var(--thumb-height);
     gap: var(--gap-small);
+    align-content: center;
 
     &.highlight {
-        background: #d6d6d6
+        border: var(--rempx) solid var(--accent);
     }
 
     & .thumbnail {
@@ -729,7 +756,7 @@ media-controller {
         background: hsla(0, 0%, 0%, 0.7);
         font-variant: small-caps;  /* for LIVE/SOON */
         margin: 0.0625rem;
-        padding: var(--hpad);
+        padding: var(--vpad);
         border-radius: var(--radius);
     }
     & .info {
@@ -738,7 +765,7 @@ media-controller {
         grid-template-rows: auto auto;
         align-content: center;
         align-items: end;
-        gap: 0.125rem var(--vpad);
+        gap: calc(var(--vpad) / 3) var(--hpad);
 
         & .title {
             grid-column: 1 / -1;
@@ -761,18 +788,28 @@ media-controller {
 
 .featured {
     grid-column: 1 / -1;
+    padding: 0;
+    overflow: hidden;
 
     &.entry {  /* not loaded yet */
+        height: calc(var(--thumb-height) * 2.75);
+        position: relative;
         & .thumbnail {
             display: none;
         }
         & .title {
+            position: absolute;
+            top: 0;
+            padding: var(--vpad) var(--hpad);
             font-size: var(--text-big);
             font-weight: 500;
         }
     }
 
     > .title {
+        display: block;
+        padding: var(--vpad) var(--hpad);
+        padding-bottom: 0;
         color: var(--accent-dark);
     }
 
@@ -781,6 +818,7 @@ media-controller {
         flex-flow: row nowrap;
         justify-content: flex-start;
         overflow-x: auto;
+        padding: var(--vpad) var(--hpad);
     }
 
     & .page {
@@ -816,17 +854,10 @@ media-controller {
     align-items: flex-start;
     gap: var(--gap-small) 0;
 
-    > h2 {
-        margin: 0;
-    }
-
     & .comment {
         display: flex;
         flex-flow: row nowrap;
-        padding: var(--vpad) calc(var(--hpad) * 1.5);
         gap: var(--gap-small);
-        background: #e2e2e2;
-        border-radius: var(--radius);
 
         & .avatar {
             min-width: 2.5rem;
@@ -871,13 +902,13 @@ media-controller {
     }
     & .thread-replies {
         position: relative;
-        min-width: 1px;
-        min-height: 1px;
+        min-width: var(--rempx);
+        min-height: var(--rempx);
         padding-left: calc(var(--gap) * 2);
 
         > div {
-            min-width: 1px;
-            min-height: 1px;
+            min-width: var(--rempx);
+            min-height: var(--rempx);
             display: flex;
             flex-flow: column nowrap;
             align-items: flex-start;
@@ -901,6 +932,7 @@ media-controller {
     opacity: 0.4;
     display: flex;
     height: 100%;
+    line-height: 2rem;
     justify-content: center;
     align-items: center;
 }
@@ -925,14 +957,15 @@ media-controller {
 }
 .load-button {
     display: none;
-    padding: var(--vpad) calc(var(--vpad) * 2);
+    padding: var(--hpad) calc(var(--hpad) * 2);
+    background: var(--bg-front);
 }
 
 /* HACK: POS search field refuses to naturally narrow past a certain point */
 @media all and (max-width: 22rem) {
     .search-row {
         justify-content: center;
-        & > input[type=search] {
+        > input[type=search] {
             max-width: 50svw;
         }
     }
@@ -1013,11 +1046,9 @@ media-controller {
     }
 }
 
-html:has(body.embed) {
-    padding: 0;
-}
 body.embed {
     display: block;
+    padding: 0;
 
     & #watch-page {
         display: block;
@@ -1028,6 +1059,7 @@ body.embed {
         min-width: 100% !important;
         max-width: 100% !important;
         height: 100svh;
+        border-radius: 0;
     }
 
     & #player-holder, media-controller {
@@ -1035,11 +1067,7 @@ body.embed {
         aspect-ratio: unset !important;
     }
 
-    & #player-and-controls {
-        border-radius: 0;
-    }
-
     & #header, #player-area ~ * {
-        display: none;
+        display: none !important;
     }
 }

@@ -7,7 +7,7 @@
     {% include "parts/header.html.jinja" %}
 
     <div id=watch-page class=page-content>
-        <div id=player-area>
+        <div id=player-area class=card>
             <div
                 id=player-and-controls
                 style="background: url('{{info.best_thumbnail.fixed_url}}')"
@@ -18,7 +18,7 @@
             </div>
         </div>
 
-        <div id=video-info>
+        <div id=video-info class=card>
             <h1>{{youtube_format(info.title, allow_markup=False)}}</h1>
 
             <div class=video-details>
@@ -86,7 +86,6 @@
             </div>
 
             {% if info.description %}
-                <hr>
                 <p
                     class="video-description yt-markup"
                 >{{youtube_format(info.description)}}</p>
@@ -96,6 +95,7 @@
         {% if get_comments %}
             <div
                 id=comments
+                class=card
                 hx-get="{{get_comments}}"
                 hx-trigger=load
                 hx-swap=innerHTML
@@ -115,6 +115,7 @@
                 </script>
                 <div 
                     id=playlist
+                    class=card
                     hx-get="{{get_playlist}}"
                     hx-trigger=load
                     hx-select=".page-content > *"

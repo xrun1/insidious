@@ -54,20 +54,11 @@
         {% endmacro -%}
 
         {% macro legend(name) -%}
-            <legend>{{name}}
-                <button
-                    type=button
-                    title=Reset
-                    class=reset
-                    onclick="resetFilters(this)"
-                >
-                   ↻{{no_emoji}}
-                </button>
-            </legend>
+            <span class=legend>{{name}}</span>
         {% endmacro -%}
 
         <div id=search-filters class={{"" if filter_is_default else "on"}}>
-            <fieldset>
+            <fieldset class=card>
                 {{legend("Type")}}
                 {{radio(Type.Any, checked=true)}}
                 {{radio(Type.Video)}}
@@ -75,14 +66,14 @@
                 {{radio(Type.Playlist)}}
                 {{radio(Type.Movie)}}
             </fieldset>
-            <fieldset>
+            <fieldset class=card>
                 {{legend("Duration")}}
                 {{radio(Duration.Any, checked=true)}}
                 {{radio(Duration.Under4Min, "Under 4 min")}}
                 {{radio(Duration.From4To20Min, "4-20 min")}}
                 {{radio(Duration.Over20Min, "Over 20 min")}}
             </fieldset>
-            <fieldset>
+            <fieldset class=card>
                 {{legend("Upload date")}}
                 {{radio(Date.Any, checked=true)}}
                 {{radio(Date.LastHour, "Last hour")}}
@@ -91,14 +82,14 @@
                 {{radio(Date.ThisMonth, "This month")}}
                 {{radio(Date.ThisYear, "This year")}}
             </fieldset>
-            <fieldset>
+            <fieldset class=card>
                 {{legend("Sort by")}}
                 {{radio(Sort.Relevance, checked=true)}}
                 {{radio(Sort.Date)}}
                 {{radio(Sort.Views)}}
                 {{radio(Sort.Rating)}}
             </fieldset>
-            <fieldset>
+            <fieldset class=card>
                 {{legend("Features")}}
                 {{feature("Live")}}
                 {{feature("4K", "In4K")}}
@@ -117,15 +108,6 @@
     <script>
         function toggleFilters() {
             document.querySelector("#search-filters").classList.toggle("on")
-        }
-
-        function resetFilters(el) {
-            const fieldset = el.parentElement.parentElement
-            const firstRadio = fieldset.querySelector("[type=radio]")
-            if (firstRadio) firstRadio.checked = true
-            fieldset.querySelectorAll("input[type=checkbox]").forEach(box => {
-                box.checked = false
-            })
         }
     </script>
 </div>

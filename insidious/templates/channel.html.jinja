@@ -20,7 +20,7 @@
         {% endif %}
 
         <div 
-            class=avatar-info
+            class="avatar-info card"
             hx-select=.page-content
             hx-target=.page-content
             hx-push-url=true
@@ -58,17 +58,20 @@
         </div>
 
         <nav
+            class=card
             hx-select=.page-content
             hx-target=.page-content
             hx-push-url=true
         >
-            {% for tab in info.tabs %}
-                {% set cls = "current" if tab == current_tab else "" %}
-                {% set url = subpage_path(tab) %}
-                <a class="{{cls}}" href="{{url}}" hx-get="{{url}}">
-                    {{tab.capitalize()}}
-                </a>
-            {% endfor %}
+            <div class=tabs>
+                {% for tab in info.tabs %}
+                    {% set cls = "current" if tab == current_tab else "" %}
+                    {% set url = subpage_path(tab) %}
+                    <a class="{{cls}}" href="{{url}}" hx-get="{{url}}">
+                        {{tab.capitalize()}}
+                    </a>
+                {% endfor %}
+            </div>
 
             <form class=search-row hx-get={{subpage_path("search")}}>
                 <input

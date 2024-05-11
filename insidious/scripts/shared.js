@@ -6,7 +6,7 @@ const thisYearFormatter = new Intl.DateTimeFormat(lang, {
     month: "short", year: "numeric",
 })
 const thisMonthFormatter = new Intl.DateTimeFormat(lang, {
-    day: "numeric", month: "short", year: "numeric",
+    day: "numeric", month: "short",
 })
 const todayFormatter = new Intl.DateTimeFormat(lang, {
     hour: "numeric", minute: "numeric",
@@ -17,7 +17,9 @@ const futureFormatter = new Intl.DateTimeFormat(lang, {
 const relativeFormatter = new Intl.RelativeTimeFormat(lang, {
     numeric: "auto", style: "short",
 })
-const normalDateFormatter = thisMonthFormatter
+const normalDateFormatter = new Intl.DateTimeFormat(lang, {
+    day: "numeric", month: "short", year: "numeric",
+})
 
 function formatYoutubeDate(timestamp) {
     const date = new Date(timestamp * 1000)
@@ -146,9 +148,10 @@ function isShortGroup(el) {
 
 function mergeShortGroups(current) {
     let prev = current.previousElementSibling
-    while (prev && prev.tagName == "SCRIPT")
+    while (prev && (prev.tagName == "SCRIPT" || prev.tagName == "BUTTON"))
         prev = prev.previousElementSibling
 
+    console.log(current, prev, isShortGroup(current), isShortGroup(prev))
     if (isShortGroup(current) && isShortGroup(prev)) {
         prev = prev.querySelector(".shorts")
         for (const child of current.querySelectorAll(".entry")) {
