@@ -870,6 +870,7 @@ media-controller {
         & .open { display: none; }
     }
     & .thread-replies {
+        position: relative;
         min-width: 1px;
         min-height: 1px;
         padding-left: calc(var(--gap) * 2);
@@ -887,11 +888,11 @@ media-controller {
             display: none;
         }
 
-        & .lazy-loader { 
-            display: none;
-        }
-        & .load-button:last-of-type {
+        & .load-button:nth-of-type(even):last-of-type {
             display: initial;
+            + .lazy-loader {
+                display: none;
+            }
         }
     }
 }
@@ -1000,14 +1001,13 @@ media-controller {
             max-height: 50svh !important;
         }
 
-        & #related {
-            & .lazy-loader { 
+        & #related .load-button:nth-of-type(odd):last-of-type {
+            display: initial;
+            grid-column: 1 / -1;
+            justify-self: center;
+
+            + .lazy-loader {
                 display: none;
-            }
-            & .load-button:last-of-type {
-                display: initial;
-                grid-column: 1 / -1;
-                justify-self: center;
             }
         }
     }

@@ -95,6 +95,15 @@
 </script>
 
 {% if pagination.next_url %}
+    <button
+        class=load-button
+        hx-get="{{pagination.next_url}}"
+        hx-target="next .lazy-loader"
+        hx-swap="outerHTML ignoreTitle:true"
+        hx-on::before-request="loadButtonSaveCurrentScroll(this)"
+        hx-on::after-request="loadButtonRestoreScroll(this)"
+    ><span class=icon>➕{{no_emoji}}</span> More replies</button>
+
     <div
         class="lazy-loader {{'large' if pagination.running_short else ''}}"
         hx-get="{{pagination.next_url}}"
@@ -102,9 +111,4 @@
         hx-swap="outerHTML ignoreTitle:true"
     ></div>
 
-    <button
-        class=load-button
-        hx-get="{{pagination.next_url}}"
-        hx-swap="afterend ignoreTitle:true"
-    ><span class=icon>➕{{no_emoji}}</span> More replies</button>
 {% endif %}

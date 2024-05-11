@@ -158,10 +158,10 @@ function mergeShortGroups(current) {
 }
 
 function loadButtonSaveCurrentScroll(button) {
-    button.previousPageHeight = button.parentNode.clientHeight
+    button.previousScrollX = window.scrollX
+    button.previousScrollY = window.scrollY
 }
 
 function loadButtonRestoreScroll(button) {
-    const now = button.parentNode.clientHeight 
-    window.scrollBy(0, -(now - button.previousPageHeight))
+    window.scroll(button.previousScrollX, button.previousScrollY)
 }
