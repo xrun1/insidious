@@ -869,7 +869,7 @@ media-controller {
         & .close { display: initial; }
         & .open { display: none; }
     }
-    .thread-replies {
+    & .thread-replies {
         min-width: 1px;
         min-height: 1px;
         padding-left: calc(var(--gap) * 2);
@@ -877,6 +877,10 @@ media-controller {
         > div {
             min-width: 1px;
             min-height: 1px;
+            display: flex;
+            flex-flow: column nowrap;
+            align-items: flex-start;
+            gap: var(--gap-small);
         }
 
         &.hidden {
