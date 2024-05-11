@@ -13,7 +13,7 @@ get() { url_path="$1"
 rm -rf "$base"
 mkdir "$base"
 
-get htmx.org@^1.9.9/dist/htmx.min.js
+get htmx.org@^1.9.12/dist/htmx.min.js
 get modern-normalize@^2.0.0/modern-normalize.min.css
 get media-chrome@3.2.0/+esm
 get hls-video-element@1.1.3/+esm
