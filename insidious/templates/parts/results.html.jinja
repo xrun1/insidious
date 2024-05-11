@@ -53,9 +53,29 @@
             hx-select=".page > *"
             hx-swap="outerHTML ignoreTitle:true"
         ></div>
+
+        <button
+            class=load-button
+            hx-get="{{pagination.next_url}}"
+            hx-select=".page > *"
+            hx-swap="afterend ignoreTitle:true"
+            hx-on::before-swap="beforeLoadSwap(this)"
+            hx-on::after-swap="afterLoadSwap(this)"
+        ><span class=icon>➕{{no_emoji}}</span> More videos</button>
     {% endif %}
 </div>
 
 {% if pagination and pagination.page < 2 and not pagination.next_url %}
     <p class=nothing-found>Nothing found</p>
 {% endif %}
+
+<script>
+    function beforeLoadSwap(button) {
+        button.previousPageHeight = button.parentNode.clientHeight
+        console.log(button.previousPageHeight)
+    }
+    function afterLoadSwap(button) {
+        const now = button.parentNode.clientHeight 
+        window.scrollBy(0, -(now - button.previousPageHeight))
+    }
+</script>

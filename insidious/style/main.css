@@ -906,6 +906,11 @@ media-controller {
         /* background: rgba(255, 0, 0, 0.3); */
     }
 }
+.load-button {
+    display: none;
+    padding: var(--vpad) calc(var(--vpad) * 2);
+    grid-column: 1 / -1;
+}
 
 /* HACK: POS search field refuses to naturally narrow past a certain point */
 @media all and (max-width: 22rem) {
@@ -969,15 +974,25 @@ media-controller {
     #watch-page {
         grid-template-columns: 1fr;
 
+        & #other-videos {
+            grid-column: 1;
+            grid-row: 3;
+            width: 100%;
+        }
+
         & #playlist {
             max-width: 100% !important;
             max-height: 50svh !important;
         }
 
-        & #other-videos {
-            grid-column: 1;
-            grid-row: -1;
-            width: 100%;
+        & #related {
+            & .lazy-loader { 
+                display: none;
+            }
+            & .load-button:last-of-type {
+                display: initial;
+                justify-self: center;
+            }
         }
     }
 }
