@@ -175,7 +175,7 @@ img {
 
     > .card {
         box-shadow: var(--box-shadow-down);
-        border: var(--rempx) solid var(--discrete-border);
+        border-bottom: var(--rempx) solid var(--discrete-border);
     }
 }
 
