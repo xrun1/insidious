@@ -29,6 +29,7 @@
 
     --theme-transition: 0.3s ease-out background, 0.1s ease-out color;
     --fg: black;
+    --fg-icons: #222;
     --bg-back: #e1e1e1;
     --bg-front: #fcfcfc;
     --bg-buttons: #eee;
@@ -45,6 +46,7 @@
 
     &:has(#alt-theme:checked) {
         --fg: hsl(0, 0%, 90%);
+        --fg-icons: hsl(0, 0%, 85%);
         --bg-back: hsl(240, 14%, 17%);
         --bg-front: hsl(240, 20%, 25%);
         --bg-buttons: hsl(240, 20%, 30%);
@@ -180,9 +182,13 @@ img {
 .icon {
     display: inline-block;
     text-align: center;
-    width: 0.9rem;
-    color: var(--fg);
+    width: 1rem;
+    scale: 0.8;
+    color: var(--fg-icons);
     transition: var(--theme-transition);
+    /* font-family: "Font Awesome 6 Free", var(--fonts); */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
 }
 
 .elide {
@@ -218,6 +224,12 @@ img {
     flex-flow: row nowrap;
     align-items: flex-start;
     gap: var(--gap);
+
+    & input[type=submit], #alt-theme {
+        font-family: "Font Awesome 6 Free", var(--fonts);
+        font-weight: 900;
+        color: var(--fg-icons);
+    }
 
     & #alt-theme {
         appearance: none;
@@ -262,6 +274,9 @@ img {
 
     #filterButton {
         transition: 0.2s all;
+        & .icon {
+            scale: 0.94;
+        }
     }
 
     .search-row {
@@ -866,7 +881,7 @@ media-controller {
         }
         & :not(.title) {
             font-size: var(--text-small);
-            > :not(.icon) { 
+            > * { 
                 opacity: var(--opacity-dim);
             }
         }
@@ -965,10 +980,6 @@ media-controller {
                 flex-flow: row wrap;
                 gap: calc(var(--gap-small) * 0.75);
                 opacity: var(--opacity-dim);
-
-                & .icon {
-                    font-weight: initial;
-                }
 
                 & .by-uploader {
                     font-weight: 500;

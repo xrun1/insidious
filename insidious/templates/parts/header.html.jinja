@@ -19,9 +19,9 @@
             <button type=button
                 id=filterButton title=Filters onclick="toggleFilters()"
             >
-                <span class=icon>⧩{{no_emoji}}</span>
+                <span class=icon>{{no_emoji}}</span>
             </button>
-            <input type=submit value="🔎{{no_emoji}}" title=Search>
+            <input type=submit value="{{no_emoji}}" title=Search>
         </div>
 
         {% macro check(on) -%}{{"checked" if on else ""}}{% endmacro -%}
