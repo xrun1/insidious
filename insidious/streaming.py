@@ -26,6 +26,7 @@ def master_playlist(api: str, video: Video) -> str:
     def sort_key(f: Format) -> Any:
         return (
             bool(f.vcodec),
+            f.id.endswith("-drc"),
             f.height or 480,
             f.fps or 30,
             f.average_bitrate or 0,
