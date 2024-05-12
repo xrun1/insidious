@@ -224,6 +224,11 @@ img {
     flex-flow: row nowrap;
     align-items: flex-start;
     gap: var(--gap);
+    height: 2rem;
+
+    & #logo img {
+        height: 2rem;
+    }
 
     & input[type=submit], #alt-theme {
         font-family: "Font Awesome 6 Free", var(--fonts);

@@ -1,4 +1,4 @@
-# Insidious
+# ![Logo](./logo.png) Insidious
 
 [Features](#features) |
 [pip setup](#local-installation-with-pip) |

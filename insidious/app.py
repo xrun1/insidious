@@ -21,6 +21,7 @@ import jinja2
 from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
 from fastapi.responses import (
+    FileResponse,
     HTMLResponse,
     PlainTextResponse,
     RedirectResponse,
@@ -121,7 +122,7 @@ def mount(name: str) -> None:
     app.mount(f"/{name}", StaticFiles(packages=[(NAME, name)]), name=name)
 
 
-list(map(mount, ("scripts", "style", "npm")))
+list(map(mount, ("scripts", "style", "npm", "images")))
 if os.getenv("UVICORN_RELOAD"):
     # Fix browser reusing cached files at reload despite disk modifications
     StaticFiles.is_not_modified = lambda *_, **_kws: False  # type: ignore
