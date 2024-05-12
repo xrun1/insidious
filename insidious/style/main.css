@@ -20,15 +20,32 @@
         var(--player-main-controls-height) + var(--player-time-range-height)
     );
 
-    --bg-back: #e1e1e1;
-    --bg-mid: #eee;
-    --bg-front: #fcfcfc;
     --box-shadow: 0.25rem 0.15rem 0.65rem rgba(0, 0, 0, 0.15);
     --box-shadow-down: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.15);
     --box-shadow-strong: 0.25rem 0.15rem 0.65rem rgba(0, 0, 0, 0.26);
-    --accent: #2a32a9;
-    --accent-dark: #151c8a;
-    --accent-light: #6b75ff;
+
+    --theme-transition: 0.3s ease-out background, 0.1s ease-out color;
+    --fg: black;
+    --bg-back: #e1e1e1;
+    --bg-front: #fcfcfc;
+    --bg-buttons: #eee;
+    --accent: hsl(235, 60%, 40%);
+    --accent-weak: hsl(235, 75%, 30%);
+    --accent-strong: hsl(235, 100%, 70%);
+    --opacity-dim: 0.75;
+    --opacity-dimmer: 0.5;
+
+    &:has(#alt-theme:checked) {
+        --fg: hsl(0, 0%, 90%);
+        --bg-back: hsl(240, 14%, 17%);
+        --bg-front: hsl(240, 20%, 25%);
+        --bg-buttons: hsl(240, 20%, 30%);
+        --accent: hsl(220, 100%, 88%);
+        --accent-weak: hsl(220, 80%, 88%);
+        --accent-strong: hsl(220, 100%, 80%);
+        --opacity-dim: 0.86;
+        --opacity-dimmer: 0.56;
+    }
 }
 
 html {
@@ -38,6 +55,8 @@ html {
 }
 
 body {
+    transition: var(--theme-transition);
+    color: var(--fg);
     background: var(--bg-back);
     font-size: var(--text-normal);
     padding: var(--gap);
@@ -70,6 +89,7 @@ hr {
 a {
     text-decoration-line: none;
     color: var(--accent);
+    transition: var(--theme-transition);
 }
 
 h1 {
@@ -87,10 +107,17 @@ h2 {
 input, button {
     border-radius: var(--radius);
     padding: var(--vpad) var(--hpad);
+    color: var(--fg);
     background: var(--bg-front);
+    transition: var(--theme-transition);
     border: 0;
     border-bottom: var(--rempx) solid transparent;
     outline: 0;
+
+    &::placeholder {
+        color: var(--fg); 
+        opacity: var(--opacity-dim);
+    }
 
     &:not(:is([type=checkbox], [type=radio])) {
         box-shadow: var(--box-shadow);
@@ -101,7 +128,9 @@ input, button {
     }
 }
 button, input[type=submit] {
-    background: var(--bg-mid);
+    background: var(--bg-buttons);
+    color: var(--fg);
+    transition: var(--theme-transition);
 }
 
 img {
@@ -115,6 +144,7 @@ img {
 
 .card {
     background: var(--bg-front);
+    transition: var(--theme-transition);
     border-radius: var(--radius);
     padding: var(--vpad) var(--hpad);
     box-shadow: var(--box-shadow);
@@ -128,6 +158,8 @@ img {
     display: inline-block;
     text-align: center;
     width: 0.9rem;
+    color: var(--fg);
+    transition: var(--theme-transition);
 }
 
 .elide {
@@ -158,11 +190,36 @@ img {
     }
 }
 
-#search {
+#header {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: flex-start;
+    gap: var(--gap);
+
+    & #alt-theme {
+        appearance: none;
+        margin: 0;
+        transition: var(--theme-transition);
+
+        &::after {
+            content: "🌙\fe0e";
+            font-weight: 600;
+        }
+
+        &:checked {
+            color: hsl(40, 100%, 75%);
+            text-shadow: 0 0 0.5rem hsl(40, 100%, 85%);
+            background: var(--bg-buttons);
+        }
+    }
+}
+
+#search-form {
+    flex-grow: 1;
     display: grid;
     grid-template-rows: min-content 0fr;
     justify-items: center;
-    transition: 0.3s grid-template-rows ease-out;
+    transition: 0.3s grid-template-rows ease-out, var(--theme-transition);
 
     &:has(#search-filters.on) {
         grid-template-rows: min-content 1fr;
@@ -171,13 +228,13 @@ img {
     &:has(:is(
         .filter-choice:not(:first-of-type) input[type=radio]:checked,
         input[type=checkbox]:checked
-    )) #filterButton {
-        color: var(--accent-light);
-        text-shadow: 0 0 0.5rem var(--accent-light);
+    )) #filterButton .icon {
+        color: var(--accent-strong);
+        text-shadow: 0 0 0.5rem var(--accent-strong);
     }
 
     &:has(#search-filters.on) #filterButton {
-        border-bottom-color: var(--accent-light);
+        border-bottom-color: var(--accent-strong);
     }
 
     #filterButton {
@@ -266,7 +323,8 @@ img {
             font-weight: 600;
             &[type=search] {
                 font-weight: 500;
-                color: var(--accent-light);
+                color: var(--accent-strong);
+                transition: var(--theme-transition);
             }
         }
 
@@ -280,10 +338,11 @@ img {
     /* These links are useful only when the channel/playlist page is embedded,
        they point to the full page */
     > .avatar-info > a, > .avatar-info > .info > a {
-          pointer-events: none;
-          cursor: default;
-          text-decoration: none;
-          color: black;
+        pointer-events: none;
+        cursor: default;
+        text-decoration: none;
+        color: var(--fg);
+        transition: var(--theme-transition);
     }
 
     & .playlist-details {
@@ -463,7 +522,7 @@ img {
             & p {
                 margin-block-start: 0;
                 white-space: normal;
-                opacity: 0.85;
+                opacity: var(--opacity-dim);
             }
         }
     }
@@ -710,6 +769,7 @@ media-controller {
 
     &.highlight {
         border: var(--rempx) solid var(--accent);
+        transition: var(--theme-transition);
     }
 
     & .thumbnail {
@@ -781,7 +841,9 @@ media-controller {
         }
         & :not(.title) {
             font-size: var(--text-small);
-            > :not(.icon) { font-weight: 300; }
+            > :not(.icon) { 
+                opacity: var(--opacity-dim);
+            }
         }
     }
 }
@@ -810,7 +872,8 @@ media-controller {
         display: block;
         padding: var(--vpad) var(--hpad);
         padding-bottom: 0;
-        color: var(--accent-dark);
+        color: var(--accent-weak);
+        transition: var(--theme-transition);
     }
 
     & .pages {
@@ -875,7 +938,7 @@ media-controller {
                 display: flex;
                 flex-flow: row wrap;
                 gap: calc(var(--gap-small) * 0.75);
-                font-weight: 300;
+                opacity: var(--opacity-dim);
 
                 & .icon {
                     font-weight: initial;
@@ -929,7 +992,7 @@ media-controller {
 }
 
 .nothing-found {
-    opacity: 0.4;
+    opacity: var(--opacity-dimmer);
     display: flex;
     height: 100%;
     line-height: 2rem;
@@ -959,6 +1022,7 @@ media-controller {
     display: none;
     padding: var(--hpad) calc(var(--hpad) * 2);
     background: var(--bg-front);
+    transition: var(--theme-transition);
 }
 
 /* HACK: POS search field refuses to naturally narrow past a certain point */

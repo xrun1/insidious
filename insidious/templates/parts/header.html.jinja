@@ -2,7 +2,7 @@
 {% set filter_is_default = search_filter == SearchFilter() %}
 <div id=header>
     <form
-        id=search
+        id=search-form
         hx-get=/search
         hx-select=.page-content
         hx-target=.page-content
@@ -105,9 +105,18 @@
             </fieldset>
         </div>
     </form>
+
+    <input type=checkbox 
+        id=alt-theme title="Toggle dark mode" onchange="saveTheme(this)"
+    >
+
     <script>
         function toggleFilters() {
             document.querySelector("#search-filters").classList.toggle("on")
         }
+        function saveTheme(checkbox) {
+            setToughCookie("alt-theme", checkbox.checked)
+        }
+        document.querySelector("#alt-theme").checked = getCookie("alt-theme")
     </script>
 </div>
