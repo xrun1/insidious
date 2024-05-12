@@ -1,4 +1,7 @@
+@import "./fonts/include.css";
+
 :root {
+    --fonts: Roboto, "Segoe UI", Helvetica, Arial, sans-serif;
     --rempx: calc(1rem / 16);
     --thumb-width: min(33svw, 10rem);
     --thumb-height: calc(10rem / (16 / 9));
@@ -72,6 +75,7 @@ body {
     transition: var(--theme-transition);
     color: var(--fg);
     background: var(--bg-back);
+    font-family: var(--fonts);
     font-size: var(--text-normal);
     padding: var(--gap);
     min-height: 100%;
@@ -222,7 +226,7 @@ img {
 
         &::after {
             content: "🌙\fe0e";
-            font-weight: 600;
+            font-weight: 700;
         }
 
         &:checked {
@@ -339,7 +343,7 @@ img {
         }
 
         & .current {
-            font-weight: 600;
+            font-weight: 700;
             &[type=search] {
                 font-weight: 500;
                 color: var(--accent-strong);
@@ -411,7 +415,7 @@ img {
         }
         & .user-id {
             > .at {
-                font-weight: 800; 
+                font-weight: 700; 
             }
         }
         & p {
@@ -858,7 +862,7 @@ media-controller {
             grid-column: 1 / -1;
         }
         & .followers > .icon {
-            font-weight: bold; 
+            font-weight: 700; 
         }
         & :not(.title) {
             font-size: var(--text-small);
