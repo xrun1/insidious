@@ -36,6 +36,7 @@
     --accent: hsl(235, 60%, 40%);
     --accent-weak: hsl(235, 75%, 30%);
     --accent-strong: hsl(235, 100%, 70%);
+    --discrete-border: hsl(235, 20%, 90%);
     --opacity-dim: 0.75;
     --opacity-dimmer: 0.5;
 
@@ -51,6 +52,7 @@
         --accent: hsl(220, 100%, 88%);
         --accent-weak: hsl(220, 80%, 88%);
         --accent-strong: hsl(220, 100%, 80%);
+        --discrete-border: hsl(240, 20%, 20%);
         --opacity-dim: 0.86;
         --opacity-dimmer: 0.56;
     }
@@ -167,6 +169,7 @@ img {
 
     > .card {
         box-shadow: var(--box-shadow-down);
+        border: var(--rempx) solid var(--discrete-border);
     }
 }
 
@@ -348,6 +351,8 @@ img {
             scale: 0.95;
             flex-grow: 1;
             margin-right: -0.5rem;
+            border: var(--rempx) solid var(--discrete-border);
+            border-radius: var(--radius);
         }
     }
 
@@ -910,6 +915,7 @@ media-controller {
         & .entry {
             grid-template-columns: var(--thumb-width);
             align-items: start;
+            border: var(--rempx) solid var(--discrete-border);
 
             & .info {
                 display: flex;
