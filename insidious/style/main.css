@@ -29,6 +29,10 @@
     --bg-back: #e1e1e1;
     --bg-front: #fcfcfc;
     --bg-buttons: #eee;
+    --scroll-track: var(--bg-front);
+    --scroll-thumb: #c6c6c6;
+    --scroll-nested-track: hsl(0, 0%, 96%);
+    --scroll-nested-thumb: hsl(0, 0%, 80%);
     --accent: hsl(235, 60%, 40%);
     --accent-weak: hsl(235, 75%, 30%);
     --accent-strong: hsl(235, 100%, 70%);
@@ -40,6 +44,10 @@
         --bg-back: hsl(240, 14%, 17%);
         --bg-front: hsl(240, 20%, 25%);
         --bg-buttons: hsl(240, 20%, 30%);
+        --scroll-track: hsl(240, 19%, 35%);
+        --scroll-thumb: hsl(240, 19%, 55%);
+        --scroll-nested-track: hsl(240, 25%, 35%);
+        --scroll-nested-thumb: hsl(240, 25%, 60%);
         --accent: hsl(220, 100%, 88%);
         --accent-weak: hsl(220, 80%, 88%);
         --accent-strong: hsl(220, 100%, 80%);
@@ -52,6 +60,10 @@ html {
     height: 100%;
     overflow-wrap: anywhere;
     font-size: 93.75%;  /* scale rem so that 16px/rem would be 15px/rem */
+
+    scrollbar-color: var(--scroll-thumb) var(--scroll-track); 
+    &::-webkit-scrollbar-track { background: var(--scroll-track); }
+    &::-webkit-scrollbar-thumb { background: var(--scroll-thumb); }
 }
 
 body {
@@ -67,6 +79,10 @@ body {
     justify-content: center;
     grid-template-rows: min-content;
     grid-template-columns: min(100%, var(--side) * 3 + var(--gap-small) * 2);
+
+    scrollbar-color: var(--scroll-nested-thumb) var(--scroll-nested-track); 
+    &::-webkit-scrollbar-track { background: var(--scroll-nested-track); }
+    &::-webkit-scrollbar-thumb { background: var(--scroll-nested-thumb); }
 
     &:has(#watch-page) {
         grid-template-columns: calc(var(--side) + min(
