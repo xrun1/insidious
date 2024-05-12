@@ -57,7 +57,7 @@
             <span class=legend>{{name}}</span>
         {% endmacro -%}
 
-        <div id=search-filters class={{"" if filter_is_default else "on"}}>
+        <div id=search-filters class='{{"" if filter_is_default else "on"}}'>
             <fieldset class=card>
                 {{legend("Type")}}
                 {{radio(Type.Any, checked=true)}}
