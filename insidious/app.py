@@ -22,7 +22,6 @@ from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
 from fastapi.responses import (
     HTMLResponse,
-    JSONResponse,
     PlainTextResponse,
     RedirectResponse,
     Response,
