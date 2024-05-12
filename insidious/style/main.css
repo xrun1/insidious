@@ -17,7 +17,7 @@
     --vpad: 0.375rem;
     --hpad: 0.5rem;
     --radius: 0.4rem;
-    --player-main-controls-height: 2.77rem;
+    --player-main-controls-height: 2.7rem;
     --player-time-range-height: 0.3rem;
     --player-controls-height: calc(
         var(--player-main-controls-height) + var(--player-time-range-height)
@@ -658,8 +658,10 @@ media-controller {
         backdrop-filter: none;
         white-space: nowrap;
         width: 100%;
+        height: var(--player-main-controls-height);
 
         &:has(> media-time-range) {
+            height: var(--player-time-range-height);
             backdrop-filter: unset !important;
             z-index: 10;
             --media-range-thumb-border: var(--rempx) solid rgba(0, 0, 0, 0.7);
