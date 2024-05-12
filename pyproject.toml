@@ -5,10 +5,24 @@
 [tool.poetry]
     name = "insidious"
     version = "0.1.0"
-    description = "YouTube front-end"
+    description = "Self-hosted YouTube front-end"
     authors = ["xrun1 <126838916+xrun1@users.noreply.github.com>"]
     license = "AGPL-3.0-or-later"
     readme = "README.md"
+    repository = "https://github.com/xrun1/insidious"
+    keywords = [
+        "youtube", "self-hosted", "front-end", "video",
+        "yt-dlp", "invidious", "youtube-dl"
+    ]
+    classifiers = [
+        "Development Status :: 4 - Beta",
+        "Environment :: Web Environment",
+        "Intended Audience :: End Users/Desktop",
+        "Natural Language :: English",
+        "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+        "Topic :: Multimedia :: Video :: Display",
+        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    ]
 
     [tool.poetry.scripts]
         insidious = "insidious.__main__:run"
