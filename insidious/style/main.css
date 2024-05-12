@@ -17,7 +17,7 @@
     --vpad: 0.375rem;
     --hpad: 0.5rem;
     --radius: 0.4rem;
-    --player-main-controls-height: 2.75rem;
+    --player-main-controls-height: 2.77rem;
     --player-time-range-height: 0.3rem;
     --player-controls-height: calc(
         var(--player-main-controls-height) + var(--player-time-range-height)
