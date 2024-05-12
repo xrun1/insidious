@@ -258,13 +258,17 @@ class PlaylistEntry(Entry):
 class ChannelEntry(Entry):
     entry_type: Literal["ChannelEntry"]
     uploader: str
-    uploader_id: str
-    uploader_url: str
+    uploader_id: str | None = None
+    uploader_url: str | None = None
+    channel_id: str | None = None
+    channel_url: str | None = None
     followers: int | None = Field(None, alias="channel_follower_count")
 
     @property
     def shortest_url(self) -> str | None:
-        return min((self.url, self.uploader_url), key=len)
+        urls = (self.url, self.channel_url, self.uploader_url)
+        urls = (u for u in urls if u)
+        return min(urls, key=len, default=None)
 
 
 # NOTE: Inherit Sequence first to avoid BaseModel overriding __iter__
