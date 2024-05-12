@@ -1,6 +1,11 @@
 """Usage: {NAME} [options] [HOST] [PORT]
 
-Start the {NAME} service on http://localhost:8000 by default.
+Start the {NAME} instance on http://localhost:8000 by default.
+To make it accessible from outside this machine, use "0.0.0.0" as HOST.
+
+Arguments:
+    HOST  Adress to bind the server to, 127.0.0.1 if unspecified.
+    PORT  Port to listen on, 8000 if unspecified.
 
 Options:
     -r DIR, --reload DIR  Restart {NAME} when source code files in DIR change.
