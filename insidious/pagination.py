@@ -269,12 +269,17 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
 
         with report(DownloadError):
             filter = SearchFilter(type=Type.Playlist)
-            got = await YTDLP.search(query, filter)
-            log.info("Related: using %d playlists for %r", len(got), query)
+            search = await YTDLP.search(query, filter)
+            found = 0
 
-            for entry in got.entries:
+            for entry in search.entries:
                 if isinstance(entry, PlaylistEntry):
                     self.batch_playlists[entry.url] = (entry, weight)  # dedup
+                    found += 1
+                    if found >= 3:  # noqa: PLR2004
+                        break
+
+        log.info("Related: using %d playlists for %r", found, query)
 
     async def process_playlists(self) -> None:
         """Register deduplicated by dictionary playlists previously found."""
