@@ -11,7 +11,7 @@
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
         pyPkgs = pkgs.python311Packages;
         construct21068 = pyPkgs.construct.overrideAttrs {
-            verson = "2.10.68";
+            version = "2.10.68";
             src = inputs.construct;
         };
         pymp4 = pyPkgs.buildPythonPackage {

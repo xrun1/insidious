@@ -27,10 +27,13 @@
         backoff = "^2.2.1"
         appdirs = "^1.4.4"
         websockets = "^12.0"
-        pymp4 = { git = "https://github.com/xrun1/pymp4.git" }
-        construct = "==2.10.68"
         lz4 = "^4.3.3"
         pure-protobuf = "^3.1.0"
+        construct = "==2.10.68"
+
+        [tool.poetry.dependencies.pymp4]
+            git = "https://github.com/devine-dl/pymp4.git"
+            branch = "construct-2.10-patch"
 
     [tool.poetry.group.dev.dependencies]
         ruff = "0.1.8"
