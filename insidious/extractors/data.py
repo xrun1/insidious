@@ -507,3 +507,4 @@ class Comments(BaseModel):
     data: list[Comment] = Field(alias="comments")
     total: int | None = Field(None, alias="commentCount")
     continuation_id: str | None = Field(None, alias="continuation")
+    disabled: bool = False

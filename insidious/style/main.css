@@ -988,6 +988,10 @@ media-controller {
     align-items: flex-start;
     gap: var(--gap-small) 0;
 
+    & .comments-off {
+        opacity: var(--opacity-dimmer);
+    }
+
     & .comment {
         display: flex;
         flex-flow: row nowrap;

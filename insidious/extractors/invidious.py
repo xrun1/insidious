@@ -44,7 +44,16 @@ class InvidiousClient(YoutubeClient):
             params["continuation"] = continuation_id
 
         reply = await self._httpx.get(url, params=params)
-        reply.raise_for_status()
+        try:
+            reply.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:  # noqa: PLR2004
+                return Comments(
+                    comments=[], commentCount=0, continuation=None,
+                    disabled=True,
+                )
+            raise
+
         return Comments.model_validate(reply.json())
 
     @property

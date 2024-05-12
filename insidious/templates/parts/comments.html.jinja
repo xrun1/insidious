@@ -1,4 +1,6 @@
-{% if info and info.total %}
+{% if info and info.disabled %}
+    <h2 class=comments-off>Comments disabled</h2>
+{% elif info and info.total %}
     <h2 class=number raw="{{info.total}}" suffix=" comments"></h2>
 {% endif %}
 
