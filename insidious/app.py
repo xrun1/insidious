@@ -22,6 +22,8 @@ from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
 from fastapi.responses import (
     HTMLResponse,
+    JSONResponse,
+    PlainTextResponse,
     RedirectResponse,
     Response,
     StreamingResponse,
@@ -542,6 +544,13 @@ async def make_variant_m3u8(
             mp4_data = reply.aiter_bytes()
             text = await variant_playlist(api % quote(format.url), mp4_data)
             return Response(text, media_type=HLS_MIME)
+
+
+@app.get("/refresh_hls")
+async def refresh_hls(video_id: str) -> PlainTextResponse:
+    # googlevideo links have a ~6h lifetime
+    video = await YTDLP.video(video_id, skip_cache=True)
+    return PlainTextResponse(video.manifest_url)
 
 
 @app.get("/proxy/get", response_class=Response)

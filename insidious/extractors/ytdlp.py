@@ -168,10 +168,12 @@ class CacheFile:
 
 
 class CachedYoutubeDL(YoutubeDL):
+    # WARN: not threadsafe
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._newly_written: list[CacheFile] | None = None
         self._urlopen_callback: RequestCallback | None = None
+        self._skip_cache: bool = False
 
     @override
     def urlopen(
@@ -187,7 +189,7 @@ class CachedYoutubeDL(YoutubeDL):
             self._urlopen_callback(req)
 
         if (file := CacheFile.from_request(req)):
-            if (resp := file.response()):
+            if not self._skip_cache and (resp := file.response()):
                 return resp
 
             file.write(resp := super().urlopen(req), MAX_CACHE_TIME)
@@ -207,7 +209,6 @@ class CachedYoutubeDL(YoutubeDL):
 
     @contextmanager
     def adjust_cache_expiration(self) -> Iterator[ExpireIn]:
-        # WARN: not threadsafe
         self._newly_written = batch = []
 
         def make_expire_in(seconds: float):
@@ -218,6 +219,14 @@ class CachedYoutubeDL(YoutubeDL):
             yield make_expire_in
         finally:
             self._newly_written = None
+
+    @contextmanager
+    def skip_cache(self, skip: bool = True) -> Iterator[None]:
+        self._skip_cache = skip
+        try:
+            yield
+        finally:
+            self._skip_cache = False
 
     @staticmethod
     def prune_cache(size_limit: int = 1024 * 1024 * 512) -> None:
@@ -306,8 +315,10 @@ class YtdlpClient(YoutubeClient):
         return Playlist.model_validate((await self._get(path, page))[0])
 
     @override
-    async def video(self, id: str) -> Video:
-        data, expire_in = await self._get(f"watch?v={id}", process=True)
+    async def video(self, id: str, skip_cache: bool = False) -> Video:
+        data, expire_in = await self._get(
+            f"watch?v={id}", process=True, skip_cache=skip_cache,
+        )
 
         if "concurrent_view_count" in data:
             video = PartialVideo.model_validate(data)
@@ -408,7 +419,11 @@ class YtdlpClient(YoutubeClient):
         return data | {"entries": gathered}
 
     async def _get(
-        self, path: str, page: int = 1, process: bool = False,
+        self,
+        path: str,
+        page: int = 1,
+        process: bool = False,
+        skip_cache: bool = False,
     ) -> tuple[RawData, ExpireIn]:
 
         loop = asyncio.get_event_loop()
@@ -417,10 +432,11 @@ class YtdlpClient(YoutubeClient):
         @backoff.on_exception(backoff.expo, NoDataReceived, max_tries=10)
         def task():
             with self._ytdl.adjust_cache_expiration() as expire_in:
-                if (data := self._ytdl.extract_info(
-                    url, process=process, download=False,
-                )) is None:
-                    raise NoDataReceived
+                with self._ytdl.skip_cache(skip_cache):
+                    if (data := self._ytdl.extract_info(
+                        url, process=process, download=False,
+                    )) is None:
+                        raise NoDataReceived
 
                 if "entries" not in data:
                     return (data, expire_in)

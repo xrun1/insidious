@@ -455,6 +455,36 @@ img {
         -webkit-transform: rotateZ(360deg);
         transform: rotateZ(360deg);
         box-shadow: var(--box-shadow-strong);
+        position: relative;
+
+        & #player-crash-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 99999;
+            background: hsla(0, 0%, 0%, 0.85);
+            flex-flow: column nowrap;
+            justify-content: center;
+            align-items: center;
+            gap: var(--gap);
+            font-size: var(--text-bigger);
+
+            .error {
+                padding: var(--vpad) var(--hpad);
+                background: black;
+                font-size: var(--text-small);
+                max-height: 80%;
+                max-width: 100%;
+                overflow: auto;
+            }
+        }
+
+        &.crashed #player-crash-overlay {
+            display: flex;
+        }
     }
 
     & #video-info {
