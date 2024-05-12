@@ -1,9 +1,9 @@
 # ![Logo](./logo.png) Insidious
 
-[Features](#features) |
-[pip setup](#local-installation-with-pip) |
-[Nix setup](#direct-run-with-nix) |
-[NixOS setup](#system-service-on-nixos) |
+[Features](#features) ⬥
+[pip setup](#local-installation-with-pip) ⬥
+[Nix setup](#direct-run-with-nix) ⬥
+[NixOS setup](#system-service-on-nixos) ⬥
 [Usage](#usage)
 
 Self-hosted alternative YouTube front-end.
