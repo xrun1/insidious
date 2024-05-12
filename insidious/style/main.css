@@ -39,7 +39,7 @@
     --scroll-nested-thumb: hsl(0, 0%, 80%);
     --accent: hsl(235, 60%, 40%);
     --accent-weak: hsl(235, 75%, 30%);
-    --accent-strong: hsl(235, 100%, 70%);
+    --accent-strong: hsl(235, 100%, 80%);
     --discrete-border: hsl(235, 20%, 90%);
     --opacity-dim: 0.75;
     --opacity-dimmer: 0.5;
@@ -699,7 +699,7 @@ media-controller {
     & media-cast-button[mediaiscasting],
     & media-captions-menu-button[mediasubtitlesshowing]
     {
-        --media-primary-color: cyan;
+        --media-primary-color: var(--accent-strong);
     }
 
     & .no-choice, media-captions-menu-button:not([mediasubtitleslist]) {
