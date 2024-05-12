@@ -642,13 +642,13 @@ media-controller {
         }
     }
 
-    &:not([mediahasplayed]), &[mediaended] {
+    &[mediaended] {
         > media-loading-indicator {
             --media-control-display: none;
         }
     }
 
-    &[mediahasplayed]:not([mediaended]) {
+    &[medialoading], &[mediahasplayed]:not([mediaended]) {
         > media-play-button[slot=centered-chrome] {
             --media-control-display: none;
         }
