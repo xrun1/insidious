@@ -8,11 +8,12 @@
 
     <div id=watch-page class=page-content>
         <div id=player-area class=card>
+            {% set fixed_ratio = [1, info.aspect_ratio] | max %}
             <div
                 id=player-and-controls
                 style="background: url('{{info.best_thumbnail.fixed_url}}')"
             >
-                <div id=player-holder style="aspect-ratio: {{info.aspect_ratio}}">
+                <div id=player-holder style="aspect-ratio: {{fixed_ratio}}">
                     {% include "parts/player.html.jinja" %}
                 </div>
             </div>
