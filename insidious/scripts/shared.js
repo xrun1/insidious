@@ -1,3 +1,6 @@
+// Copyright Insidious authors <https://github.com/xrun1/insidious>
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 const lang = navigator.language
 const thinNumberFormatter = new Intl.NumberFormat(lang , {notation: "compact"})
 const numberFormatter = new Intl.NumberFormat(lang)

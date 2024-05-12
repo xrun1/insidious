@@ -1,3 +1,6 @@
+# Copyright Insidious authors <https://github.com/xrun1/insidious>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 import operator
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from dataclasses import dataclass

@@ -1,3 +1,6 @@
+# Copyright Insidious authors <https://github.com/xrun1/insidious>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # Can't have a "click to view replies" feature if we rely only on yt-dlp for
 # comments because it doesn't provide any way to work with continuation IDs
 

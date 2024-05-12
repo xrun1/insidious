@@ -1,3 +1,6 @@
+# Copyright Insidious authors <https://github.com/xrun1/insidious>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 """Usage: {NAME} [options] [HOST] [PORT]
 
 Start the {NAME} instance on http://localhost:8000 by default.
