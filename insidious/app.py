@@ -13,9 +13,10 @@ from datetime import timedelta
 from functools import reduce
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeAlias
-from typing_extensions import override
 from urllib.parse import quote
 
+import backoff
+import httpx
 import jinja2
 from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
@@ -27,6 +28,7 @@ from fastapi.responses import (
 )
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from typing_extensions import override
 from watchfiles import awatch
 
 from . import DISPLAY_NAME, NAME
@@ -561,7 +563,10 @@ async def proxy(
 
     req = HTTPX.build_request("GET", url, headers=headers)
     with httpx_to_fastapi_errors():
-        reply = await HTTPX.send(req, stream=True)
+        e = (httpx.NetworkError, httpx.TimeoutException, httpx.HTTPStatusError)
+        reply = await backoff.on_exception(
+            backoff.expo, e, max_tries=5, backoff_log_level=log.WARNING,
+        )(HTTPX.send)(req, stream=True)
         reply.raise_for_status()
 
     mime = reply.headers.get("content-type")
