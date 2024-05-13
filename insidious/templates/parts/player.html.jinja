@@ -187,7 +187,6 @@
 
     function onLevelsUpdate(event, data) {
         const levels = data.levels
-        console.log("levels:", levels)
         let opts = Object.fromEntries(levels.map(lv => [levelName(lv), lv]))
 
         opts = Object.values(opts).reverse().map(lv => createQualityOption(
@@ -207,7 +206,6 @@
         while (header.nextSibling) header.nextSibling.remove()
         for (const opt of opts) qualities.appendChild(opt)
         haveClass(qualityButton, "no-choice", opts.length < 2)
-        opts.forEach(o => console.log(o.value, o.ariaChecked, o.checked))
 
         const saved = getCookie("quality")
         const choice = saved === null ? auto : (
