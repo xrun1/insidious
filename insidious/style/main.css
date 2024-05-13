@@ -175,6 +175,7 @@ button, input[type=submit] {
 img {
     border-radius: var(--radius);
     object-fit: cover;
+    background: black;
 
     &[srcset=""] {
         opacity: 0;
