@@ -7,11 +7,17 @@ from asyncio import BoundedSemaphore
 from collections import defaultdict
 from typing import Any
 
+import httpx
 from fastapi.datastructures import URL
 from httpx import USE_CLIENT_DEFAULT, AsyncClient, Request, Response
 from typing_extensions import override
 
 PARALLEL_REQUESTS_PER_HOST = 16
+HTTPX_BACKOFF_ERRORS = (
+    httpx.NetworkError,
+    httpx.TimeoutException,
+    httpx.HTTPStatusError,
+)
 
 _GOOGLE_DOMAINS = {
     "ytimg.com", "googlevideo.com", "googleusercontent.com", "ggpht.com",

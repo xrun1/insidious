@@ -60,7 +60,7 @@ from .extractors.filters import (
 from .extractors.invidious import INVIDIOUS
 from .extractors.markup import yt_to_html
 from .extractors.ytdlp import YTDLP, CachedYoutubeDL
-from .net import HttpClient
+from .net import HTTPX_BACKOFF_ERRORS, HttpClient
 from .pagination import Pagination, RelatedPagination, T
 from .streaming import (
     HLS_ALT_MIME,
@@ -574,9 +574,9 @@ async def proxy(
 
     req = HTTPX.build_request("GET", url, headers=headers)
     with httpx_to_fastapi_errors():
-        e = (httpx.NetworkError, httpx.TimeoutException, httpx.HTTPStatusError)
         reply = await backoff.on_exception(
-            backoff.expo, e, max_tries=5, backoff_log_level=log.WARNING,
+            backoff.expo, HTTPX_BACKOFF_ERRORS, max_tries=5,
+            backoff_log_level=log.WARNING,
         )(HTTPX.send)(req, stream=True)
         reply.raise_for_status()
 

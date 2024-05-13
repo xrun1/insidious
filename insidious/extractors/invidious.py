@@ -13,7 +13,7 @@ import backoff
 import httpx
 from typing_extensions import override
 
-from insidious.net import HttpClient
+from insidious.net import HTTPX_BACKOFF_ERRORS, HttpClient
 
 from .client import YoutubeClient
 from .data import Comments
@@ -28,7 +28,7 @@ class InvidiousClient(YoutubeClient):
     @override
     @backoff.on_exception(
         backoff.constant,
-        (httpx.NetworkError, httpx.TimeoutException, httpx.HTTPStatusError),
+        HTTPX_BACKOFF_ERRORS,
         max_tries = 20,
         interval = 0,
         backoff_log_level = logging.WARNING,
