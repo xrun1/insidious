@@ -257,6 +257,10 @@ class PlaylistEntry(Entry):
     def load_url(self) -> str | None:
         return f"/load_playlist_entry?video_id={self.id}"
 
+    @property
+    def rss_url(self) -> str:
+        return f"/feeds/videos.xml?playlist_id={self.id}"
+
 
 class ChannelEntry(Entry):
     entry_type: Literal["ChannelEntry"]
@@ -483,6 +487,10 @@ class Channel(Search, HasThumbnails):
     tab: str = Field(alias="webpage_url_basename", default="featured")
     followers: int | None = Field(None, alias="channel_follower_count")
     uploader_id: str | None = None
+
+    @property
+    def rss_url(self) -> str:
+        return f"/feeds/videos.xml?channel_id={self.id}"
 
 
 class Comment(HasThumbnails):
