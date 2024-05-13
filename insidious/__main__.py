@@ -3,7 +3,7 @@
 
 """Usage: {NAME} [options] [HOST] [PORT]
 
-Start the {NAME} instance on http://localhost:8000 by default.
+Start the {DNAME} instance on http://localhost:8000 by default.
 To make it accessible from outside this machine, use "0.0.0.0" as HOST.
 
 Arguments:
@@ -11,9 +11,9 @@ Arguments:
     PORT  Port to listen on, 8000 if unspecified.
 
 Options:
-    -r DIR, --reload DIR  Restart {NAME} when source code files in DIR change.
+    -r DIR, --reload DIR  Restart {DNAME} when source code files in DIR change.
     -h, --help            Show this help and exit.
-    --version             Show the {NAME} version and exit.
+    --version             Show the {DNAME} version and exit.
 """
 
 import os
@@ -26,7 +26,7 @@ from . import DISPLAY_NAME, NAME, __version__
 
 
 def run() -> None:
-    doc = __doc__.format(NAME=DISPLAY_NAME)
+    doc = __doc__.format(NAME=NAME, DNAME=DISPLAY_NAME)
     args = docopt.docopt(doc, version=__version__)
     dir = args["--reload"]
     if dir:
