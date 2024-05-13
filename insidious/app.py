@@ -533,7 +533,6 @@ async def make_master_m3u8(request: Request, video_id: str) -> Response:
 async def make_variant_m3u8(
     request: Request, video_id: str, format_id: str,
 ) -> Response:
-    # WARN: relying on the implicit caching mechanism here
     video = await YTDLP.video(video_id)
     format = next(f for f in video.formats if f.id == format_id)
     api = f"{request.base_url}proxy/get?url=%s"
