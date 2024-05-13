@@ -67,6 +67,17 @@
     }
 }
 
+@keyframes pop-in {
+    0% {
+        scale: 0;
+        opacity: 0;
+    }
+    100% {
+        scale: 1;
+        opacity: 1;
+    }
+}
+
 html {
     height: 100%;
     overflow-wrap: anywhere;
@@ -847,6 +858,10 @@ media-controller {
     gap: var(--gap-small);
     align-content: center;
 
+    &:not(.playlist:not(.loading)) {
+        animation: pop-in 0.3s ease-out;
+    }
+
     &.highlight {
         border: var(--rempx) solid var(--accent);
         transition: var(--theme-transition);
@@ -1006,6 +1021,7 @@ media-controller {
         display: flex;
         flex-flow: row nowrap;
         gap: var(--gap-small);
+        animation: pop-in 0.3s ease-out;
 
         & .avatar {
             min-width: 2.5rem;

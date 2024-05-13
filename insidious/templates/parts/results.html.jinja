@@ -51,7 +51,7 @@
             hx-get="{{pagination.next_url}}"
             hx-select=".page > *"
             hx-target="next .lazy-loader"
-            hx-swap="outerHTML ignoreTitle:true"
+            hx-swap="outerHTML ignoreTitle:true settle:1s"
             hx-on::before-request="loadButtonSaveCurrentScroll(this)"
             hx-on::after-request="loadButtonRestoreScroll(this)"
         ><span class=icon>➕{{no_emoji}}</span> More videos</button>

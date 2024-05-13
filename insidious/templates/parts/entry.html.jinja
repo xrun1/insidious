@@ -12,6 +12,7 @@
         {{'highlight' if highlight else ''}}
         {{'featured' if feat else ''}}
         {{entry.entry_type.lower().removesuffix('entry')}}
+        {{'loading' if entry.load_url else ''}}
     "
     onmouseenter="runHoverSlideshow(this)"
     onmouseleave="stopHoverSlideshow(this)"
