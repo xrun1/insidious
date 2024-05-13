@@ -33,6 +33,7 @@ Supported YouTube pages:
 - Shorts: `/shorts/ID` (uses standard interface)
 - Clips: `/clip/ID`
 - Searches: `/results` (including filtering/sorting)
+- Hashtags: `/hashtag/TAG`
 - Users: `/user/ID`, `/user/ID/TAB`, `/user/ID/search`
 - Playlists: `/playlist`
 - Channels:
