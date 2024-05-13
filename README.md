@@ -120,6 +120,8 @@ See [os.nix](./os.nix) for options beyond `enable`.
 
 ## Usage
 
+An up-to-date browser (released after December 2023) is required.
+
 - Go to the address shown when you start the server, <http://localhost:8000> by
 default
 - The <https://youtube.com> part of any URL can be replaced by the
