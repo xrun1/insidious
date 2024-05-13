@@ -18,7 +18,7 @@ in {
         port = lib.mkOption {
             type = with lib.types; port;
             description = ''The port ${displayName} should listen on.'';
-            default = 8000;
+            default = 3030;
         };
         openFirewall = lib.mkOption {
             type = with lib.types; bool;

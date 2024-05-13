@@ -123,8 +123,8 @@ See [os.nix](./os.nix) for options beyond `enable`.
 
 An up-to-date browser (released after December 2023) is required.
 
-- Go to the address shown when you start the server, <http://localhost:8000> by
+- Go to the address shown when you start the server, <http://localhost:3030> by
 default
 - The <https://youtube.com> part of any URL can be replaced by the
   given address 
-- For <https://youtu.be/ID> links, change to e.g. <http://localhost:8000/v/ID>.
+- For <https://youtu.be/ID> links, change to e.g. <http://localhost:3030/v/ID>.
