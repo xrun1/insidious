@@ -1,7 +1,13 @@
 {% if info and info.disabled %}
-    <h2 class="comments-off card">Comments disabled</h2>
+    <h2 class="comments-off card">
+        <span class=icon>{{no_emoji}}</span>
+        Comments disabled
+    </h2>
 {% elif info and info.total %}
-    <h2 class="number card" raw="{{info.total}}" suffix=" comments"></h2>
+    <h2 class=card>
+        <span class=icon>{{no_emoji}}</span>
+        <span class=number raw="{{info.total}}" suffix=" comments">
+    </h2>
 {% endif %}
 
 {% for comment in pagination.items %}
