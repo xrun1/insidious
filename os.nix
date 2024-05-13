@@ -33,7 +33,7 @@ in {
         group = lib.mkOption {
             type = with lib.types; str;
             default = name;
-            description = "Group account under which ${displayName} runs.";
+            description = "Group under which ${displayName} runs.";
         };
         home = lib.mkOption {
             type = with lib.types; path;

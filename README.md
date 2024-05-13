@@ -18,7 +18,7 @@ Self-hosted alternative YouTube front-end.
 - Loads video data directly from Google servers at full speed,
   HLS and DASH supported
 - No ads, no tracking, no YouTube scripts and cookies
-- Watch age-gated videos without signing-in
+- Watch age-gated videos without signing in
 - Directly accessible player controls with all-time visibility
   outside fullscreen
 - Custom suggestions algorithm based on user-generated playlists, delivers
