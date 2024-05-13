@@ -1,5 +1,7 @@
 {% set search_filter = search_filter or SearchFilter() %}
 {% set filter_is_default = search_filter == SearchFilter() %}
+<div id=loading-indicator></div>
+
 <div id=header>
     <form
         id=search-form
