@@ -17,6 +17,7 @@ HTTPX_BACKOFF_ERRORS = (
     httpx.NetworkError,
     httpx.TimeoutException,
     httpx.HTTPStatusError,
+    httpx.RemoteProtocolError,
 )
 
 _GOOGLE_DOMAINS = {
