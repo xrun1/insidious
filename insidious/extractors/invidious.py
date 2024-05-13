@@ -51,10 +51,11 @@ class InvidiousClient(YoutubeClient):
             reply.raise_for_status()
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:  # noqa: PLR2004
-                return Comments(
-                    comments=[], commentCount=0, continuation=None,
-                    disabled=True,
-                )
+                if not continuation_id:
+                    return Comments(
+                        comments=[], commentCount=0, continuation=None,
+                        disabled=True,
+                    )
             raise
 
         return Comments.model_validate(reply.json())
