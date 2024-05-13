@@ -129,6 +129,10 @@ a {
     text-decoration-line: none;
     color: var(--accent);
     transition: var(--theme-transition);
+
+    > .icon:only-child {
+        color: var(--accent) !important;
+    }
 }
 
 h1 {
@@ -397,7 +401,7 @@ img {
 
     /* These links are useful only when the channel/playlist page is embedded,
        they point to the full page */
-    > .avatar-info > a, > .avatar-info > .info > a {
+    > .avatar-info > a, > .avatar-info > .info > a:not(.rss) {
         pointer-events: none;
         cursor: default;
         text-decoration: none;
@@ -556,7 +560,7 @@ img {
                         justify-content: right;
                         gap: calc(var(--gap-small) / 4);
                     }
-                    & .channel, .date, .views {
+                    & .channel, .date, .views, .rss {
                         display: none;
                     }
                 }

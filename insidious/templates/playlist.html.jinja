@@ -56,6 +56,14 @@
                         </span>
                     {% endif %}
 
+                    {% if info.views %}
+                        <span class=views title=Views>
+                            <span class=icon>👁{{no_emoji}}</span>
+                            <span class=compact-number raw="{{info.views}}">
+                            </span>
+                        </span>
+                    {% endif %}
+
                     {% if info.last_change %}
                         <span class=date title="Last modification date">
                             <span class=icon>↻{{no_emoji}}</span>
@@ -65,13 +73,9 @@
                         </span>
                     {% endif %}
 
-                    {% if info.views %}
-                        <span class=views title=Views>
-                            <span class=icon>👁{{no_emoji}}</span>
-                            <span class=compact-number raw="{{info.views}}">
-                            </span>
-                        </span>
-                    {% endif %}
+                    <a class=rss href="{{info.rss_url}}" title="RSS Feed">
+                        <span class=icon>{{no_emoji}}</span>
+                    </a>
 
                     <script>processAllText()</script>
                 </div>
