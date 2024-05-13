@@ -992,6 +992,10 @@ media-controller {
             align-items: start;
             border: var(--rempx) solid var(--discrete-border);
 
+            .thumbnail {
+                height: var(--thumb-height);
+            }
+
             & .info {
                 display: flex;
                 flex-flow: row wrap;
