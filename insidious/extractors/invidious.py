@@ -58,7 +58,11 @@ class InvidiousClient(YoutubeClient):
                     )
             raise
 
-        return Comments.model_validate(reply.json())
+        comments = Comments.model_validate(reply.json())
+        if not comments.data and not continuation_id:
+            comments.total = 0
+
+        return comments
 
     @property
     async def _api(self) -> str:

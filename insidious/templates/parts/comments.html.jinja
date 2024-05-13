@@ -3,7 +3,7 @@
         <span class=icon>{{no_emoji}}</span>
         Comments disabled
     </h2>
-{% elif info and info.total %}
+{% elif info and info.total is not none %}
     <h2 class=card>
         <span class=icon>{{no_emoji}}</span>
         <span class=number raw="{{info.total}}" suffix=" comments">
