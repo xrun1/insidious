@@ -78,12 +78,10 @@
                         <span class=number raw="{{info.views}}"></span>
                     </div>
 
-                    {% if info.likes is not none %}
-                        <div class=likes title="Likes">
-                            <span class=icon>👍{{no_emoji}}</span>
-                            <span class=number raw="{{info.likes}}"></span>
-                        </div>
-                    {% endif %}
+                    <div class=likes title="Likes">
+                        <span class=icon>👍{{no_emoji}}</span>
+                        <span class=number raw="{{info.likes or 0}}"></span>
+                    </div>
 
                     <div hx-get="{{info.dislikes_url}}" hx-trigger=load>
                         {% include "parts/dislikes.html.jinja" %}

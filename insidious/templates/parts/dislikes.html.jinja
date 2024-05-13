@@ -1,6 +1,4 @@
 <div class=dislikes title="Dislikes">
     <span class=icon>👎{{no_emoji}}</span>
-    {% if dislike_count %}
-        <span class=number raw="{{dislike_count}}"></span>
-    {% endif %}
+    <span class=number raw="{{dislike_count or 0}}"></span>
 </div>
