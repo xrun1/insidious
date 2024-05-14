@@ -1,13 +1,18 @@
-let controller = document.getElementById("controller")
-let media = document.getElementById("hls")
+function controller() {
+    return document.getElementById("controller")
+}
 
-let seekBack =
-    parseInt(controller.getAttribute("keyboardbackwardseekoffset") || 10)
+function media() {
+    return document.getElementById("hls")
+}
 
-let seekForward =
-    parseInt(controller.getAttribute("keyboardforwardseekoffset") || 10)
+function seek(step) {
+    const attr = controller().getAttribute("keyboardbackwardseekoffset")
+    return media().currentTime += parseInt(attr || 10) * step
+}
 
 function seekFrames(count) {
+    const media = media()
     const fps = media.api.levels[media.api.currentLevel].attrs["FRAME-RATE"]
     media.currentTime += (1 / fps) * count
 }
@@ -20,7 +25,7 @@ function cycleArray(array, step, currentPredicate) {
 function cycleSpeed(step) {
     const menu = document.querySelector("media-playback-rate-menu")
     const rates = Array.from(menu.rates).map(parseFloat)
-    media.playbackRate = cycleArray(rates, step, r => {
+    media().playbackRate = cycleArray(rates, step, r => {
         return r <= menu.mediaPlaybackRate
     })
 }
@@ -29,15 +34,19 @@ function cycleChapter(step) {
     const timeline = document.querySelector("media-time-range")
     const chapters = timeline.mediaChaptersCues
     if (! chapters) return false
-    media.currentTime = cycleArray(chapters, step, ch => {
+    media().currentTime = cycleArray(chapters, step, ch => {
         return ch.startTime <= timeline.mediaCurrentTime
     }).startTime
     return true
 }
 
+function click(selector) {
+    document.querySelector(selector)?.click()
+}
+
+
 function playEntry(entrySelector) {
-    const entry = document.querySelector(entrySelector + " .title")
-    if (entry) entry.click()
+    click(entrySelector + " .title")
 }
 
 function playlistPrevious() {
@@ -52,10 +61,23 @@ function playFirstSuggestion() {
     return playEntry("#related .entry")
 }
 
+export function setupPlayer() {
+    controller().hotkeys.add(
+        "nospace", "nok", "nom", "nof", "noc", "noarrowleft", "noarrowright",
+    )
+}
+
 bindKeys({
     // YouTube: https://support.google.com/youtube/answer/7631406?hl=en
-    j: _ => { media.currentTime -= seekBack },
-    l: _ => { media.currentTime += seekBack },
+    [" "]: _ => { click("media-play-button") },
+    k: _ => { click("media-play-button") },
+    m: _ => { click("media-mute-button") },
+    f: _ => { click("media-fullscreen-button") },
+    c: _ => { click("media-captions-button") },
+    j: _ => { seek(-1) },
+    l: _ => { seek(1) },
+    ArrowLeft: _ => { seek(-1) },
+    ArrowRight: _ => { seek(1) },
     [","]: _ => { seekFrames(-1) },
     ["."]: _ => { seekFrames(1) },
     ["<"]: _ => { cycleSpeed(-1) },
@@ -64,17 +86,12 @@ bindKeys({
     ["N"]: _ => { playlistNext() || playFirstSuggestion() },
 
     // Additional
-    h: () => { media.currentTime -= seekBack },  // vim good
-    H: _ => { media.currentTime -= seekBack * 6 },
-    J: _ => { media.currentTime -= seekBack * 6 },
-    L: _ => { media.currentTime += seekBack * 6 },
-    ["-"]: _ => { media.volume -= 0.05 },
-    ["+"]: _ => { media.volume += 0.05 },
+    h: () => { seek(-1) },  // vim good
+    H: _ => { seek(-6) },
+    J: _ => { seek(-6) },
+    L: _ => { seek(6) },
+    ["-"]: _ => { media().volume -= 0.05 },
+    ["+"]: _ => { media().volume += 0.05 },
     ["p"]: _ => { cycleChapter(-1) },
     ["n"]: _ => { cycleChapter(1) },
-
-}, ev => {
-    // Already set: https://www.media-chrome.org/docs/en/keyboard-shortcuts
-    if (ev.key == " ") ev.preventDefault()
-    controller.keyboardShortcutHandler(ev)
 })

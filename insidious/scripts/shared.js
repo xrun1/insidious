@@ -172,7 +172,7 @@ function loadButtonRestoreScroll(button) {
     window.scroll(button.previousScrollX, button.previousScrollY)
 }
 
-function bindKeys(handlers, fallback=null, element=document, noFields=true) {
+function bindKeys(handlers, element=document, noFields=true) {
     const fields = ["INPUT", "TEXTAREA"]
 
     element.addEventListener("keydown", ev => {
@@ -185,8 +185,6 @@ function bindKeys(handlers, fallback=null, element=document, noFields=true) {
             ev.preventDefault()
             return handlers[ev.key](ev)
         }
-
-        if (fallback) return fallback(ev)
     })
 }
 
@@ -195,4 +193,4 @@ bindKeys({
 })
 bindKeys({
     ["Escape"]: _ => { document.activeElement.blur() },
-}, null, document, false)
+}, document, false)
