@@ -4,7 +4,8 @@
 [pip setup](#local-installation-with-pip) ⬥
 [Nix setup](#direct-run-with-nix) ⬥
 [NixOS setup](#system-service-on-nixos) ⬥
-[Usage](#usage)
+[Usage](#usage) ⬥
+[Shortcuts](#keyboard-shortcuts)
 
 Self-hosted alternative YouTube front-end.
 
@@ -128,3 +129,31 @@ default
 - The <https://youtube.com> part of any URL can be replaced by the
   given address 
 - For <https://youtu.be/ID> links, change to e.g. <http://localhost:3030/v/ID>.
+
+
+### Keyboard shortcuts
+
+Key | Action
+--- | ---
+`/` | Focus search bar
+`Escape` | Leave search bar
+`k`, `Space` | Play/pause
+`f` | Toggle fullscreen
+`c` | Toggle subtitles if available
+`m` | Toggle mute
+`-` | Reduce volume 
+`+` | Increase volume 
+`<` | Reduce playback speed
+`>` | Increase playback speed
+`h`, `j`, `Left` | Seek back 5s
+`l`, `Right` | Seek forward 5s
+`H`, `J` | Seek back 30s
+`L` | Seek forward 30s
+`,` | Seek to previous frame
+`.` | Seek to next frame
+`p` | Seek to previous chapter
+`n` | Seek to next chapter
+`P` | Go to previous playlist video
+`N` | Go to next playlist video /next suggestion 
+
+These shortcuts are always active without needing player focus.
