@@ -337,7 +337,7 @@ class Video(VideoEntry):
     height: int | None = None
     aspect_ratio: float | None = None
     fps: float | None = None
-    likes: int | None = Field(alias="like_count")
+    likes: int | None = Field(None, alias="like_count")
     formats: list[Format]
     chapters: list[Chapter] | None = None
     clip_start: float | None = Field(None, alias="section_start")
