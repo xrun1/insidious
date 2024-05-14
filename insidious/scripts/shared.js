@@ -171,3 +171,27 @@ function loadButtonSaveCurrentScroll(button) {
 function loadButtonRestoreScroll(button) {
     window.scroll(button.previousScrollX, button.previousScrollY)
 }
+
+function bindKeys(handlers, fallback=null, element=document, noFields=true) {
+    const fields = ["INPUT", "TEXTAREA"]
+
+    element.addEventListener("keydown", ev => {
+        if (noFields && fields.includes(document.activeElement.tagName))
+            return
+
+        if (ev.key in handlers) {
+            ev.stopPropagation()
+            ev.preventDefault()
+            return handlers[ev.key](ev)
+        }
+
+        if (fallback) return fallback(ev)
+    })
+}
+
+bindKeys({
+    ["/"]: _ => { document.querySelector("input[type=search]").focus() },
+})
+bindKeys({
+    ["Escape"]: _ => { document.activeElement.blur() },
+}, null, document, false)
