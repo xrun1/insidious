@@ -176,6 +176,7 @@ function bindKeys(handlers, fallback=null, element=document, noFields=true) {
     const fields = ["INPUT", "TEXTAREA"]
 
     element.addEventListener("keydown", ev => {
+        if (ev.altKey || ev.ctrlKey || ev.metaKey) return
         if (noFields && fields.includes(document.activeElement.tagName))
             return
 
