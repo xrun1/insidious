@@ -44,7 +44,7 @@ function formatYoutubeDate(timestamp) {
     if (minutesAgo >= 1)
         return relativeFormatter.format(-minutesAgo, "minute")
     if (secondsAgo >= 0)
-        return relativeFormatter.format(-secondsAgo, "second")
+        return relativeFormatter.format(-Math.floor(secondsAgo), "second")
     if (daysAgo >= -1)
         return todayFormatter.format(date)
     return futureFormatter.format(date)
