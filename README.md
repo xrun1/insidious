@@ -30,7 +30,7 @@ Self-hosted alternative YouTube front-end.
 
 Supported YouTube pages:
 
-- Videos: `/watch`, `/v/ID`, `/embed/ID`, (`start`/`t`/`list` parameters OK)
+- Videos: `/watch`, `/v/ID`, `/live/ID`, `/embed/ID`, (`start`/`t`/`list` parameters OK)
 - Shorts: `/shorts/ID` (uses standard interface)
 - Clips: `/clip/ID`
 - Searches: `/results` (including filtering/sorting)

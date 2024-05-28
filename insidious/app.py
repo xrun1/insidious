@@ -417,6 +417,7 @@ async def featured_tab(request: Request, url: str, title: str) -> Response:
 @app.get("/embed/{v}")
 @app.get("/shorts/{v}")
 @app.get("/clip/{v}")
+@app.get("/live/{v}")
 async def watch(
     request: Request,
     v: str,
