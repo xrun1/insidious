@@ -1,6 +1,6 @@
 {
     inputs = {
-        nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+        nixpkgs.url = "github:redyf/nixpkgs/update-yt-dlp";
         flake-utils.url = "github:numtide/flake-utils";
         construct.url = "github:construct/construct/a6603d7821480fb5a4e6665c6fd8028ce574c4bd";
         construct.flake = false;
@@ -55,7 +55,7 @@
         devShells.default = pkgs.mkShell {
             inputsFrom = [self.packages.${sys}.default];
             packages = with pkgs; [
-                ruff nodePackages.pyright  # linting
+                ruff pyright  # linting
                 pypkgs.ipdb pypkgs.rich pypkgs.pyperclip  # debugging
                 wget  # ./update-static.sh
             ];
