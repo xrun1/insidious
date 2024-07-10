@@ -1,6 +1,6 @@
 {
     inputs = {
-        nixpkgs.url = "github:redyf/nixpkgs/update-yt-dlp";
+        nixpkgs.url = "github:NixOS/nixpkgs/master";
         flake-utils.url = "github:numtide/flake-utils";
         construct.url = "github:construct/construct/a6603d7821480fb5a4e6665c6fd8028ce574c4bd";
         construct.flake = false;
