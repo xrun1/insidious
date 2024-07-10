@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from contextlib import contextmanager
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import httpx
 from fastapi import HTTPException
@@ -20,7 +20,7 @@ class AutoStrEnum(Enum):
     """Enum where auto() value gives the name of the member"""
     @override
     @staticmethod
-    def _generate_next_value_(name: str, *_):
+    def _generate_next_value_(name: str, *_, **__: Any):
         return name
 
 

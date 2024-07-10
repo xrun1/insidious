@@ -482,7 +482,7 @@ class Channel(Search, HasThumbnails):
     ]
 
     id: str
-    title: str = Field(alias="channel")
+    title: str = Field(alias="channel", default="")
     description: str
     tab: str = Field(alias="webpage_url_basename", default="featured")
     followers: int | None = Field(None, alias="channel_follower_count")
@@ -495,7 +495,8 @@ class Channel(Search, HasThumbnails):
 
 class Comment(HasThumbnails):
     id: str = Field(alias="commentId")
-    thumbnails: list[Thumbnail] = Field(alias="authorThumbnails")
+    thumbnails: list[Thumbnail] = \
+        Field(alias="authorThumbnails", default_factory=list)
     author_name: str = Field(alias="author")
     author_id: str = Field(alias="authorId")
     author_uri: str = Field(alias="authorUrl")

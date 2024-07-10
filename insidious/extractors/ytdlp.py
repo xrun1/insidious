@@ -16,6 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from operator import itemgetter
 from pathlib import Path
 from typing import (
     Any,
@@ -256,7 +257,7 @@ class CachedYoutubeDL(YoutubeDL):
             else:
                 by_access.append((access, path))
 
-        by_access.sort(key=lambda x: x[0], reverse=True)  # most recent first
+        by_access.sort(key=itemgetter(0), reverse=True)  # most recent first
 
         while total_size > size_limit * 0.66 and by_access:
             path = by_access.pop()[1]
@@ -404,8 +405,7 @@ class YtdlpClient(YoutubeClient):
             ...
 
         def interrupt(_: YtdlpRequest) -> None:
-            nonlocal page_now
-            nonlocal got_page_data
+            nonlocal page_now, got_page_data
             if got_page_data:
                 page_now += 1
                 got_page_data = False

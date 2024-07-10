@@ -19,12 +19,10 @@ from typing import TYPE_CHECKING, ClassVar, Generic, TypeAlias
 from urllib.parse import quote
 
 import backoff
-import httpx
 import jinja2
 from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
 from fastapi.datastructures import URL
 from fastapi.responses import (
-    FileResponse,
     HTMLResponse,
     PlainTextResponse,
     RedirectResponse,
@@ -102,7 +100,7 @@ async def watch_files() -> None:
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:  # noqa: RUF029
     lifespan_tasks.append(create_background_job(prune_cache()))
     lifespan_tasks.append(create_background_job(watch_files()))
     yield
@@ -292,7 +290,7 @@ async def fix_esm_mime(request: Request, call_next: CallNext) -> Response:
 
 
 @app.get("/")
-async def home(request: Request) -> Response:
+def home(request: Request) -> Response:
     return HomePage(request, None).response
 
 
@@ -308,7 +306,7 @@ async def results(
 
 
 @app.get("/search")
-async def form_search(
+def form_search(
     request: Request,
     query: str,
     type: str,
