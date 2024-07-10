@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.1.3
+
+### Added
+
+- Support for `/live/ID` YouTube URLs 
+
+### Fixed
+
+- Milliseconds appearing on the dates of comments made less than one minute ago
+- Age-restricted video playback by updating the yt-dlp required version
+
+
 ## v0.1.2
 
 ### Added

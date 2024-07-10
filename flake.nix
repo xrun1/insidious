@@ -28,7 +28,7 @@
     in {
         packages.default = pypkgs.buildPythonPackage rec {
             pname = "insidious";
-            version = "0.1.2";
+            version = "0.1.3";
             meta.mainProgram = pname;
             src = ./.;
             pyproject = true;
