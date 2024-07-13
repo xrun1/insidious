@@ -36,7 +36,7 @@ Supported YouTube pages:
 - Searches: `/results` (including filtering/sorting)
 - Hashtags: `/hashtag/TAG`
 - Users: `/user/ID`, `/user/ID/TAB`, `/user/ID/search`
-- Playlists: `/playlist`
+- Playlists: `/playlist`, `/watch_videos?video_ids=eXaMPLE1,examPLE2,...`
 - Channels:
     - `/NAME`, `/NAME/TAB`, `/NAME/search`
     - `/channel/ID`, `/channel/ID/TAB`, `/channel/ID/search`

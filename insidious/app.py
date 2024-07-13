@@ -15,12 +15,12 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from functools import reduce
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Generic, TypeAlias
+from typing import TYPE_CHECKING, Annotated, ClassVar, Generic, TypeAlias
 from urllib.parse import quote
 
 import backoff
 import jinja2
-from fastapi import BackgroundTasks, FastAPI, Request, WebSocket
+from fastapi import BackgroundTasks, FastAPI, Query, Request, WebSocket
 from fastapi.datastructures import URL
 from fastapi.responses import (
     HTMLResponse,
@@ -372,6 +372,15 @@ async def playlist(request: Request, list: str) -> Response:
         return PlaylistPage(request, pl.title, pg, pl).response
 
     return PlaylistPage(request, None, pg).continuation
+
+
+@app.get("/watch_videos")
+async def make_playlist(video_ids: Annotated[list[str], Query()]) -> Response:
+    with httpx_to_fastapi_errors():
+        api = "https://youtube.com/watch_videos?video_ids=%s"
+        reply = await HTTPX.head(api % ",".join(video_ids))
+        reply.raise_for_status()
+        return RedirectResponse(str(reply.url))
 
 
 @app.get("/load_playlist_entry")
