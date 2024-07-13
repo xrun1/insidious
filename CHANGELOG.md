@@ -1,7 +1,7 @@
 # Changelog
 
 
-## v0.1.4
+## v0.1.4 (WIP)
 
 ### Added
 
@@ -15,7 +15,7 @@
 - Channel "Popular videos" being the same as normal latest "Videos" section
 
 
-## v0.1.3
+## v0.1.3 (2024-07-10)
 
 ### Added
 
@@ -27,7 +27,7 @@
 - Age-restricted video playback by updating the yt-dlp required version
 
 
-## v0.1.2
+## v0.1.2 (2024-05-13)
 
 ### Added
 
@@ -40,7 +40,7 @@
 - Loading of videos with no like counts
 
 
-## v0.1.1
+## v0.1.1 (2024-05-13)
 
 ### Changed
 
