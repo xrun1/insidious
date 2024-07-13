@@ -80,6 +80,18 @@
                 {% endfor %}
             </div>
 
+            {% if current_tab == "videos" %}
+                <div class=sortings>
+                    {% for param, name in info.sortings.items() %}
+                        {% set cls = "current" if sort == param else "" %}
+                        {% set url = subpage_path(current_tab, sort=param) %}
+                        <a class="{{cls}}" href="{{url}}" hx-get="{{url}}">
+                            {{name}}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             <form class=search-row hx-get={{subpage_path("search")}}>
                 <input
                     type=search

@@ -285,22 +285,24 @@ class YtdlpClient(YoutubeClient):
 
     @override
     async def channel(
-        self, id: str, tab: str = "featured", search: str = "", page: int = 1,
+        self, id: str, tab: str = "featured", search: str = "",
+        page: int = 1, sort: str = "",
     ) -> Channel:
-        return await self._channel(f"channel/{id}", tab, search, page)
+        return await self._channel(f"channel/{id}", tab, search, page, sort)
 
     @override
     async def named_channel(
-        self,
-        name: str, tab: str = "featured", search: str = "", page: int = 1,
+        self, name: str, tab: str = "featured", search: str = "",
+        page: int = 1, sort: str = "",
     ) -> Channel:
-        return await self._channel(name, tab, search, page)
+        return await self._channel(name, tab, search, page, sort)
 
     @override
     async def user(
-        self, id: str, tab: str = "featured", search: str = "", page: int = 1,
+        self, id: str, tab: str = "featured", search: str = "",
+        page: int = 1, sort: str = "",
     ) -> Channel:
-        return await self._channel(f"user/{id}", tab, search, page)
+        return await self._channel(f"user/{id}", tab, search, page, sort)
 
     @override
     async def playlist(self, id: str, page: int = 1) -> Playlist:
@@ -352,10 +354,11 @@ class YtdlpClient(YoutubeClient):
         return client
 
     async def _channel(
-        self, path: str, tab: str, search: str, page: int,
+        self, path: str, tab: str, search: str, page: int, sort: str = "",
     ) -> Channel:
         base_path = path
         path += f"/search?query={quote_plus(search)}" if search else f"/{tab}"
+
         try:
             # featured tab only returns channel banner with postprocessing
             data, _ = await self._get(path, page, process=tab == "featured")
@@ -367,7 +370,14 @@ class YtdlpClient(YoutubeClient):
             channel.entries.clear()
             return channel
         else:
-            return Channel.model_validate(data)
+            channel = Channel.model_validate(data)
+
+        if tab == "videos" and sort == "p":
+            # https://github.com/yt-dlp/yt-dlp/issues/6767
+            popular = await self.playlist("UULP" + channel.id[2:], page)
+            channel.entries = list(popular.entries)
+
+        return channel
 
     def _process_entries(self, url: str, data: RawData, page: int) -> RawData:
         tabs = [f"/{name}?" for name in Channel.tabs]

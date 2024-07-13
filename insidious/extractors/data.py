@@ -480,6 +480,7 @@ class Channel(Search, HasThumbnails):
     tabs: ClassVar[list[str]] = [
         "featured", "videos", "shorts", "streams", "playlists",
     ]
+    sortings: ClassVar[dict[str, str]] = {"": "Latest", "p": "Popular"}
 
     id: str
     title: str = Field(alias="channel", default="")

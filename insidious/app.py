@@ -15,8 +15,8 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from functools import reduce
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, ClassVar, Generic, TypeAlias
-from urllib.parse import quote
+from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Generic, TypeAlias
+from urllib.parse import parse_qs, quote, urlencode
 
 import backoff
 import jinja2
@@ -210,9 +210,14 @@ class ChannelPage(Paginated[InSearch]):
     info: Channel | None = None
     search_query: str | None = None
 
-    def subpage_path(self, tab: str) -> str:
+    @property
+    def sort(self) -> str:
+        return self.request.query_params.get("sort") or ""
+
+    def subpage_path(self, tab: str, sort: str = "") -> str:
         path = self.request.url.path.rstrip("/")
-        return path.removesuffix(f"/{self.current_tab}") + "/" + tab
+        path = path.removesuffix(f"/{self.current_tab}") + "/" + tab
+        return f"{path}?sort={sort}" if sort else path
 
 
 @dataclass(slots=True)
@@ -343,9 +348,10 @@ async def hashtag(request: Request, tag: str) -> Response:
 @app.get("/user/{id}/{tab}")
 async def user(
     request: Request, id: str, tab: str = "featured", query: str = "",
+    sort: str = "",
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        pg.add(channel := await YTDLP.user(id, tab, query, pg.page))
+        pg.add(channel := await YTDLP.user(id, tab, query, pg.page, sort))
         page = ChannelPage(request, channel.title, pg, tab, channel, query)
         return page.response
 
@@ -356,9 +362,10 @@ async def user(
 @app.get("/channel/{id}/{tab}")
 async def channel(
     request: Request, id: str, tab: str = "featured", query: str = "",
+    sort: str = "",
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        pg.add(channel := await YTDLP.channel(id, tab, query, pg.page))
+        pg.add(channel := await YTDLP.channel(id, tab, query, pg.page, sort))
         page = ChannelPage(request, channel.title, pg, tab, channel, query)
         return page.response
 
@@ -402,18 +409,19 @@ async def featured_playlist(request: Request, id: str) -> Response:
 @app.get("/featured_tab")
 async def featured_tab(request: Request, url: str, title: str) -> Response:
     *_, api, id, tab = ([""] * 4) + URL(url).path.split("/")
+    sort = next(iter(parse_qs(URL(url).query).get("sort", [])), "")
 
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
         if api in {"", "c"}:
-            channel = await YTDLP.named_channel(id, tab, page=pg.page)
+            vids = await YTDLP.named_channel(id, tab, page=pg.page, sort=sort)
         elif api == "channel":
-            channel = await YTDLP.channel(id, tab, page=pg.page)
+            vids = await YTDLP.channel(id, tab, page=pg.page, sort=sort)
         elif api == "user":
-            channel = await YTDLP.user(id, tab, page=pg.page)
+            vids = await YTDLP.user(id, tab, page=pg.page, sort=sort)
         else:
             raise ValueError(f"Invalid channel tab preview url {url!r}")
 
-        pg.add(channel)
+        pg.add(vids)
         return FeaturedSection(request, None, pg, title, url).response
 
     return FeaturedSection(request, None, pg).continuation
@@ -662,12 +670,13 @@ async def wait_alive(ws: WebSocket) -> None:
 @app.get("/c/{name}/{tab}")
 async def named_channel(
     request: Request, name: str, tab: str = "featured", query: str = "",
+    sort: str = "",
 ) -> Response:
     if name == "favicon.ico":
         return Response(status_code=404)
 
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        channel = await YTDLP.named_channel(name, tab, query, pg.page)
+        channel = await YTDLP.named_channel(name, tab, query, pg.page, sort)
         pg.add(channel)
         page = ChannelPage(request, channel.title, pg, tab, channel, query)
         return page.response
