@@ -89,6 +89,13 @@
         <media-live-button></media-live-button>
     {% endif %}
 
+    <media-chrome-button class=watch-on-site>
+        <a href="{{non_embedded_url}}" title="Watch on {{DISPLAY_NAME}}">
+            <img src="/images/logo.svg" alt=Logo>
+        </a>
+    </media-chrome-button>
+
+    {# to be triggered by keyboard shortcut #}
     <media-captions-button style="display:none"></media-captions-button>
 
     <media-control-bar>

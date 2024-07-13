@@ -752,6 +752,30 @@ media-controller {
         padding: calc(var(--vpad) * 2) calc(var(--hpad) * 2);
     }
 
+    & .watch-on-site {
+        display: none;
+        position: absolute;
+        top: var(--gap-small);
+        right: var(--gap-small);
+        padding: calc(var(--vpad) * 2) calc(var(--hpad) * 2);
+        width: 2rem;
+        height: 2rem;
+        border-radius: var(--radius);
+        cursor: pointer;
+
+        & a, img {
+            width: 2rem;
+            height: 2rem;
+            object-fit: contain;
+            transition: all 0.2s;
+        }
+
+        &:hover img {
+            filter: brightness(1.15);
+            scale: 1.05;
+        }
+    }
+
     & #quality-button {
         &:not(.auto) #auto-current-level {
             display: none;
@@ -1252,5 +1276,12 @@ body.embed {
 
     & #header, #player-area ~ * {
         display: none !important;
+    }
+
+    & .watch-on-site {
+        display: flex;
+    }
+    media-controller[userinactive][mediahasplayed] .watch-on-site {
+        opacity: 0; 
     }
 }

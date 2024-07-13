@@ -5,6 +5,7 @@
 
 ### Added
 
+- Button on embedded players to open the video's full page
 - Popularity sorting option on channel video lists
 - Support for `/watch_videos?video_ids=eXaMPLE1,examPLE2`
   (generates YouTube playlists from comma-separated combination of video IDs)

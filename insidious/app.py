@@ -188,6 +188,7 @@ class Page:
         } | {
             x.__name__: x for x in passthrough
         } | {
+            "DISPLAY_NAME": DISPLAY_NAME,
             "UVICORN_RELOAD": os.getenv("UVICORN_RELOAD"),
             "no_emoji": "&#xFE0E;",
         })
@@ -250,6 +251,10 @@ class WatchPage(Page):
     loop: bool = False
     autoplay: bool = False
     is_embed: bool = False
+
+    @property
+    def non_embedded_url(self) -> str:
+        return str(self.request.url).replace("/embed/", "/watch?v=")
 
 
 @dataclass(slots=True)
