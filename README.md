@@ -19,11 +19,11 @@ Self-hosted alternative YouTube front-end.
 - Loads video data directly from Google servers at full speed,
   HLS and DASH supported
 - No ads, no tracking, no YouTube scripts and cookies
-- Watch age-gated videos without signing in
-- Directly accessible player controls with all-time visibility
-  outside fullscreen
+- Watch age-restricted videos without signing in
+- Directly accessible player controls, always visible outside of the video when
+  not playing in fullscreen
 - Custom suggestions algorithm based on user-generated playlists, delivers
-  content related to the current video instead of what was watched before
+  content related to the current video rather than what was watched before
   and irrelevant popular junk
 - Recent comments first
 - [Return YouTube Dislike](https://returnyoutubedislike.com/) integrated
@@ -77,6 +77,13 @@ To start the server, assuming the current folder is the cloned repository:
 ```
 
 Add ` --help` to the above command for info on supported options.
+
+To update Insidious later, from the cloned repository folder:
+```sh
+git pull
+source venv/bin/activate
+pip install -e .
+```
 
 ### Direct run with Nix
 
