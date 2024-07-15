@@ -10,6 +10,12 @@
 - Support for `/watch_videos?video_ids=eXaMPLE1,examPLE2`
   (generates YouTube playlists from comma-separated combination of video IDs)
 
+### Changed
+
+- On video pages, load the comments/suggestions/playlist only when the tab is
+  focused, to avoid Google server timeouts and broken thumbnails when many
+  results are opened as background tabs in quick succession
+
 ### Fixed
 
 - Channel "Popular videos" being the same as normal latest "Videos" section

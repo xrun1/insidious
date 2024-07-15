@@ -102,7 +102,7 @@
             <div
                 id=comments
                 hx-get="{{get_comments}}"
-                hx-trigger=load
+                hx-trigger="intersect once"
                 hx-swap=innerHTML
             ></div>
         {% endif %}
@@ -122,7 +122,7 @@
                     id=playlist
                     class=card
                     hx-get="{{get_playlist}}"
-                    hx-trigger=load
+                    hx-trigger="intersect once"
                     hx-select=".page-content > *"
                     hx-swap="innerHTML ignoreTitle:true"
                 ></div>
@@ -132,7 +132,7 @@
                 <div
                     id=related
                     hx-get="{{get_related}}"
-                    hx-trigger=load
+                    hx-trigger="intersect once"
                     hx-select=.pages
                     hx-swap="innerHTML ignoreTitle:true"
                 ></div>
