@@ -12,6 +12,7 @@
 
 ### Changed
 
+- Make reduced video progress bar more visible in fullscreen
 - On video pages, load the comments/suggestions/playlist only when the tab is
   focused, to avoid Google server timeouts and broken thumbnails when many
   results are opened as background tabs in quick succession
