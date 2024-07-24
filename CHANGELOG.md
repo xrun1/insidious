@@ -1,6 +1,13 @@
 # Changelog
 
 
+## v0.1.5 (2024-07-24)
+
+### Fixed
+
+- "Internet server error" page for videos missing a release date 
+
+
 ## v0.1.4 (2024-07-15)
 
 ### Added
