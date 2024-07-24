@@ -58,13 +58,15 @@
                         hx-select=.video-little-details
                     {% endif %}
                 >
-                    <div class=date title="Release date">
-                        <span class=icon>{{no_emoji}}</span>
-                        <span
-                            class=youtube-day-date
-                            raw="{{info.release_date.timestamp()}}"
-                        ></span>
-                    </div>
+                    {% if info.release_date %}
+                        <div class=date title="Release date">
+                            <span class=icon>{{no_emoji}}</span>
+                            <span
+                                class=youtube-day-date
+                                raw="{{info.release_date.timestamp()}}"
+                            ></span>
+                        </div>
+                    {% endif %}
 
                     {% if info.fully_released %}
                         <div class=views title=Views>
