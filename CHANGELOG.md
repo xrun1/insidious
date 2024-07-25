@@ -12,7 +12,7 @@
 
 ### Fixed
 
-- "Internet server error" page for videos missing a release date 
+- "Internal server error" page for videos missing a release date 
 
 
 ## v0.1.4 (2024-07-15)
