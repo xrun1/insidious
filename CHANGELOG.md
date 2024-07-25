@@ -1,6 +1,13 @@
 # Changelog
 
 
+## v0.1.6 (2024-07-25)
+
+### Fixed
+
+- Update yt-dlp required version to fix failing videos
+
+
 ## v0.1.5 (2024-07-24)
 
 ### Fixed
