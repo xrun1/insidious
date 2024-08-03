@@ -11,7 +11,7 @@
 
     <div id=watch-page class=page-content>
         <div id=player-area class=card>
-            {% set fixed_ratio = [1, info.aspect_ratio] | max %}
+            {% set fixed_ratio = [1, info.aspect_ratio or 16 / 9] | max %}
             <div
                 id=player-and-controls
                 style="--bg: url('{{info.best_thumbnail.fixed_url}}')"
@@ -147,6 +147,7 @@
                 hx-trigger="load delay:{{info.releases_in}}s"
                 hx-select=.page-content
                 hx-target=.page-content
+                style="display:none"  {# avoid strange gap under video #}
             ></div>
         {% endif %}
     </div>

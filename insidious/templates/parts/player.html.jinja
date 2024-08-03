@@ -19,7 +19,9 @@
     <hls-video
         id=hls
         slot=media
-        src="{{info.manifest_url}}"
+        {% if info.live_status != LiveStatus.is_upcoming %}
+            src="{{info.manifest_url}}"
+        {% endif %}
         type=hls
         {% if loop %} loop {% endif %}
         {% if autoplay %} autoplay {% endif %}
