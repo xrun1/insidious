@@ -26,7 +26,7 @@ from . import DISPLAY_NAME, NAME, __version__
 
 
 def run() -> None:
-    doc = __doc__.format(NAME=NAME, DNAME=DISPLAY_NAME)
+    doc = (__doc__ or "").format(NAME=NAME, DNAME=DISPLAY_NAME)
     args = docopt.docopt(doc, version=__version__)
     dir = args["--reload"]
     if dir:
