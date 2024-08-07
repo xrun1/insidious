@@ -4,7 +4,7 @@
 
 [tool.poetry]
     name = "insidious"
-    version = "0.1.7"
+    version = "0.1.8"
     description = "Self-hosted YouTube front-end"
     authors = ["xrun1 <126838916+xrun1@users.noreply.github.com>"]
     license = "AGPL-3.0-or-later"
@@ -35,7 +35,7 @@
         pydantic = "^2.7.4"
         uvicorn = "^0.29.0"
         watchfiles = "^0.22.0"
-        yt-dlp = "2024.8.1"
+        yt-dlp = "2024.8.6"
         docopt = "^0.6.2"
         httpx = "^0.27.0"
         backoff = "^2.2.1"
