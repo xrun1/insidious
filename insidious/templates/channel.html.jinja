@@ -16,7 +16,7 @@
     {% include "parts/header.html.jinja" %}
 
     <div id=channel-page class="page-content on-{{current_tab}}-tab">
-        {% set url = local_url(info.url) %}
+        {% set url = local_url(info.url).removesuffix("/featured") %}
 
         {% if info.banners_srcset %}
             <img class=banner srcset="{{info.banners_srcset}}">
