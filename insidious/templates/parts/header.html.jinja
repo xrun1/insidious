@@ -129,6 +129,13 @@
             url.protocol = "https:"
             url.hostname = "youtube.com"
             url.port = ""
+
+            if (url.pathname == "/watch") {
+                url.hostname = "youtu.be"
+                url.pathname = url.searchParams.get("v")
+                url.searchParams.delete("v")
+            }
+
             navigator.clipboard.writeText(url.toString())
             document.querySelector("#copied-yt").classList.add("on")
             setTimeout(() => {
