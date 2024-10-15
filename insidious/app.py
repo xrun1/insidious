@@ -670,6 +670,11 @@ async def wait_alive(ws: WebSocket) -> None:
         await ws.accept()
 
 
+@app.get("/sm/{_}")
+async def chrome_js_map(_: str) -> Response:
+    return Response(status_code=404)
+
+
 # Below APIs have catch-all routes, must be declared last
 
 @app.get("/{name}/{tab}")
