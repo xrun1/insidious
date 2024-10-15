@@ -7,6 +7,10 @@
 - Header button to copy the original YouTube page URL
 - Support for directly using `/VIDEO_ID` URLs, useful when extensions like
   Privacy Redirect automatically convert youtu.be links
+  
+### Fixed
+
+- Usage of the `--reload` flag on Windows
 
 
 ## v0.1.8 (2024-08-08)
