@@ -131,11 +131,9 @@ class HasChannel(BaseModel):
 
     @property
     def shortest_channel_url(self) -> str | None:
-        if not self.uploader_url:
-            return self.channel_url
-        if not self.channel_url:
-            return None
-        return min((self.channel_url, self.uploader_url), key=len)
+        if self.uploader_url and self.channel_url:
+            return min((self.channel_url, self.uploader_url), key=len)
+        return self.channel_url or self.uploader_url
 
 
 class Fragments(BaseModel):
