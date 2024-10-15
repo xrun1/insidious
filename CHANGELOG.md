@@ -10,6 +10,7 @@
   
 ### Fixed
 
+- Rare occurance of videos channel links failing to parse
 - Usage of the `--reload` flag on Windows
 
 
