@@ -144,9 +144,8 @@ An up-to-date browser (released after December 2023) is required.
 
 - Go to the address shown when you start the server, <http://localhost:3030> by
 default
-- The <https://youtube.com> part of any URL can be replaced by the
-  given address 
-- For <https://youtu.be/ID> links, change to e.g. <http://localhost:3030/v/ID>.
+- The <https://youtube.com> or <https://youtu.be> part of any URL can be
+  replaced by the given address 
 - Use an extension like Privacy Redirect ([Chrome](https://chromewebstore.google.com/detail/privacy-redirect/pmcmeagblkinmogikoikkdjiligflglb), [Firefox](https://addons.mozilla.org/en-US/firefox/addon/privacy-redirect/))
   to automatically transform YouTube links (enable "Invidious redirects" in the options and set Insidious's address for the instance).
 

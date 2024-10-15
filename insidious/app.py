@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging as log
 import operator
 import os
@@ -19,6 +20,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, Generic, TypeAlias
 from urllib.parse import parse_qs, quote
 
 import backoff
+from fastapi.routing import APIRoute
 import jinja2
 from fastapi import BackgroundTasks, FastAPI, Query, Request, WebSocket
 from fastapi.datastructures import URL
@@ -668,8 +670,8 @@ async def wait_alive(ws: WebSocket) -> None:
         await ws.accept()
 
 
-# Have to declare this last due to the catch-all route below
-@app.get("/{name}")
+# Below APIs have catch-all routes, must be declared last
+
 @app.get("/{name}/{tab}")
 @app.get("/c/{name}")
 @app.get("/c/{name}/{tab}")
@@ -687,3 +689,38 @@ async def named_channel(
         return page.response
 
     return ChannelPage(request, None, pg, tab).continuation
+
+
+@app.get("/{path}")
+async def watch_or_channel(
+    request: Request, path: str,
+) -> Response:
+    params = dict(request.query_params)
+    params.pop("request", None)
+    watch_ok_params = set(inspect.getfullargspec(watch).args)
+    watch_params = {k: v for k, v in params.items() if k in watch_ok_params}
+    chan_ok_params = set(inspect.getfullargspec(named_channel).args)
+    chan_params = {k: v for k, v in params.items() if k in chan_ok_params}
+    exc: list[Exception] = []
+
+    tasks = (
+        asyncio.create_task(watch(request, path, **watch_params)),
+        asyncio.create_task(named_channel(request, path, **chan_params)),
+    )
+    while tasks:
+        done, pending = await asyncio.wait(
+            tasks, return_when=asyncio.FIRST_COMPLETED,
+        )
+        for task in done:
+            try:
+                result = task.result()
+            except Exception as e:
+                exc.append(e)
+                log.info("Catch-all route fail: %r", e)
+            else:
+                for task in pending:
+                    task.cancel()
+                return result
+        tasks = pending
+
+    raise ExceptionGroup("All subroutes failed", exc)
