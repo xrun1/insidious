@@ -31,7 +31,7 @@ def run() -> None:
     dir = args["--reload"]
     if dir:
         dir = Path(dir).resolve()  # We change the cwd later, "." would break
-        os.putenv("UVICORN_RELOAD", dir)
+        os.environ["UVICORN_RELOAD"] = str(dir)
 
     uvicorn.run(
         f"{NAME}.app:app",
