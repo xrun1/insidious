@@ -206,8 +206,7 @@ img {
     scale: 0.8;
     color: var(--fg-icons);
     transition: var(--theme-transition);
-    /* font-family: "Font Awesome 6 Free", var(--fonts); */
-    font-family: "Font Awesome 6 Free";
+    font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands";
     font-weight: 900;
 }
 
@@ -239,6 +238,29 @@ img {
     }
 }
 
+.has-tooltip {
+    position: relative;
+}
+.tooltip {
+    position: absolute;
+    margin-top: var(--gap);
+    padding: var(--hpad) var(--vpad);
+    background: hsla(0, 0%, 0%, 0.5);
+    border-radius: var(--radius);
+    transform: scale(0);
+    transform-origin: top right;
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.15s all ease-out;
+    z-index: 99999;
+    
+    &.on {
+        transform: scale(1);
+        opacity: 1;
+        visibility: unset;
+    }
+}
+
 #header {
     display: flex;
     flex-flow: row nowrap;
@@ -247,6 +269,27 @@ img {
 
     > :not(#search-form), .search-row > * {
         height: 2rem;
+    }
+    
+    & #copy-yt {
+        position: relative;
+    }
+    & #copy-yt > .icon:first-child {
+        scale: 1.1;
+        margin-right: 0.125rem;
+        color: #ff8080;
+        opacity: 0.9;
+    }
+    & #copy-yt > .icon:not(:first-child) {
+        position: absolute;
+        scale: 0.9;
+        right: 0.3rem;
+        bottom: 0;
+        text-shadow: 0 0 0.2rem black;
+    }
+    & #copied-yt {
+        width: max-content;
+        right: 0;
     }
 
     & input[type=submit], #alt-theme {

@@ -108,11 +108,33 @@
         </div>
     </form>
 
+    <button type=button
+        id=copy-yt
+        class=has-tooltip 
+        title="Copy YouTube link"
+        onclick="copyOriginalLink()"
+    >
+        <span class=icon>{{no_emoji}}</span>
+        <span class=icon>{{no_emoji}}</span>
+        <div id=copied-yt class=tooltip>Copied YouTube link</div>
+    </button>
+
     <input type=checkbox 
         id=alt-theme title="Toggle dark mode" onchange="saveTheme(this)"
     >
 
     <script>
+        function copyOriginalLink() {
+            url = new URL(location.href)
+            url.protocol = "https:"
+            url.hostname = "youtube.com"
+            url.port = ""
+            navigator.clipboard.writeText(url.toString())
+            document.querySelector("#copied-yt").classList.add("on")
+            setTimeout(() => {
+                document.querySelector("#copied-yt").classList.remove("on")
+            }, 1500)
+        }
         function toggleFilters() {
             document.querySelector("#search-filters").classList.toggle("on")
         }

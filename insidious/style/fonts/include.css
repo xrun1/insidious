@@ -12,6 +12,13 @@
     font-display: block;
     src: url("./fa/solid/900.woff2") format("woff2");
 }
+@font-face {
+    font-family: "Font Awesome 6 Brands";
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+    src: url("./fa/brands/400.woff2") format("woff2");
+}
 
 @font-face {
     font-family: "Roboto";
