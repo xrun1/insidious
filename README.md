@@ -58,8 +58,10 @@ Missing/planned:
 
 ### Local installation with pip
 
-Tested with Python 3.11 only. If unavailable on your system, 
-consider the [Nix method](#direct-run-with-nix).
+Python 3.11 must be installed on your system.
+On Linux without 3.11, consider the [Nix method](#direct-run-with-nix).
+For setting up on Windows instead of Linux/OSX,
+see [these notes](#windowspowershell-notes).
 
 Local installation:
 
@@ -84,6 +86,15 @@ git pull
 source venv/bin/activate
 pip install -e .
 ```
+
+#### Windows/PowerShell notes
+
+- Run `.\venv\Scripts\Activate.ps1` instead of `source venv/bin/activate`
+- Run `.\venv\Scripts\insidious.exe` instead of `./venv/bin/insidious`
+- Said executable can be double clicked directly in explorer to start
+- In `%appdata%\Microsoft\Windows\Start Menu\Programs\Startup`, a
+  shortcut to the exe can be created to automatically start Insidious on login.
+
 
 ### Direct run with Nix
 
@@ -136,6 +147,8 @@ default
 - The <https://youtube.com> part of any URL can be replaced by the
   given address 
 - For <https://youtu.be/ID> links, change to e.g. <http://localhost:3030/v/ID>.
+- Use an extension like Privacy Redirect ([Chrome](https://chromewebstore.google.com/detail/privacy-redirect/pmcmeagblkinmogikoikkdjiligflglb), [Firefox](https://addons.mozilla.org/en-US/firefox/addon/privacy-redirect/))
+  to automatically transform YouTube links (enable "Invidious redirects" in the options and set Insidious's address for the instance).
 
 
 ### Keyboard shortcuts
