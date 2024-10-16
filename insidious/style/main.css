@@ -78,6 +78,16 @@
     }
 }
 
+body:has(#alt-theme:checked) #copy-yt {
+    .icon:first-child {
+        color: #ff8080;
+    }
+    .icon:not(:first-child) {
+        opacity: 1;
+        text-shadow: 0 0 0.2rem black;
+    }
+}
+
 html {
     height: 100%;
     overflow-wrap: anywhere;
@@ -277,15 +287,14 @@ img {
     & #copy-yt > .icon:first-child {
         scale: 1.1;
         margin-right: 0.125rem;
-        color: #ff8080;
-        opacity: 0.9;
+        color: #eb2a2a;
     }
     & #copy-yt > .icon:not(:first-child) {
         position: absolute;
         scale: 0.9;
         right: 0.3rem;
         bottom: 0;
-        text-shadow: 0 0 0.2rem black;
+        opacity: 0;
     }
     & #copied-yt {
         width: max-content;
@@ -303,6 +312,7 @@ img {
         margin: 0;
         transition: var(--theme-transition);
         box-shadow: var(--box-shadow);
+        color: #6365a3;
 
         &::after {
             content: "🌙\fe0e";
