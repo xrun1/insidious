@@ -29,7 +29,7 @@ MARKUP_RE = {
 }
 
 
-def yt_to_html(text: str, allow_markup: bool = True) -> str:
+def yt_to_html(text: str, allow_markup: bool = True, br: bool = False) -> str:
     parts: dict[UUID, str] = {}
 
     def prepare_url(match: re.Match[str]) -> str:
@@ -69,6 +69,9 @@ def yt_to_html(text: str, allow_markup: bool = True) -> str:
     text = HASHTAGS_RE.sub(prepare_hashtags, text)
     text = TIME_RE.sub(prepare_timestamp, text)
     text = html.escape(text, quote=False)
+    
+    if br:
+        text = text.replace("\n", "<br>")
 
     # Only after escaping normal text, we can inject our custom HTML
     if allow_markup:

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+import html
 import inspect
 import logging as log
 import operator
@@ -137,6 +138,12 @@ HTTPX = HttpClient(follow_redirects=True, headers={
 MANIFEST_URL = re.compile(r'(^|")(https?://[^"]+?)($|")', re.MULTILINE)
 RSS_YT_URL = re.compile(r"https?://(www\.)?youtu(\.be|be\.com)(?!/xml/)")
 RSS_YTIMG_URL = re.compile(r"https?://(.*\.)?ytimg.com")
+RSS_MEDIA_GROUP = re.compile(r"<media:group>.*?</media:group>", re.DOTALL)
+RSS_MEDIA_URL = re.compile(r'<media:content[^>]*?url="(.+?)"', re.DOTALL)
+RSS_MEDIA_IMG = re.compile(r'<media:thumbnail[^>]*?url="(.+?)"', re.DOTALL)
+RSS_MEDIA_DESCRIPTION = re.compile(
+    r"<media:description>(.+?)</media:description>", re.DOTALL,
+)
 dying = False
 RELOAD_PAGE = asyncio.Event()
 RELOAD_STYLE = asyncio.Event()
@@ -627,6 +634,31 @@ async def proxy(
 
 @app.get("/feeds/videos.xml")
 async def rss_feed(request: Request):
+    def process_media_group(match: re.Match[str]) -> str:
+        text = match[0]
+        content = ""
+
+        if (link := RSS_MEDIA_URL.search(text)) and \
+            (thumb := RSS_MEDIA_IMG.search(text)):
+
+            content += """<a href="%s">
+                <img alt="Video" src="%s" width="480" height="360" />
+            </a>""" % (link[1], thumb[1])
+
+        if (desc := RSS_MEDIA_DESCRIPTION.search(text)):
+            html = yt_to_html(desc[1], br=True)
+            text = f"<summary>{desc[1]}</summary>{text}"
+            content += f"<p>{html}</p>"
+
+        if content:
+            text = """<content type="html">
+                <![CDATA[
+                    %s
+                ]]>
+            </content>%s""" % (content, text)
+
+        return text
+
     with httpx_to_fastapi_errors():
         url = request.url.replace(scheme="https", netloc="youtube.com")
         reply = await HTTPX.get(str(url))
@@ -637,6 +669,7 @@ async def rss_feed(request: Request):
             lambda match: f"{new_base}/proxy/get?url={quote(match[0])}",
             xml,
         )
+        xml = RSS_MEDIA_GROUP.sub(process_media_group, xml)
         return Response(content=xml, media_type="application/xml")
 
 
