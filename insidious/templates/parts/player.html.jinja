@@ -148,6 +148,7 @@
     const fullscreenButton = document.getElementById("fullscreen-button")
     let initialSetQuality = true
     let recoverDate = null
+    let refreshTimes = 0
 
     function levelFps(level) {
         return parseFloat(level.attrs["FRAME-RATE"] || "30")
@@ -340,7 +341,7 @@
     function crashPlayer(...details) {
         document.querySelector("#player-area").classList.add("crashed")
         if (details) {
-            const text = details.map(String).join("\n\n")
+            const text = details.map(JSON.stringify).join("\n\n")
             document.querySelector("#player-area .error").innerText = text
         }
         hls.destroy()
@@ -350,6 +351,7 @@
         const wasPaused = media.paused
         const oldTime = media.currentTime
         const req = new XMLHttpRequest()
+        refreshTimes++
 
         req.onerror = ev => { crashPlayer("refreshStream: error", ev) }
         req.ontimeout = ev => { crashPlayer("refreshStream: timeout", ev) }
@@ -389,7 +391,11 @@
             hls.recoverMediaError()
             recoverDate = now
         } else if (Hls.ErrorTypes.NETWORK_ERROR) {
-            refreshStream()
+            if (refreshTimes > 3) {
+                crashPlayer("Network error", event, data)
+            } else {
+                setTimeout(refreshStream, refreshTimes * 5 * 1000)
+            }
         } else {
             crashPlayer("Unexpected HLS error", event, data)
         }
