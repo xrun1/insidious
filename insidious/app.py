@@ -171,7 +171,9 @@ class Page:
         return self._response_env("search.html.jinja")
 
     @staticmethod
-    def local_url(url: str) -> str:
+    def local_url(url: str | None) -> str:
+        if not url:
+            return "/"
         return str(URL(url).replace(scheme="", netloc=""))
 
     @staticmethod
