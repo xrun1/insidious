@@ -119,7 +119,9 @@ LOADER = jinja2.PackageLoader(NAME, "templates")
 ENV = jinja2.Environment(loader=LOADER, autoescape=jinja2.select_autoescape())
 TEMPLATES = Jinja2Templates(env=ENV)
 lifespan_tasks = []
-app = FastAPI(default_response_class=HTMLResponse, lifespan=lifespan)
+app = FastAPI(
+    default_response_class=HTMLResponse, lifespan=lifespan, debug=True,
+)
 
 
 def mount(name: str) -> None:
