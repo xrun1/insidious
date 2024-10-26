@@ -47,6 +47,7 @@ from .client import YoutubeClient
 from .data import (
     Channel,
     ChannelEntry,
+    ChannelNotFound,
     FeaturedChannelPlaylist,
     FeaturedChannelTab,
     PartialEntry,
@@ -285,21 +286,21 @@ class YtdlpClient(YoutubeClient):
 
     @override
     async def channel(
-        self, id: str, tab: str = "featured", search: str = "",
+        self, id: str, tab: str | None = None, search: str = "",
         page: int = 1, sort: str = "",
     ) -> Channel:
         return await self._channel(f"channel/{id}", tab, search, page, sort)
 
     @override
     async def named_channel(
-        self, name: str, tab: str = "featured", search: str = "",
+        self, name: str, tab: str | None = None, search: str = "",
         page: int = 1, sort: str = "",
     ) -> Channel:
         return await self._channel(name, tab, search, page, sort)
 
     @override
     async def user(
-        self, id: str, tab: str = "featured", search: str = "",
+        self, id: str, tab: str | None = None, search: str = "",
         page: int = 1, sort: str = "",
     ) -> Channel:
         return await self._channel(f"user/{id}", tab, search, page, sort)
@@ -352,25 +353,18 @@ class YtdlpClient(YoutubeClient):
         })
         self._ytdl_instances[thread] = client
         return client
-
-    async def _channel(
+    
+    async def _channel_tab(
         self, path: str, tab: str, search: str, page: int, sort: str = "",
     ) -> Channel:
         base_path = path
-        path += f"/search?query={quote_plus(search)}" if search else f"/{tab}"
+        path += f"/{tab}"
+        if search:
+            path = f"{base_path}/search?query={quote_plus(search)}"
 
-        try:
-            # featured tab only returns channel banner with postprocessing
-            data, _ = await self._get(path, page, process=tab == "featured")
-        except yt_dlp.DownloadError as e:
-            log.warning("%s", e)
-            path = base_path + "/featured"
-            data, _ = await self._get(path, page, process=True)
-            channel = Channel.model_validate(data)
-            channel.entries.clear()
-            return channel
-        else:
-            channel = Channel.model_validate(data)
+        # featured tab only returns channel banner with postprocessing
+        data, _ = await self._get(path, page, process=tab == "featured")
+        channel = Channel.model_validate(data)
 
         if tab == "videos" and sort == "p":
             # https://github.com/yt-dlp/yt-dlp/issues/6767
@@ -378,6 +372,33 @@ class YtdlpClient(YoutubeClient):
             channel.entries = list(popular.entries)
 
         return channel
+
+    async def _channel(
+        self,
+        path: str,
+        tab: str | None,
+        search: str,
+        page: int,
+        sort: str = "",
+    ) -> Channel:
+
+        if search or tab is not None: 
+            try:
+                return await self._channel_tab(path, tab, search, page, sort)
+            except yt_dlp.DownloadError as e:
+                log.warning("%s", e)
+                channel = await self._channel(path, None, "", page, sort)
+                channel.tab = tab or ""
+                channel.entries.clear()
+                return channel
+
+        for tab_ in ("featured", "videos", "playlists", "streams", "shorts"):
+            try:
+                return await self._channel_tab(path, tab_, search, page, sort)
+            except yt_dlp.DownloadError as e:
+                log.warning("%s", e)
+
+        raise ChannelNotFound
 
     def _process_entries(self, url: str, data: RawData, page: int) -> RawData:
         tabs = [f"/{name}?" for name in Channel.tabs]

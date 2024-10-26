@@ -473,6 +473,10 @@ class Playlist(
 InChannel: TypeAlias = InSearch
 
 
+class ChannelNotFound(Exception):
+    ...
+
+
 class Channel(Search, HasThumbnails):
     has_banner: ClassVar[bool] = True
     tabs: ClassVar[list[str]] = [

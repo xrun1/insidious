@@ -361,29 +361,29 @@ async def hashtag(request: Request, tag: str) -> Response:
 @app.get("/user/{id}")
 @app.get("/user/{id}/{tab}")
 async def user(
-    request: Request, id: str, tab: str = "featured", query: str = "",
+    request: Request, id: str, tab: str | None = None, query: str = "",
     sort: str = "",
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        pg.add(channel := await YTDLP.user(id, tab, query, pg.page, sort))
-        page = ChannelPage(request, channel.title, pg, tab, channel, query)
+        pg.add(chan := await YTDLP.user(id, tab, query, pg.page, sort))
+        page = ChannelPage(request, chan.title, pg, chan.tab, chan, query)
         return page.response
 
-    return ChannelPage(request, None, pg, tab).continuation
+    return ChannelPage(request, None, pg, tab or "").continuation
 
 
 @app.get("/channel/{id}")
 @app.get("/channel/{id}/{tab}")
 async def channel(
-    request: Request, id: str, tab: str = "featured", query: str = "",
+    request: Request, id: str, tab: str | None = None, query: str = "",
     sort: str = "",
 ) -> Response:
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        pg.add(channel := await YTDLP.channel(id, tab, query, pg.page, sort))
-        page = ChannelPage(request, channel.title, pg, tab, channel, query)
+        pg.add(chan := await YTDLP.channel(id, tab, query, pg.page, sort))
+        page = ChannelPage(request, chan.title, pg, chan.tab, chan, query)
         return page.response
 
-    return ChannelPage(request, None, pg, tab).continuation
+    return ChannelPage(request, None, pg, tab or "").continuation
 
 
 @app.get("/playlist")
@@ -714,19 +714,19 @@ async def chrome_js_map(_: str) -> Response:
 @app.get("/c/{name}")
 @app.get("/c/{name}/{tab}")
 async def named_channel(
-    request: Request, name: str, tab: str = "featured", query: str = "",
+    request: Request, name: str, tab: str | None = None, query: str = "",
     sort: str = "",
 ) -> Response:
     if name == "favicon.ico":
         return Response(status_code=404)
 
     if (pg := Pagination[InSearch].get(request).advance()).needs_more_data:
-        channel = await YTDLP.named_channel(name, tab, query, pg.page, sort)
-        pg.add(channel)
-        page = ChannelPage(request, channel.title, pg, tab, channel, query)
+        chan = await YTDLP.named_channel(name, tab, query, pg.page, sort)
+        pg.add(chan)
+        page = ChannelPage(request, chan.title, pg, chan.tab, chan, query)
         return page.response
 
-    return ChannelPage(request, None, pg, tab).continuation
+    return ChannelPage(request, None, pg, tab or "").continuation
 
 
 @app.get("/{path}")
