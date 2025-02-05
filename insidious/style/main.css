@@ -37,6 +37,7 @@
     --bg-back: #e1e1e1;
     --bg-front: #fcfcfc;
     --bg-buttons: #eee;
+    --bg-tooltips: hsla(0, 0%, 100%, 0.8);
     --scroll-track: var(--bg-front);
     --scroll-thumb: #c6c6c6;
     --scroll-nested-track: hsl(0, 0%, 96%);
@@ -54,6 +55,7 @@
         --bg-back: hsl(240, 14%, 17%);
         --bg-front: hsl(240, 20%, 25%);
         --bg-buttons: hsl(240, 20%, 30%);
+        --bg-tooltips: hsla(0, 0%, 0%, 0.5);
         --scroll-track: hsl(240, 19%, 35%);
         --scroll-thumb: hsl(240, 19%, 55%);
         --scroll-nested-track: hsl(240, 25%, 35%);
@@ -255,7 +257,7 @@ img {
     position: absolute;
     margin-top: var(--gap);
     padding: var(--hpad) var(--vpad);
-    background: hsla(0, 0%, 0%, 0.5);
+    background: var(--bg-tooltips);
     border-radius: var(--radius);
     transform: scale(0);
     transform-origin: top right;
