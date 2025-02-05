@@ -3,7 +3,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -15,6 +16,17 @@ if TYPE_CHECKING:
         Video,
     )
     from .filters import SearchFilter
+
+
+class ClientUnavailable(RuntimeError):
+    pass
+
+
+@dataclass
+class APIInstance:
+    url: str
+    last_error: datetime = \
+        field(default_factory=lambda: datetime.fromtimestamp(0))
 
 
 @dataclass
