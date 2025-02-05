@@ -16,6 +16,7 @@ def build_youtube_markup_regex(symbol: str) -> re.Pattern[str]:
     return re.compile(rf"(?:^|(?<=\s)){sym}(?!\s)(.*?)[^\s]{sym}(?=\s|$)")
 
 
+A_RE = re.compile(r"</?a(>|[^>]+href=[^>]+>)")
 URL_RE = re.compile(
     r"(https?://(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}"
     r"\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=!]*))",
@@ -29,7 +30,12 @@ MARKUP_RE = {
 }
 
 
-def yt_to_html(text: str, allow_markup: bool = True, br: bool = False) -> str:
+def yt_to_html(
+    text: str,
+    allow_markup: bool = True,
+    br: bool = False,
+    escape_html: bool = True,
+) -> str:
     parts: dict[UUID, str] = {}
 
     def prepare_url(match: re.Match[str]) -> str:
@@ -68,8 +74,12 @@ def yt_to_html(text: str, allow_markup: bool = True, br: bool = False) -> str:
     text = URL_RE.sub(prepare_url, text)
     text = HASHTAGS_RE.sub(prepare_hashtags, text)
     text = TIME_RE.sub(prepare_timestamp, text)
-    text = html.escape(text, quote=False)
-    
+
+    if escape_html:
+        text = html.escape(text, quote=False)
+    else:
+        text = A_RE.sub("", text)
+
     if br:
         text = text.replace("\n", "<br>")
 

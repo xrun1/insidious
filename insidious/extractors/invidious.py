@@ -19,7 +19,7 @@ class InvidiousClient(APIClient):
     @override
     @backoff.on_exception(
         backoff.constant,
-        HTTPX_BACKOFF_ERRORS,
+        (OSError, *HTTPX_BACKOFF_ERRORS),
         max_tries = 20,
         interval = 0,
         backoff_log_level = logging.WARNING,

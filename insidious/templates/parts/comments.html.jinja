@@ -19,7 +19,12 @@
         >
 
         <div class=content>
-            <p class=yt-markup>{{youtube_format(comment.text)}}</p>
+            {% if comment.text %}
+                <p class=yt-markup>{{youtube_format(comment.text)}}</p>
+            {% else %}
+                <p>{{youtube_format(comment.html,
+                    allow_markup=False, escape_html=False)}}</p>
+            {% endif %}
 
             <div class=details>
                 {% if comment.by_uploader %}
@@ -38,8 +43,12 @@
 
                 <span class=date title="Published date">
                     <span class=icon>{{no_emoji}}</span>
-                    <span class=youtube-date
-                          raw="{{comment.date.timestamp()}}"></span>
+                    {% if comment.date %}
+                        <span class=youtube-date
+                              raw="{{comment.date.timestamp()}}"></span>
+                    {% else %}
+                        {{comment.relative_date}}
+                    {% endif %}
                 </span>
 
                 {% if comment.replies %}

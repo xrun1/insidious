@@ -63,7 +63,7 @@ class Thumbnail(BaseModel):
 
     @property
     def srcset(self) -> str:
-        return f"{self.fixed_url} {self.width or 0}w"
+        return f"{self.fixed_url} {self.width or 1}w"
 
 
 class HasThumbnails(BaseModel):
@@ -501,15 +501,16 @@ class Comment(HasThumbnails):
     thumbnails: list[Thumbnail] = \
         Field(alias="authorThumbnails", default_factory=list)
     author_name: str = Field(alias="author")
-    author_id: str = Field(alias="authorId")
     author_uri: str = Field(alias="authorUrl")
-    text: str = Field(alias="content")
-    date: datetime = Field(alias="published")
-    likes: int = Field(alias="likeCount")
-    by_uploader: bool = Field(alias="authorIsChannelOwner")
-    edited: bool = Field(alias="isEdited")
-    pinned: bool = Field(alias="isPinned")
-    sponsor: bool = Field(alias="isSponsor")
+    text: str | None = Field(None, alias="content")
+    html: str | None = Field(None, alias="commentText")
+    date: datetime | None = Field(None, alias="published")
+    relative_date: str | None = Field(None, alias="commentedTime")
+    likes: int = Field(0, alias="likeCount")
+    by_uploader: bool = Field(False, alias="authorIsChannelOwner")
+    edited: bool = Field(False, alias="isEdited")
+    pinned: bool = Field(False, alias="isPinned")
+    sponsor: bool = Field(False, alias="isSponsor")
     replies: int | None = \
         Field(None, validation_alias=AliasPath("replies", "replyCount"))
     continuation_id: str | None = \

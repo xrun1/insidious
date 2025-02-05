@@ -58,7 +58,7 @@ from .extractors.filters import (
     Sort,
     Type,
 )
-from .extractors.invidious import INVIDIOUS
+from .extractors.piped import PIPED
 from .extractors.markup import yt_to_html
 from .extractors.ytdlp import YTDLP, CachedYoutubeDL
 from .net import HTTPX_BACKOFF_ERRORS, HttpClient
@@ -181,8 +181,10 @@ class Page:
         return f"/proxy/{method}?url={quote(url)}"
 
     @staticmethod
-    def youtube_format(text: str, allow_markup: bool = True) -> str:
-        return yt_to_html(text, allow_markup)
+    def youtube_format(
+        text: str, allow_markup: bool = True, escape_html: bool = True,
+    ) -> str:
+        return yt_to_html(text, allow_markup, escape_html=escape_html)
 
     @staticmethod
     def format_duration(seconds: float) -> str:
@@ -543,7 +545,7 @@ async def comments(
 ) -> Response:
     if (pg := Pagination[Comment].get(request).advance()).needs_more_data:
         with httpx_to_fastapi_errors():
-            coms = await INVIDIOUS.comments(video_id, by_date, continuation_id)
+            coms = await PIPED.comments(video_id, by_date, continuation_id)
 
         pg.add(coms.data)
         pg.continuation_id = coms.continuation_id
