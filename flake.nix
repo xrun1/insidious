@@ -1,6 +1,6 @@
 {
     inputs = {
-        nixpkgs.url = "github:NixOS/nixpkgs/master";
+        nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
         flake-utils.url = "github:numtide/flake-utils";
         construct.url = "github:construct/construct/a6603d7821480fb5a4e6665c6fd8028ce574c4bd";
         construct.flake = false;
@@ -13,7 +13,7 @@
 
     } // (flake-utils.lib.eachDefaultSystem (sys: let
         pkgs = nixpkgs.legacyPackages.${sys};
-        pypkgs = pkgs.python311Packages;
+        pypkgs = pkgs.python312Packages;
         construct21068 = pypkgs.construct.overrideAttrs {
             version = "2.10.68";
             src = inputs.construct;
@@ -42,7 +42,7 @@
                 uvicorn
                 watchfiles
                 yt-dlp
-                docopt
+                docopt-ng
                 httpx
                 backoff
                 appdirs

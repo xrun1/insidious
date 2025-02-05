@@ -58,8 +58,8 @@ Missing/planned:
 
 ### Local installation with pip
 
-Python 3.11 must be installed on your system.
-On Linux without 3.11, consider the [Nix method](#direct-run-with-nix).
+Python 3.12 must be installed on your system.
+On Linux without 3.12, consider the [Nix method](#direct-run-with-nix).
 For setting up on Windows instead of Linux/OSX,
 see [these notes](#windowspowershell-notes).
 
