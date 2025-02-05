@@ -146,8 +146,7 @@ An up-to-date browser (released after December 2023) is required.
 default
 - The <https://youtube.com> or <https://youtu.be> part of any URL can be
   replaced by the given address 
-- Use an extension like Privacy Redirect ([Chrome](https://chromewebstore.google.com/detail/privacy-redirect/pmcmeagblkinmogikoikkdjiligflglb), [Firefox](https://addons.mozilla.org/en-US/firefox/addon/privacy-redirect/))
-  to automatically transform YouTube links (enable "Invidious redirects" in the options and set Insidious's address for the instance).
+- Use an extension like [LibRedirect](https://libredirect.github.io/) to automatically transform YouTube links (in the preferences, enable YouTube redirects, set the frontend to "Invidious", then set Insidious's address as your favorite instance).
 
 
 ### Keyboard shortcuts
