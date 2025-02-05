@@ -71,7 +71,8 @@
                 {% if comment.likes %}
                     <span class=likes title=Likes>
                         <span class=icon>👍{{no_emoji}}</span>
-                        <span class=number raw="{{comment.likes}}"></span>
+                        <span class=compact-number raw="{{comment.likes}}">
+                        </span>
                     </span>
                 {% endif %}
 
