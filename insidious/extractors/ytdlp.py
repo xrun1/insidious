@@ -235,7 +235,7 @@ class CachedYoutubeDL(YoutubeDL):
 
     @staticmethod
     def prune_cache(size_limit: int = 1024 * 1024 * 512) -> None:
-        now = datetime.now(UTC)
+        now = datetime.now()
         by_access: list[tuple[datetime, Path]] = []
         sizes: dict[Path, int] = {}
 
