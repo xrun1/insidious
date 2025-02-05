@@ -1,6 +1,7 @@
 # Copyright Insidious authors <https://github.com/xrun1/insidious>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import json
 import logging
 from dataclasses import dataclass
 
@@ -19,7 +20,7 @@ class InvidiousClient(APIClient):
     @override
     @backoff.on_exception(
         backoff.constant,
-        (OSError, *HTTPX_BACKOFF_ERRORS),
+        (OSError, json.JSONDecodeError, *HTTPX_BACKOFF_ERRORS),
         max_tries = 20,
         interval = 0,
         backoff_log_level = logging.WARNING,
