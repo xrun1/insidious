@@ -255,8 +255,11 @@
 
     function onAudioTracksUpdate() {
         const header = audioTracks.querySelector("[slot=header]")
+        console.log(hls.audioTrack, hls.audioTracks)
         const opts = hls.audioTracks.map(at => createOption(
-            at.name, at.id, hls.audioTrack === at.id,
+            at.name,
+            at.id,
+            hls.audioTrack === -1 ? at.default : (hls.audioTrack === at.id),
         ))
         while (header.nextSibling) header.nextSibling.remove()
         for (const opt of opts) audioTracks.appendChild(opt)
