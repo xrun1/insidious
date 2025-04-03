@@ -346,7 +346,7 @@ class YtdlpClient(YoutubeClient):
             "compat_opts": ["no-youtube-unavailable-videos"],
             "extractor_args": {
                 # This client has the HLS manifests, no need for others
-                "youtube": {"player_client": ["web_safari"]},
+                "youtube": {"player_client": ["ios"]},
                 # Retrieve upload dates in flat playlists
                 "youtubetab": {"approximate_date": ["timestamp"]},
             },
