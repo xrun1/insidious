@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.1.10 (2025-06-25)
+
+### Fixed
+
+- Use Piped instances as alternate comment source while Invidious is dead
+- Playback failing due to outdated yt-dlp and bad client selection
+- Thumbnails and descriptions missing for some RSS clients
+- Loading channels missing a featured tab
+- Broken video streams infinitely retrying with no delay
+- "Copied YouTube link" tooltip background color in light mode
+
+
 ## v0.1.9 (2024-10-15)
 
 ### Added
@@ -7,10 +19,10 @@
 - Header button to copy the original YouTube page URL
 - Support for directly using `/VIDEO_ID` URLs, useful when extensions like
   Privacy Redirect automatically convert youtu.be links
-  
+
 ### Fixed
 
-- Rare occurance of videos channel links failing to parse
+- Rare occurrence of videos channel links failing to parse
 - Usage of the `--reload` flag on Windows
 
 
@@ -40,7 +52,7 @@
 
 ### Fixed
 
-- "Internal server error" page for videos missing a release date 
+- "Internal server error" page for videos missing a release date
 
 
 ## v0.1.4 (2024-07-15)
@@ -68,7 +80,7 @@
 
 ### Added
 
-- Support for `/live/ID` YouTube URLs 
+- Support for `/live/ID` YouTube URLs
 
 ### Fixed
 
