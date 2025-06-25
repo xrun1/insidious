@@ -346,14 +346,14 @@ class YtdlpClient(YoutubeClient):
             "compat_opts": ["no-youtube-unavailable-videos"],
             "extractor_args": {
                 # This client has the HLS manifests, no need for others
-                "youtube": {"player_client": ["ios"]},
+                "youtube": {"player_client": ["android_vr"]},
                 # Retrieve upload dates in flat playlists
                 "youtubetab": {"approximate_date": ["timestamp"]},
             },
         })
         self._ytdl_instances[thread] = client
         return client
-    
+
     async def _channel_tab(
         self, path: str, tab: str, search: str, page: int, sort: str = "",
     ) -> Channel:
@@ -382,7 +382,7 @@ class YtdlpClient(YoutubeClient):
         sort: str = "",
     ) -> Channel:
 
-        if search or tab is not None: 
+        if search or tab is not None:
             try:
                 return await self._channel_tab(path, tab, search, page, sort)
             except yt_dlp.DownloadError as e:
