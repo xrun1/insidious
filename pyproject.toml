@@ -4,7 +4,7 @@
 
 [tool.poetry]
     name = "insidious"
-    version = "0.1.9"
+    version = "0.1.10"
     description = "Self-hosted YouTube front-end"
     authors = ["xrun1 <126838916+xrun1@users.noreply.github.com>"]
     license = "AGPL-3.0-or-later"
