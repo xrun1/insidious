@@ -197,7 +197,7 @@ class Entry(HasThumbnails):
 
 class ShortEntry(Entry, HasHoverThumbnails):
     entry_type: Literal["ShortEntry"]
-    views: int = Field(alias="view_count")
+    views: int | None = Field(None, alias="view_count")
 
 
 class VideoEntry(Entry, HasHoverThumbnails, HasChannel):
