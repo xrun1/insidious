@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.11 (2025-08-09)
+
+### Fixed
+
+- Channels with a "Posts" section in their home pages not loading
+
+
 ## v0.1.10 (2025-06-25)
 
 ### Fixed
