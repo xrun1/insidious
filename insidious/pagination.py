@@ -19,6 +19,7 @@ from yt_dlp.utils import DownloadError
 from insidious.extractors.filters import SearchFilter, Type
 
 from .extractors.data import (
+    FeaturedChannelPosts,
     FeaturedChannelTab,
     Playlist,
     PlaylistEntry,
@@ -204,7 +205,7 @@ class RelatedPagination(Pagination[ShortEntry | VideoEntry]):
         weight += 1
 
         for i, entry in enumerate(entries.entries):
-            if isinstance(entry, FeaturedChannelTab):
+            if isinstance(entry, FeaturedChannelTab | FeaturedChannelPosts):
                 ignore += 1
             elif entry.id == self.video_id or \
                     entry.id in self.returned_videos_id:

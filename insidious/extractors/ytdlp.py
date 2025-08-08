@@ -49,6 +49,7 @@ from .data import (
     ChannelEntry,
     ChannelNotFound,
     FeaturedChannelPlaylist,
+    FeaturedChannelPosts,
     FeaturedChannelTab,
     PartialEntry,
     PartialVideo,
@@ -414,6 +415,8 @@ class YtdlpClient(YoutubeClient):
 
             if "/shorts/" in entry["url"]:
                 etype = ShortEntry
+            elif entry["url"].endswith("/posts"):
+                etype = FeaturedChannelPosts
             elif "/channel/" in entry["url"]:
                 etype = ChannelEntry
             elif "/playlist?" in entry["url"]:

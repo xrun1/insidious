@@ -23,7 +23,8 @@
     {% endmacro -%}
 
     {% set group = namespace(inside=false) %}
-    {% for entry in pagination.items %}
+    {# Channel posts are not implemented by yt-dlp or any other API #}
+    {% for entry in pagination.items if entry.entry_type != "FeaturedChannelPosts" %}
         {% if entry.entry_type == "ChannelEntry" and subpage_path %}
             <h2 class=related-channels-title>Related channels</h2>
         {% endif %}

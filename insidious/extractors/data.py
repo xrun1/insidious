@@ -316,9 +316,20 @@ class FeaturedChannelPlaylist(BaseModel):
         return f"/featured_playlist?id={self.id}"
 
 
+class FeaturedChannelPosts(BaseModel):
+    entry_type: Literal["FeaturedChannelPosts"]
+    url: str
+    title: str
+
+    @property
+    def load_url(self) -> str:
+        params = (quote(self.url), quote(self.title))
+        return "/featured_posts?url=%s&title=%s" % params
+
+
 InSearch: TypeAlias = (
     ShortEntry | VideoEntry | PartialEntry | ChannelEntry | PlaylistEntry |
-    FeaturedChannelTab | FeaturedChannelPlaylist
+    FeaturedChannelTab | FeaturedChannelPlaylist | FeaturedChannelPosts
 )
 
 
