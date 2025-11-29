@@ -54,41 +54,22 @@ Missing/planned:
 
 ## Setup
 
-Python 3.12 must be installed on your system.
-For setting up on Windows instead of Linux/OSX,
-see [these notes](#windowspowershell-notes).
-
-Local installation:
+[Install uv](https://docs.astral.sh/uv/getting-started/installation/), then:
 
 ```sh
 git clone https://github.com/xrun1/insidious
 cd insidious
-python -m venv venv
-source venv/bin/activate
-pip install -e .
 ```
 
-To start the server, assuming the current folder is the cloned repository:
-```sh
-./venv/bin/insidious
-```
+Run with `uv run insidious`.
+Check `uv run insidious --help` for supported options.
+To update the program later, run `git pull` in the cloned repository folder
+before running.
 
-Add ` --help` to the above command for info on supported options.
-
-To update Insidious later, from the cloned repository folder:
-```sh
-git pull
-source venv/bin/activate
-pip install -e .
-```
-
-#### Windows/PowerShell notes
-
-- Run `.\venv\Scripts\Activate.ps1` instead of `source venv/bin/activate`
-- Run `.\venv\Scripts\insidious.exe` instead of `./venv/bin/insidious`
-- Said executable can be double clicked directly in explorer to start
-- In `%appdata%\Microsoft\Windows\Start Menu\Programs\Startup`, a
-  shortcut to the exe can be created to automatically start Insidious on login.
+On Windows, the program can also be started with `.venv\Scripts\insidious.exe`.
+Creating a shortcut to that executable in
+`%appdata%\Microsoft\Windows\Start Menu\Programs\Startup`
+will Insidious on login automatically.
 
 
 ## Usage
