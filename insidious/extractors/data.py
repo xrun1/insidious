@@ -191,7 +191,7 @@ class Chapter(BaseModel):
 class Subtitle(BaseModel):
     extension: str = Field(alias="ext")
     url: str
-    name: str
+    name: str | None = None
 
 
 class Entry(HasThumbnails):

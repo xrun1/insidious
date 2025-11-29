@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.13 (2025-11-29)
+
+### Fixed
+
+- Error on videos with live replay chat
+
+
 ## v0.1.12 (2025-11-29)
 
 ### Changed
