@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.12 (2025-11-29)
+
+### Changed
+
+- New installation procedure and external dependency due to yt-dlp changes,
+  check the [README](README.md#setup)
+
+### Removed
+
+- Unmaintained Nix flake and NixOS integration
+
+### Fixed
+
+- Missing subtitles on most videos
+
+
 ## v0.1.11 (2025-08-09)
 
 ### Fixed
