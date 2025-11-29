@@ -37,7 +37,7 @@ dependencies = [
     "pydantic>=2.11.7,<3",
     "uvicorn>=0.34.2,<0.35",
     "watchfiles>=1.0.5,<2",
-    "yt-dlp[default]==2025.7.21",
+    "yt-dlp[default]==2025.11.12",
     "docopt-ng>=0.9.0,<0.10",
     "httpx>=0.28.1,<0.29",
     "backoff>=2.2.1,<3",

@@ -54,7 +54,10 @@ Missing/planned:
 
 ## Setup
 
-[Install uv](https://docs.astral.sh/uv/getting-started/installation/), then:
+From your system's package manager or by following the instructions from the
+following links,
+install [uv](https://docs.astral.sh/uv/getting-started/installation/)
+and [deno](https://docs.deno.com/runtime/#quick-install), then:
 
 ```sh
 git clone https://github.com/xrun1/insidious
