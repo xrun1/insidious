@@ -1,9 +1,7 @@
 # ![Logo](./logo.png) Insidious
 
 [Features](#features) ⬥
-[pip setup](#local-installation-with-pip) ⬥
-[Nix setup](#direct-run-with-nix) ⬥
-[NixOS setup](#system-service-on-nixos) ⬥
+[Setup](#setup) ⬥
 [Usage](#usage) ⬥
 [Shortcuts](#keyboard-shortcuts)
 
@@ -56,10 +54,7 @@ Missing/planned:
 
 ## Setup
 
-### Local installation with pip
-
 Python 3.12 must be installed on your system.
-On Linux without 3.12, consider the [Nix method](#direct-run-with-nix).
 For setting up on Windows instead of Linux/OSX,
 see [these notes](#windowspowershell-notes).
 
@@ -96,48 +91,6 @@ pip install -e .
   shortcut to the exe can be created to automatically start Insidious on login.
 
 
-### Direct run with Nix
-
-[Install the Nix package manager](https://github.com/DeterminateSystems/nix-installer)
-if needed, then:
-```sh
-nix run github:xrun1/insidious
-```
-
-Add ` -- --help` to the above command for info on supported options.
-
-### System service on NixOS
-
-With flakes: add this repository to your inputs, import the module, and enable
-the service.  
-Minimal example:
-
-```nix
-# flake.nix
-{
-    inputs = {
-        nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-        insidious.url = "github:xrun1/insidious";
-    };
-    outputs = inputs @ { self, nixpkgs, ... }: {
-        nixosConfigurations.example = nixpkgs.lib.nixosSystem {
-            system = "x86_64-linux";
-            specialArgs = { inherit inputs; };
-            modules = [./configuration.nix ./insidious.nix];
-        };
-    };
-}
-
-# insidious.nix
-{ inputs, ... }: {
-    imports = [inputs.insidious.nixosModules.default];
-    services.insidious.enable = true;
-}
-```
-
-See [os.nix](./os.nix) for options beyond `enable`.
-
-
 ## Usage
 
 An up-to-date browser (released after December 2023) is required.
@@ -145,7 +98,7 @@ An up-to-date browser (released after December 2023) is required.
 - Go to the address shown when you start the server, <http://localhost:3030> by
 default
 - The <https://youtube.com> or <https://youtu.be> part of any URL can be
-  replaced by the given address 
+  replaced by the given address
 - Use an extension like [LibRedirect](https://libredirect.github.io/) to automatically transform YouTube links (in the preferences, enable YouTube redirects, set the frontend to "Invidious", then set Insidious's address as your favorite instance).
 
 
@@ -159,8 +112,8 @@ Key | Action
 `f` | Toggle fullscreen
 `c` | Toggle subtitles if available
 `m` | Toggle mute
-`-` | Reduce volume 
-`+` | Increase volume 
+`-` | Reduce volume
+`+` | Increase volume
 `<` | Reduce playback speed
 `>` | Increase playback speed
 `h`, `j`, `Left` | Seek back 5s
@@ -172,6 +125,6 @@ Key | Action
 `p` | Seek to previous chapter
 `n` | Seek to next chapter
 `P` | Go to previous playlist video
-`N` | Go to next playlist video /next suggestion 
+`N` | Go to next playlist video /next suggestion
 
 These shortcuts are always active without needing player focus.
