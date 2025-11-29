@@ -69,6 +69,7 @@ from .streaming import (
     dash_variant_playlist,
     master_playlist,
     sort_master_playlist,
+    subtitle_playlist,
     variant_playlist,
 )
 from .utils import httpx_to_fastapi_errors, report
@@ -560,8 +561,9 @@ async def comments(
 @app.get("/generate_hls/master")
 async def make_master_m3u8(request: Request, video_id: str) -> Response:
     api = str(request.base_url)
-    api += f"generate_hls/variant?video_id={video_id}&format_id="
-    text = master_playlist(api, await YTDLP.video(video_id))
+    fmt_api = f"{api}generate_hls/variant?video_id={video_id}&format_id="
+    sub_api = f"{api}generate_hls/subtitle?video_id={video_id}&url="
+    text = master_playlist(fmt_api, sub_api, await YTDLP.video(video_id))
     return Response(text, media_type="application/x-mpegURL")
 
 
@@ -582,6 +584,16 @@ async def make_variant_m3u8(
             mp4_data = reply.aiter_bytes()
             text = await variant_playlist(api % quote(format.url), mp4_data)
             return Response(text, media_type=HLS_MIME)
+
+
+@app.get("/generate_hls/subtitle")
+async def make_subtitle_m3u8(
+    request: Request, video_id: str, url: str,
+) -> Response:
+    video = await YTDLP.video(video_id)
+    url = f"{request.base_url}proxy/get?url={quote(url)}"
+    text = subtitle_playlist(video.duration or 3600, url)
+    return Response(text, media_type=HLS_MIME)
 
 
 @app.get("/refresh_hls")

@@ -188,6 +188,12 @@ class Chapter(BaseModel):
     title: str
 
 
+class Subtitle(BaseModel):
+    extension: str = Field(alias="ext")
+    url: str
+    name: str
+
+
 class Entry(HasThumbnails):
     id: str
     url: str
@@ -349,6 +355,7 @@ class Video(VideoEntry):
     likes: int | None = Field(None, alias="like_count")
     formats: list[Format]
     chapters: list[Chapter] | None = None
+    subtitles: dict[str, list[Subtitle]] | None = None  # key = language code
     clip_start: float | None = Field(None, alias="section_start")
     clip_end: float | None = Field(None, alias="section_end")
 

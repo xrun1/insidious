@@ -7,12 +7,14 @@ import io
 import logging as log
 import math
 import re
+from textwrap import dedent
 from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import quote
 
 from construct import Container, StreamError
 from pymp4.parser import Box
 
+from insidious.extractors.data import Subtitle
 from insidious.utils import report
 
 if TYPE_CHECKING:
@@ -25,7 +27,7 @@ HLS_ALT_MIME = "application/vnd.apple.mpegurl"
 STREAM_TAGS_RE = re.compile(r"([A-Z\d_-]+=(?:\".*?\"|'.*?'|.*?))(?:,|$)")
 
 
-def master_playlist(api: str, video: Video) -> str:
+def master_playlist(formats_api: str, subtitle_api: str, video: Video) -> str:
     def sort_key(f: Format) -> Any:
         return (
             bool(f.vcodec),
@@ -35,15 +37,34 @@ def master_playlist(api: str, video: Video) -> str:
             f.average_bitrate or 0,
         )
 
+    subs = "".join(
+        "".join(_master_sub(subtitle_api, lang, sub))
+        for lang, subs in (video.subtitles or {}).items()
+        for sub in subs
+    ).rstrip()
+
     content = "".join(
-        "".join(_master_entry(api, f, *video.formats))
+        "".join(_master_stream(formats_api, f, video))
         for f in sorted(video.formats, key=sort_key)
     ).rstrip()
-    return f"#EXTM3U\n#EXT-X-VERSION:7\n{content}"
+
+    return f"#EXTM3U\n#EXT-X-VERSION:7\n{subs}\n{content}"
 
 
 async def variant_playlist(uri: str, mp4_data: AsyncIterator[bytes]) -> str:
     return "".join([x async for x in _variant_playlist(uri, mp4_data)])
+
+
+def subtitle_playlist(duration: float, url: str) -> str:
+    return dedent(f"""
+        #EXTM3U
+        #EXT-X-VERSION:3
+        #EXT-X-PLAYLIST-TYPE:VOD
+        #EXT-X-TARGETDURATION:{round(duration)}
+        #EXTINF:{round(duration)},
+        {url}
+        #EXT-X-ENDLIST
+    """).strip()
 
 
 def dash_variant_playlist(api: str, format: Format) -> str:
@@ -81,8 +102,22 @@ def sort_master_playlist(content: str) -> str:
     return "\n".join(lines + streams)
 
 
-def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
-    has_any_dash = any(f.has_dash for f in all)
+def _master_sub(api: str, lang_code: str, sub: Subtitle) -> Iterator[str]:
+    if sub.extension.lower().strip() != "vtt":
+        return
+    yield "#EXT-X-MEDIA:"
+    yield "TYPE=SUBTITLES,"
+    yield 'GROUP-ID="vtt",'
+    yield 'LANGUAGE="%s",' % lang_code
+    yield 'NAME="%s",' % sub.name
+    yield "DEFAULT=NO,"
+    yield "AUTOSELECT=YES,"
+    yield 'URI="%s",' % (api + quote(sub.url))
+    yield "\n"
+
+
+def _master_stream(api: str, format: Format, video: Video) -> Iterator[str]:
+    has_any_dash = any(f.has_dash for f in video.formats)
 
     def can_use(fmt: Format) -> bool:
         if has_any_dash and not fmt.has_dash:
@@ -133,11 +168,14 @@ def _master_entry(api: str, format: Format, *all: Format) -> Iterator[str]:
         else:
             yield 'CODECS="%s",' % format.vcodec
 
+        if video.subtitles:
+            yield 'SUBTITLES="vtt",'
+
         yield "BANDWIDTH=%d\n" % math.ceil(bitrate * 1000)
         yield (api + format.id) + "\n"
 
     audio_groups: dict[str, list[Format]] = {}
-    for f in all:
+    for f in video.formats:
         if can_use(f) and not f.vcodec and f.acodec:
             audio_groups.setdefault(f.id.removesuffix("-drc"), []).append(f)
 
