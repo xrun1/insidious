@@ -54,25 +54,25 @@ Missing/planned:
 
 ## Setup
 
-From your system's package manager or by following the instructions from the
+From your system's package manager, or by following the instructions from the
 following links,
 install [uv](https://docs.astral.sh/uv/getting-started/installation/)
-and [deno](https://docs.deno.com/runtime/#quick-install), then:
+and [deno](https://docs.deno.com/runtime/#quick-install). Then:
 
 ```sh
 git clone https://github.com/xrun1/insidious
 cd insidious
 ```
 
-Run with `uv run insidious`.
+Start with `uv run insidious`.
 Check `uv run insidious --help` for supported options.
-To update the program later, run `git pull` in the cloned repository folder
+To update the program later, do `git pull` in the cloned repository folder
 before running.
 
 On Windows, the program can also be started with `.venv\Scripts\insidious.exe`.
 Creating a shortcut to that executable in
 `%appdata%\Microsoft\Windows\Start Menu\Programs\Startup`
-will Insidious on login automatically.
+will start Insidious on login automatically.
 
 
 ## Usage
